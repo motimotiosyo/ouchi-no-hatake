@@ -208,3 +208,9 @@ SNS系のアプリは、植物全般や観葉植物に特化していること�
 - **メンバーの権限設定**（Owner、Editor、Viewer）
 - **公開・非公開設定**でプライバシーを保護
 - **React**でアルバム管理とメンバー追加/削除のUIを構築
+
+
+
+
+### 画面遷移図
+Figma：https://www.figma.com/design/kLDLwqqEeI0vaGIQlXVBCY/%E3%83%99%E3%82%B8%E3%83%95%E3%82%A1%E3%83%9F%E3%83%AA%E3%83%BC%E7%94%BB%E9%9D%A2%E9%81%B7%E7%A7%BB%E5%9B%B3?node-id=0-1&t=9XV7k4UxObRGfAlZ-1
