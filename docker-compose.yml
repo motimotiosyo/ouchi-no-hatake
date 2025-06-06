@@ -48,7 +48,7 @@ services:
       - "3000:3000"                             # ホスト:3000 → コンテナ内Next.js:3000
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:3001
-                                               # フロントエンドからバックエンドへのAPIエンドポイント
+                                                # フロントエンドからバックエンドへのAPIエンドポイント
     depends_on:
       - backend                                 # backend コンテナが起動してから開始
     command: npm run dev                        # 開発サーバーを起動
