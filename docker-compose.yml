@@ -1,56 +1,57 @@
 services:
   db:
-    image: postgres:15
+    image: postgres:15                         # PostgreSQL 15 を使用
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: vege_family_dev
+      POSTGRES_USER: postgres                  # データベースユーザー名
+      POSTGRES_PASSWORD: password              # データベースパスワード
+      POSTGRES_DB: dummy_app_dev               # 初期作成されるデータベース名
     ports:
-      - "5432:5432"
+      - "5432:5432"                            # ホストの5432番ポートをコンテナにマッピング
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql/data       # 永続化用ボリュームをマウント
 
   backend:
     build:
-      context: ./backend
-      dockerfile: Dockerfile
+      context: ./backend                       # Dockerfile のあるディレクトリ
+      dockerfile: Dockerfile                   # 使用する Dockerfile
     volumes:
-      - ./backend:/app
+      - ./backend:/app                          # ホストのbackendフォルダをコンテナの/appに同期
     ports:
-      - "3001:3000"
+      - "3001:3000"                             # ホスト:3001 → コンテナ内Rails:3000
     environment:
-      RAILS_ENV: development
-      DATABASE_HOST: db
-      DATABASE_USER: postgres
-      DATABASE_PASSWORD: password
-      DATABASE_NAME: vege_family_dev
+      RAILS_ENV: development                    # Rails の実行環境を開発環境に設定
+      DATABASE_HOST: db                         # DBホストを db サービス名に設定
+      DATABASE_USER: postgres                   # DB接続ユーザー名
+      DATABASE_PASSWORD: password               # DB接続パスワード
+      DATABASE_NAME: dummy_app_dev              # 接続先データベース名
     depends_on:
-      - db
-    command: >
+      - db                                      # db コンテナが起動してから開始
+    command: >                                  # 起動時に実行するコマンドをまとめて定義
       bash -lc "
-        # PostgreSQL が起動して接続を受け付けるまで待機
+        # PostgreSQL が起動し接続可能になるまで待機
         until pg_isready -h db -p 5432; do
           echo 'Waiting for PostgreSQL...'
           sleep 1
         done
-        # DB作成 → マイグレーション → サーバー起動
+        # データベース作成・マイグレーション実行後、Rails サーバーを起動
         bundle exec rails db:create db:migrate &&
         bundle exec rails server -b 0.0.0.0 -p 3000
       "
 
   frontend:
     build:
-      context: ./frontend
-      dockerfile: Dockerfile
+      context: ./frontend                       # Dockerfile のあるディレクトリ
+      dockerfile: Dockerfile                    # 使用する Dockerfile
     volumes:
-      - ./frontend:/app
+      - ./frontend:/app                         # ホストのfrontendフォルダをコンテナの/appに同期
     ports:
-      - "3000:3000"
+      - "3000:3000"                             # ホスト:3000 → コンテナ内Next.js:3000
     environment:
-      NEXT_PUBLIC_API_URL: http://backend:3000
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+                                               # フロントエンドからバックエンドへのAPIエンドポイント
     depends_on:
-      - backend
-    command: npm run dev
+      - backend                                 # backend コンテナが起動してから開始
+    command: npm run dev                        # 開発サーバーを起動
 
 volumes:
-  db_data:
+  db_data:                                      # PostgreSQL 用データ永続化ボリューム
