@@ -4,7 +4,7 @@ services:
     environment:
       POSTGRES_USER: postgres                  # データベースユーザー名
       POSTGRES_PASSWORD: password              # データベースパスワード
-      POSTGRES_DB: dummy_app_dev               # 初期作成されるデータベース名
+      POSTGRES_DB: vege_family_dev             # 初期作成されるデータベース名
     ports:
       - "5432:5432"                            # ホストの5432番ポートをコンテナにマッピング
     volumes:
@@ -23,7 +23,7 @@ services:
       DATABASE_HOST: db                         # DBホストを db サービス名に設定
       DATABASE_USER: postgres                   # DB接続ユーザー名
       DATABASE_PASSWORD: password               # DB接続パスワード
-      DATABASE_NAME: dummy_app_dev              # 接続先データベース名
+      DATABASE_NAME: vege_family_dev            # 接続先データベース名
     depends_on:
       - db                                      # db コンテナが起動してから開始
     command: >                                  # 起動時に実行するコマンドをまとめて定義
