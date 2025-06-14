@@ -48,4 +48,4 @@ services:
     command: npx next dev --turbopack
 
 volumes:
-  db_data:
+  db_data:  # ← 修正：volumes定義はここに
