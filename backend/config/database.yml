@@ -1,26 +1,24 @@
-# 共通設定
 default: &default
-  adapter: postgresql                                                     # DBにPostgreSQLを使用
-  encoding: unicode                                                       # 文字エンコーディングをUnicodeに設定
-  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>                       # 同時接続数のプール。環境変数が未設定なら5を使用
-
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
 
 development:
-  <<: *default                                                            # デフォルト設定を継承
-  database: <%= ENV.fetch("DATABASE_NAME") { "backend_development" } %>   # 開発環境のDB名。環境変数がなければ "backend_development"
-  host: <%= ENV.fetch("DATABASE_HOST") { "db" } %>                        # 開発環境のDBホスト。Dockerで「db」と設定している場合を想定
-  username: <%= ENV.fetch("DATABASE_USER") { "postgres" } %>              # 開発環境のDBユーザー名。環境変数がなければ "postgres"
-  password: <%= ENV.fetch("DATABASE_PASSWORD") { "password" } %>          # 開発環境のDBパスワード。環境変数がなければ "password"
+  <<: *default
+  database: <%= ENV.fetch("DATABASE_NAME") { "backend_development" } %>
+  host:     <%= ENV.fetch("DATABASE_HOST")     %>    # .env で指定
+  username: <%= ENV.fetch("DATABASE_USER")     %>    # .env で指定
+  password: <%= ENV.fetch("DATABASE_PASSWORD") %>    # .env で指定
 
 test:
-  <<: *default                                                            # デフォルト設定を継承
-  database: <%= ENV.fetch("DATABASE_NAME") { "backend_test" } %>          # テスト環境のDB名。環境変数がなければ "backend_test"
-  host: <%= ENV.fetch("DATABASE_HOST") { "db" } %>                        # テスト環境のDBホスト。開発環境と同じ設定を想定
-  username: <%= ENV.fetch("DATABASE_USER") { "postgres" } %>              # テスト環境のDBユーザー名。開発と同様
-  password: <%= ENV.fetch("DATABASE_PASSWORD") { "password" } %>          # テスト環境のDBパスワード。開発と同様
+  <<: *default
+  database: <%= ENV.fetch("DATABASE_NAME") { "backend_test" } %>
+  host:     <%= ENV.fetch("DATABASE_HOST")     %>
+  username: <%= ENV.fetch("DATABASE_USER")     %>
+  password: <%= ENV.fetch("DATABASE_PASSWORD") %>
 
 production:
-  <<: *default                                                            # デフォルト設定を継承
-  database: backend_production                                            # 本番環境のDB名を直接指定（環境変数を経由しない場合）
-  username: backend                                                       # 本番環境のDBユーザー名を直接指定
-  password: <%= ENV["BACKEND_DATABASE_PASSWORD"] %>                       # 本番環境は必ず環境変数から取得してセキュリティを確保
+  <<: *default
+  database: backend_production
+  username: backend
+  password: <%= ENV["BACKEND_DATABASE_PASSWORD"] %>
