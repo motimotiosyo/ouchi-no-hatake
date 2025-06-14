@@ -1,0 +1,20 @@
+FROM node:23
+
+WORKDIR /app
+
+# package.json と package-lock.json をコピー
+COPY package*.json ./
+
+# npm ci でクリーンインストール
+RUN npm ci
+
+# PATH に node_modules/.bin を追加
+ENV PATH="/app/node_modules/.bin:$PATH"
+
+# アプリケーションコードをコピー
+COPY . .
+
+EXPOSE 3000
+
+# npx を使用してNext.jsを起動
+CMD ["npx", "next", "dev", "--turbopack"]
