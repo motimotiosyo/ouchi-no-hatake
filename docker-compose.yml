@@ -2,7 +2,7 @@ services:
   db:
     image: postgres:15
     env_file:
-      - backend/.env  # ← これを追加
+      - backend/.env.development
     environment:
       POSTGRES_HOST_AUTH_METHOD: md5
     ports:
@@ -19,7 +19,7 @@ services:
     ports:
       - "3001:3000"
     env_file:
-      - backend/.env
+      - backend/.env.development
     depends_on:
       - db
     command: >
@@ -42,10 +42,10 @@ services:
     ports:
       - "3000:3000"
     env_file:
-      - backend/.env
+      - frontend/.env.development
     depends_on:
       - backend
-    command: npx next dev --turbopack  # この行を追加
+    command: npx next dev --turbopack
 
 volumes:
   db_data:
