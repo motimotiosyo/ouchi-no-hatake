@@ -16,6 +16,7 @@ services:
       dockerfile: Dockerfile.dev
     volumes:
       - ./backend:/app
+      - ./backend/config/database.development.yml:/app/config/database.yml  # ← ここに移動
     ports:
       - "3001:3000"
     env_file:
@@ -48,4 +49,4 @@ services:
     command: npx next dev --turbopack
 
 volumes:
-  db_data:
+  db_data:  # ← 修正：volumes定義はここに
