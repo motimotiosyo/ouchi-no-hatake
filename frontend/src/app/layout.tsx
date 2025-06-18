@@ -1,5 +1,7 @@
 import './globals.css'
-import Link from 'next/link'
+
+import PublicHeader from '@/components/layout/PublicHeader'
+import PublicFooter from '@/components/layout/PublicFooter'
 
 export const metadata = {
   title: 'ベジファミリー',
@@ -8,20 +10,12 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ja">
-      <body className="min-h-screen flex flex-col">
-        <header className="bg-green-100 p-4 shadow">
-          <nav className="container mx-auto flex space-x-6">
-            <Link href="/" className="font-medium">ホーム</Link>
-            <Link href="/login" className="font-medium">ログイン</Link>
-            <Link href="/diagnosis" className="font-medium">野菜診断</Link>
-          </nav>
-        </header>
+      <body className="min-h-screen flex flex-col bg-[#89FD8B]">
+        <PublicHeader />
         <main className="flex-1 container mx-auto p-6">
           {children}
         </main>
-        <footer className="bg-gray-100 p-4 text-center">
-          © 2025 ベジファミリー
-        </footer>
+        <PublicFooter />
       </body>
     </html>
   )
