@@ -20,7 +20,7 @@
 }
 
 body {
-  background: var(--background);
+  background: #89FD8B33;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
