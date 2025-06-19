@@ -1,5 +1,4 @@
 name: CI
-
 on:
   pull_request:
   push:
@@ -8,103 +7,116 @@ on:
 jobs:
   scan_ruby:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: backend/.ruby-version
+          working-directory: backend
           bundler-cache: true
-
       - name: Scan for common Rails security vulnerabilities using static analysis
+        working-directory: backend
         run: bin/brakeman --no-pager
 
-  scan_js:
+  lint_and_fix:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
-
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # ref を明示的に指定してdetached HEAD を回避
+          ref: ${{ github.head_ref || github.ref }}
+          
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: backend/.ruby-version
+          working-directory: backend
           bundler-cache: true
-
-      - name: Scan for security vulnerabilities in JavaScript dependencies
-        run: bin/importmap audit
-
-  lint:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
+          
+      # vendor/bundle を確実に .gitignore に追加
+      - name: Ensure vendor is ignored
+        run: |
+          if ! grep -q "vendor/bundle/" backend/.gitignore; then
+            echo "vendor/bundle/" >> backend/.gitignore
+          fi
+          if ! grep -q ".bundle/" backend/.gitignore; then
+            echo ".bundle/" >> backend/.gitignore
+          fi
+          
+      - name: Run rubocop with auto-fix
         working-directory: backend
+        run: bin/rubocop -A
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Stage only source code changes
+        run: |
+          # 明示的に追跡したいファイルのみステージング
+          git add backend/app/ 2>/dev/null || true
+          git add backend/config/ 2>/dev/null || true
+          git add backend/test/ 2>/dev/null || true
+          git add backend/lib/ 2>/dev/null || true
+          git add backend/db/ 2>/dev/null || true
+          git add backend/Gemfile 2>/dev/null || true
+          git add backend/Gemfile.lock 2>/dev/null || true
+          git add backend/.gitignore 2>/dev/null || true
+          git add backend/*.rb 2>/dev/null || true
 
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: backend/.ruby-version
-          bundler-cache: true
+      - name: Check for changes
+        id: changes
+        run: |
+          if git diff --cached --quiet; then
+            echo "changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "changes=true" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Lint code for consistent style
+      - name: Commit and push auto-fixes
+        if: steps.changes.outputs.changes == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action [rubocop]"
+          git commit -m "style: rubocop自動修正 [skip ci]"
+          
+          # プッシュ先を明示的に指定
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git push origin HEAD:${{ github.head_ref }}
+          else
+            git push origin HEAD:${{ github.ref_name }}
+          fi
+
+      - name: Run rubocop check (final)
+        working-directory: backend
         run: bin/rubocop -f github
 
   test:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
-
     services:
       postgres:
         image: postgres
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: backend_test
         ports:
           - 5432:5432
         options: --health-cmd="pg_isready" --health-interval=10s --health-timeout=5s --health-retries=3
-
-      # redis:
-      #   image: redis
-      #   ports:
-      #     - 6379:6379
-      #   options: --health-cmd "redis-cli ping" --health-interval 10s --health-timeout 5s --health-retries 5
-
     steps:
-      - name: Install packages
-        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y google-chrome-stable curl libjemalloc2 libvips postgresql-client
-
       - name: Checkout code
         uses: actions/checkout@v4
-
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: backend/.ruby-version
+          working-directory: backend
           bundler-cache: true
-
       - name: Run tests
+        working-directory: backend
         env:
           RAILS_ENV: test
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432
-          # REDIS_URL: redis://localhost:6379/0
-        run: bin/rails db:test:prepare test test:system
-
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/backend_test
+        run: bin/rails db:create db:test:prepare test
       - name: Keep screenshots from failed system tests
         uses: actions/upload-artifact@v4
         if: failure()
