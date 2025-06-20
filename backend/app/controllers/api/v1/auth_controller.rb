@@ -1,6 +1,4 @@
 class Api::V1::AuthController < ApplicationController
-  include ExceptionHandler
-
   def register
     user = User.create!(user_params)
     token = JsonWebToken.encode(user_id: user.id)
