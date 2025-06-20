@@ -3,15 +3,15 @@ class Api::V1::AuthController < ApplicationController
     user = User.create!(user_params)
     token = JsonWebToken.encode(user_id: user.id)
 
-    render json:{
-      message: 'ユーザー登録が完了しました',
+    render json: {
+      message: "ユーザー登録が完了しました",
       token: token,
       user: {
         id: user.id,
         email: user.email,
         name: user.name
       }
-    },status: :created
+    }, status: :created
   end
 
   private

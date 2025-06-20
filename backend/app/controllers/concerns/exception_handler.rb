@@ -22,12 +22,12 @@ module ExceptionHandler
     render json: { message: e.message }, status: :unauthorized
   end
 
-  #422
+  # 422
   def four_twenty_two(e)
     render json: { message: e.message }, status: :unprocessable_entity
   end
 
-  #404
+  # 404
   def not_found(e)
     render json: { message: e.message }, status: :not_found
   end
