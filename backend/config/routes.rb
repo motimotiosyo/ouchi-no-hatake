@@ -1,5 +1,13 @@
 Rails.application.routes.draw do
   namespace :api do
+    namespace :v1 do
+      # 認証関連API
+      post 'auth/register', to: 'auth#register'
+      # 将来追加予定
+      # post 'auth/login', to: 'auth#login'  
+      # delete 'auth/logout', to: 'auth#logout'
+    end
+
     get "health_check", to: "health_check#index"
   end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
