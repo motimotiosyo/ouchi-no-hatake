@@ -1,5 +1,4 @@
 class Api::V1::AuthController < ApplicationController
-
   # POST /api/v1/auth/register
   def register
     user = User.create!(user_params)
@@ -27,7 +26,7 @@ class Api::V1::AuthController < ApplicationController
       token = JsonWebToken.encode(user_id: user.id)
       # 成功レスポンス返却
       render json: {
-        message: 'ログインに成功しました',
+        message: "ログインに成功しました",
         token: token,
         user: {
           id: user.id,
@@ -37,7 +36,7 @@ class Api::V1::AuthController < ApplicationController
       }, status: :ok
     else
       # 失敗時に例外処理
-      raise ExceptionHandler::AuthenticationError, 'メールアドレスまたはパスワードが正しくありません'
+      raise ExceptionHandler::AuthenticationError, "メールアドレスまたはパスワードが正しくありません"
     end
   end
 
