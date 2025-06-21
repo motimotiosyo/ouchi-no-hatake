@@ -3,8 +3,8 @@ Rails.application.routes.draw do
     namespace :v1 do
       # 認証関連API
       post "auth/register", to: "auth#register"
+      post 'auth/login', to: 'auth#login'
       # 将来追加予定
-      # post 'auth/login', to: 'auth#login'
       # delete 'auth/logout', to: 'auth#logout'
     end
 
