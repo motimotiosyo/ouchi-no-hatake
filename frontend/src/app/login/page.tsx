@@ -3,6 +3,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { loginSchema, type LoginFormData } from '@/lib/validation'
+import { apiCall } from '@/lib/api'
 import { useState } from 'react'
 
 export default function LoginPage() {
@@ -22,11 +23,8 @@ export default function LoginPage() {
     setApiError(null)
 
     try {
-      const response = await fetch('http://localhost:3001/api/v1/auth/login', {
+      const response = await apiCall('/api/v1/auth/login', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(data)
       })
 
