@@ -34,7 +34,7 @@ export default function LoginPage() {
         const result = await response.json()
         console.log('ログイン成功:', result)
         // TODO: JWT保存とダッシュボードリダイレクト
-        alert('ログインに成功しました！')
+        window.location.href = '/dashboard'
       } else {
         const error = await response.json()
         setApiError(error.message || 'ログインに失敗しました')

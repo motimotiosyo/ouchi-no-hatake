@@ -34,7 +34,7 @@ export default function SignupPage() {
         const result = await response.json()
         console.log('新規登録成功:', result)
         // TODO: JWT保存とダッシュボードリダイレクト
-        alert('新規登録に成功しました！')
+        window.location.href = '/dashboard'
       } else {
         const error = await response.json()
         setApiError(error.message || '新規登録に失敗しました')
