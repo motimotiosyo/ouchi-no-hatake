@@ -4,7 +4,7 @@ class JwtBlacklist < ApplicationRecord
 
   # 期限切れのトークンを削除するクラスメソッド
   def self.cleanup_expired
-    where('expires_at < ?', Time.current).delete_all
+    where("expires_at < ?", Time.current).delete_all
   end
 
   # トークンがブラックリストに登録されているかチェック

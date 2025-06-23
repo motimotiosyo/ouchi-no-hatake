@@ -23,7 +23,7 @@ class JsonWebToken
 
     return false if jti.nil?
     !JwtBlacklist.blacklisted?(jti)
-  rescue ExceptionHandler::InvalidToken,StandardError
+  rescue ExceptionHandler::InvalidToken, StandardError
     false
   end
 
@@ -34,10 +34,10 @@ class JsonWebToken
     expires_at = Time.at(decoded_token[:exp])
 
     return false if jti.nil?
-    
+
     JwtBlacklist.add_to_blacklist(jti, expires_at)
     true
-  rescue ExceptionHandler::InvalidToken,StandardError => e
+  rescue ExceptionHandler::InvalidToken, StandardError => e
     Rails.logger.error "Failed to backlist token: #{e.message}"
     false
   end

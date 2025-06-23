@@ -6,12 +6,12 @@ class ApplicationController < ActionController::API
   private
 
   def authenticate_request
-    header = request.headers['Authorization']
-    header = header.split(' ').last if header
+    header = request.headers["Authorization"]
+    header = header.split(" ").last if header
 
     # トークン無い場合
     if header.blank?
-      raise ExceptionHandler::MissingToken, 'トークンが提供されていません'
+      raise ExceptionHandler::MissingToken, "トークンが提供されていません"
     end
 
     # JWTデコード
@@ -19,7 +19,7 @@ class ApplicationController < ActionController::API
 
     # ブラックリストチェック
     if @decoded[:jti] && JwtBlacklist.blacklisted?(@decoded[:jti])
-      raise ExceptionHandler::InvalidToken, 'トークンは無効化されています'
+      raise ExceptionHandler::InvalidToken, "トークンは無効化されています"
     end
 
     # ユーザー検索
@@ -31,7 +31,7 @@ class ApplicationController < ActionController::API
   end
 
   def current_token
-    header = request.headers['Authorization']
-    header.split(' ').last if header
+    header = request.headers["Authorization"]
+    header.split(" ").last if header
   end
 end

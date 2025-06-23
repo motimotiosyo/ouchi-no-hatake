@@ -1,7 +1,7 @@
 class CreateJwtBlacklists < ActiveRecord::Migration[7.2]
   def change
     create_table :jwt_blacklists do |t|
-      t.string :jti, null:false
+      t.string :jti, null: false
       t.string :expires_at, null: false
 
       t.timestamps

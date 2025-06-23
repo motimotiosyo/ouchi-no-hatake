@@ -1,5 +1,5 @@
 class Api::V1::AuthController < ApplicationController
-  skip_before_action :authenticate_request, only: [:register, :login]
+  skip_before_action :authenticate_request, only: [ :register, :login ]
 
   # POST /api/v1/auth/register
   def register
@@ -47,22 +47,22 @@ class Api::V1::AuthController < ApplicationController
     token = current_token
 
     if token.blank?
-      render json: { error: 'No token provided' }, status: :bad_request
+      render json: { error: "No token provided" }, status: :bad_request
       return
     end
 
     if JsonWebToken.blacklist_token(token)
-      render json: { message: 'ログアウトに成功しました' }, status: :ok
+      render json: { message: "ログアウトに成功しました" }, status: :ok
     else
-      render json: { error: 'ログアウトに失敗しました' }, status: :internal_server_error
+      render json: { error: "ログアウトに失敗しました" }, status: :internal_server_error
     end
   rescue StandardError => e
     Rails.logger.error "Logout error: #{e.message}"
-    render json: { error:'ログアウトに失敗しました' }, status: :internal_server_error
+    render json: { error: "ログアウトに失敗しました" }, status: :internal_server_error
   end
 
   private
-  
+
   def user_params
     params.require(:user).permit(:email, :password, :password_confirmation, :name)
   end

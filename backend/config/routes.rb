@@ -4,7 +4,7 @@ Rails.application.routes.draw do
       # 認証関連API
       post "auth/register", to: "auth#register"
       post "auth/login", to: "auth#login"
-      delete 'auth/logout', to: 'auth#logout'
+      delete "auth/logout", to: "auth#logout"
     end
 
     get "health_check", to: "health_check#index"
