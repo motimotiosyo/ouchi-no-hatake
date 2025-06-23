@@ -39,7 +39,7 @@ export default function LoginPage() {
         const error = await response.json()
         setApiError(error.message || 'ログインに失敗しました')
       }
-    } catch (error) {
+    } catch {
       setApiError('ネットワークエラーが発生しました')
     } finally {
       setIsLoading(false)

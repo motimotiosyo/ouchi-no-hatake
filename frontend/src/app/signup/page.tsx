@@ -39,7 +39,7 @@ export default function SignupPage() {
         const error = await response.json()
         setApiError(error.message || '新規登録に失敗しました')
       }
-    } catch (error) {
+    } catch {
       setApiError('ネットワークエラーが発生しました')
     } finally {
       setIsLoading(false)
