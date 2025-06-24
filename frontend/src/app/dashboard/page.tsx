@@ -1,13 +1,29 @@
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'
+import { useApi } from '@/hooks/useApi'
+import { useState } from 'react'
 
 export default function DashboardPage() {
-  const { user, logout } = useAuth()
+  const { user, logout: authLogout } = useAuth()
+  const { logout: apiLogout } = useApi()
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   const handleLogout = async () => {
-    logout()
-    window.location.href = '/login'
+    setIsLoggingOut(true)
+
+    try {
+      // バックエンドAPIでログアウト
+      await apiLogout()
+      console.log('サーバーサイドログアウト成功')
+    } catch (error) {
+      console.error('サーバーサイドログアウトエラー:', error)
+      // エラーが発生してもローカルのログアウトは実行
+    } finally {
+      // ローカルの認証状態をクリア
+      authLogout()
+      window.location.href = '/login'
+    }
   }
 
   return (
@@ -49,18 +65,12 @@ export default function DashboardPage() {
           </div>
 
           <div className="mt-6">
-            <a
-              href="/login"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700"
-            >
-              ログインページに戻る
-            </a>
-
             <button
-              onClick={handleLogout}  {/* handlelogout → handleLogout */}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
             >
-              ログアウト
+              {isLoggingOut ? 'ログアウト中...' : 'ログアウト'}
             </button>
           </div>
         </div>
