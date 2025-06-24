@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         setToken(savedToken)
         setUser(JSON.parse(savedUser))
-      } catch (error) {
+      } catch {
         // パース失敗時はクリア
         localStorage.removeItem('auth_token')
         localStorage.removeItem('auth_user')
