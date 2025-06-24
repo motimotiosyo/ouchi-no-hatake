@@ -19,3 +19,28 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
     },
   })
 }
+
+// 認証付きAPI呼び出し関数
+export const authenticatedApiCall = async (endpoint: string, token: string, options: RequestInit = {}) => {
+  const url = `${API_BASE_URL}${endpoint}`
+
+  const defaultHeaders = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`,
+  }
+
+  return fetch(url, {
+    ...options,
+    headers: {
+      ...defaultHeaders,
+      ...options.headers,
+    },
+  })
+}
+
+// ログアウトAPI呼び出し関数
+export const logoutApi = async (token: string) => {
+  return authenticatedApiCall('/api/v1/auth/logout', token, {
+    method: 'DELETE'
+  })
+}
