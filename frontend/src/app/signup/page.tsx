@@ -4,11 +4,14 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { registerSchema, type RegisterFormData } from '@/lib/validation'
 import { apiCall } from '@/lib/api'
+import { useAuth } from '@/contexts/AuthContext'
 import { useState } from 'react'
 
 export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [apiError, setApiError] = useState<string | null>(null)
+
+  const { login } = useAuth()
 
   const {
     register,
@@ -31,6 +34,9 @@ export default function SignupPage() {
       if (response.ok) {
         const result = await response.json()
         console.log('新規登録成功:', result)
+
+        // useAuthのlogin関数を使ってJWT保存
+        login(result.token, result.user)
         // TODO: JWT保存とダッシュボードリダイレクト
         window.location.href = '/dashboard'
       } else {
