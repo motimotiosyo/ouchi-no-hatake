@@ -61,6 +61,15 @@ class Api::V1::AuthController < ApplicationController
     render json: { error: "ログアウトに失敗しました" }, status: :internal_server_error
   end
 
+  # トークン検証API - privateより上に配置
+  def verify
+    if current_user
+      render json: { valid: true }
+    else
+      render json: { valid: false }, status: :unauthorized
+    end
+  end
+
   private
 
   def user_params
