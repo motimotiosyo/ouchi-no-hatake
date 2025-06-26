@@ -4,7 +4,7 @@ Rails.application.routes.draw do
       # 認証関連API
       post "auth/register", to: "auth#register"
       post "auth/login", to: "auth#login"
-      get 'auth/verify', to: 'auth#verify'
+      get "auth/verify", to: "auth#verify"
       delete "auth/logout", to: "auth#logout"
     end
 

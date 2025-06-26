@@ -1,6 +1,6 @@
 class Api::V1::AuthController < ApplicationController
   include ActionController::Cookies
-  skip_before_action :authenticate_request, only: [:register, :login, :verify]
+  skip_before_action :authenticate_request, only: [ :register, :login, :verify ]
 
   # POST /api/v1/auth/register
   def register
@@ -31,7 +31,7 @@ class Api::V1::AuthController < ApplicationController
       cookies[:auth_token] = {
         value: token,
         expires: 7.days.from_now,
-        path: '/',
+        path: "/",
         same_site: :none,   # ← クロスオリジンの場合は :none
         secure: true,       # ← https環境なら true、ローカルhttpなら false
         httponly: false
@@ -73,7 +73,7 @@ class Api::V1::AuthController < ApplicationController
 
   def verify
     # Cookieからトークンを取得
-    token = cookies[:auth_token] || request.headers['Authorization']&.split(' ')&.last
+    token = cookies[:auth_token] || request.headers["Authorization"]&.split(" ")&.last
     if token && JsonWebToken.valid_token?(token)
       render json: { valid: true }
     else
