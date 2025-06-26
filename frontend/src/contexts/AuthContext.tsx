@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { authenticatedApiCall } from '@/lib/api'
 
 // ユーザー情報の型定義
 interface User {
@@ -25,7 +26,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 const setCookie = (name: string, value: string, days: number = 7) => {
   const expires = new Date()
   expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000)
-  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Strict`
+  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`
 }
 
 const getCookie = (name: string): string | null => {
@@ -81,16 +82,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(newUser)
     localStorage.setItem('auth_token', newToken)
     localStorage.setItem('auth_user', JSON.stringify(newUser))
-    setCookie('auth_token', newToken, 7) // 7日間有効
+    setCookie('auth_token', newToken, 7)
+    console.log('Cookie after setCookie:', document.cookie)
   }
 
   // ログアウト関数
-  const logout = () => {
-    setToken(null)
-    setUser(null)
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('auth_user')
-    deleteCookie('auth_token')
+  const logout = async () => {
+    try {
+      if (token) {
+        await authenticatedApiCall('/api/v1/auth/logout', token, { method: 'DELETE' });
+      }
+    } catch (error) {
+      console.error('Logout API error:', error)
+    } finally {
+      setToken(null)
+      setUser(null)
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('auth_user')
+      deleteCookie('auth_token')
+    }
   }
 
   const value = {

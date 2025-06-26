@@ -11,12 +11,23 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
     'Content-Type': 'application/json',
   }
 
+  // ここでリクエスト内容をログ出力
+  console.log('APIリクエスト送信:', url, {
+    ...options,
+    headers: {
+      ...defaultHeaders,
+      ...options.headers,
+    },
+    credentials: 'include',
+  })
+
   return fetch(url, {
     ...options,
     headers: {
       ...defaultHeaders,
       ...options.headers,
     },
+    credentials: 'include',
   })
 }
 
@@ -35,6 +46,7 @@ export const authenticatedApiCall = async (endpoint: string, token: string, opti
       ...defaultHeaders,
       ...options.headers,
     },
+    credentials: 'include',
   })
 }
 

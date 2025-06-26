@@ -1,5 +1,6 @@
 class Api::V1::AuthController < ApplicationController
-  skip_before_action :authenticate_request, only: [ :register, :login ]
+  include ActionController::Cookies
+  skip_before_action :authenticate_request, only: [:register, :login, :verify]
 
   # POST /api/v1/auth/register
   def register
@@ -26,6 +27,15 @@ class Api::V1::AuthController < ApplicationController
     if user&.authenticate(params[:password])
       # 認証成功時にJWTトークン発行
       token = JsonWebToken.encode(user_id: user.id)
+      # サーバーサイドでCookieをセット
+      cookies[:auth_token] = {
+        value: token,
+        expires: 7.days.from_now,
+        path: '/',
+        same_site: :none,   # ← クロスオリジンの場合は :none
+        secure: true,       # ← https環境なら true、ローカルhttpなら false
+        httponly: false
+      }
       # 成功レスポンス返却
       render json: {
         message: "ログインに成功しました",
@@ -61,9 +71,10 @@ class Api::V1::AuthController < ApplicationController
     render json: { error: "ログアウトに失敗しました" }, status: :internal_server_error
   end
 
-  # トークン検証API - privateより上に配置
   def verify
-    if current_user
+    # Cookieからトークンを取得
+    token = cookies[:auth_token] || request.headers['Authorization']&.split(' ')&.last
+    if token && JsonWebToken.valid_token?(token)
       render json: { valid: true }
     else
       render json: { valid: false }, status: :unauthorized
