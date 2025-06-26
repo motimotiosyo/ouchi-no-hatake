@@ -1,6 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { authenticatedApiCall } from '@/lib/api'
 
 // ユーザー情報の型定義
 interface User {
@@ -21,6 +22,28 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
+// Cookie操作のヘルパー関数
+const setCookie = (name: string, value: string, days: number = 7) => {
+  const expires = new Date()
+  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000)
+  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`
+}
+
+const getCookie = (name: string): string | null => {
+  const nameEQ = name + "="
+  const ca = document.cookie.split(';')
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i]
+    while (c.charAt(0) === ' ') c = c.substring(1, c.length)
+    if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length)
+  }
+  return null
+}
+
+const deleteCookie = (name: string) => {
+  document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
+}
+
 // AuthProvider コンポーネント
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
@@ -36,6 +59,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         setToken(savedToken)
         setUser(JSON.parse(savedUser))
+
+        // localStorage/Cookie同期
+        if (!localStorage.getItem('auth_token')) {
+          localStorage.setItem('auth_token', savedToken)
+        }
+        if (!getCookie('auth_token')) {
+          setCookie('auth_token', savedToken)
+        }
       } catch {
         // パース失敗時はクリア
         localStorage.removeItem('auth_token')
@@ -51,14 +82,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(newUser)
     localStorage.setItem('auth_token', newToken)
     localStorage.setItem('auth_user', JSON.stringify(newUser))
+    setCookie('auth_token', newToken, 7)
+    console.log('Cookie after setCookie:', document.cookie)
   }
 
   // ログアウト関数
-  const logout = () => {
-    setToken(null)
-    setUser(null)
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('auth_user')
+  const logout = async () => {
+    try {
+      if (token) {
+        await authenticatedApiCall('/api/v1/auth/logout', token, { method: 'DELETE' });
+      }
+    } catch (error) {
+      console.error('Logout API error:', error)
+    } finally {
+      setToken(null)
+      setUser(null)
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('auth_user')
+      deleteCookie('auth_token')
+    }
   }
 
   const value = {
