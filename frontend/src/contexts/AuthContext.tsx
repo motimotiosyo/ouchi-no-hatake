@@ -91,15 +91,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       if (token) {
         await authenticatedApiCall('/api/v1/auth/logout', token, { method: 'DELETE' });
+        console.log('🔓 サーバーサイドログアウト成功')
       }
     } catch (error) {
-      console.error('Logout API error:', error)
+      console.error('🔓 ログアウトAPIエラー:', error)
+      // エラーが発生してもローカルのログアウトは実行
     } finally {
+      // ローカルの認証状態をクリア
       setToken(null)
       setUser(null)
       localStorage.removeItem('auth_token')
       localStorage.removeItem('auth_user')
       deleteCookie('auth_token')
+      console.log('🔓 ローカルログアウト完了')
     }
   }
 
