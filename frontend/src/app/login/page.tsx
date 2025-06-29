@@ -6,12 +6,10 @@ import { loginSchema, type LoginFormData } from '@/lib/validation'
 import { apiCall } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [apiError, setApiError] = useState<string | null>(null)
-  const router = useRouter()
 
   const { login } = useAuth()
 
@@ -37,11 +35,10 @@ export default function LoginPage() {
         const result = await response.json()
         console.log('🔐 ログイン成功:', result)
 
-        // useAuthのlogin関数を使ってJWT保存
+        // useAuthのlogin関数を使ってJWT保存（画面遷移も自動実行）
         login(result.token, result.user)
-        
-        // Next.jsのrouterを使用してダッシュボードにリダイレクト
-        router.push('/dashboard')
+
+        // router.push('/dashboard') ← 削除（AuthContextで処理）
       } else {
         const error = await response.json()
         setApiError(error.message || 'ログインに失敗しました')
