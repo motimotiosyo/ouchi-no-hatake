@@ -35,10 +35,11 @@ export default function LoginPage() {
         const result = await response.json()
         console.log('🔐 ログイン成功:', result)
 
-        // useAuthのlogin関数を使ってJWT保存（画面遷移も自動実行）
+        // useAuthのlogin関数を使ってJWT保存
         login(result.token, result.user)
-
-        // router.push('/dashboard') ← 削除（AuthContextで処理）
+        
+        // ログイン成功時の遷移
+        window.location.href = '/dashboard'
       } else {
         const error = await response.json()
         setApiError(error.message || 'ログインに失敗しました')

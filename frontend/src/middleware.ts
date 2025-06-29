@@ -7,7 +7,7 @@ export async function middleware(request: NextRequest) {
   // Cookieからトークンを取得
   const token = request.cookies.get('auth_token')?.value
 
-  // 保護されたルート（今後追加予定）
+  // 保護されたルート
   const protectedRoutes = ['/dashboard', '/profile', '/settings', '/admin']
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
 
@@ -46,6 +46,12 @@ export async function middleware(request: NextRequest) {
   // 認証済みユーザーが認証ページにアクセス
   if (isAuthRoute && isAuthenticated) {
     console.log(`🔀 認証ガード: ${pathname} → /dashboard (認証済み)`)
+    return NextResponse.redirect(new URL('/dashboard', request.url))
+  }
+
+  // ルートページへの認証済みアクセス → ダッシュボードにリダイレクト
+  if (pathname === '/' && isAuthenticated) {
+    console.log(`🏠 ルートアクセス: / → /dashboard (認証済み)`)
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 

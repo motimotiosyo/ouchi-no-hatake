@@ -26,7 +26,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 const setCookie = (name: string, value: string, days: number = 7) => {
   const expires = new Date()
   expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000)
-  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`
+  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax`
 }
 
 const getCookie = (name: string): string | null => {
@@ -76,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false)
   }, [])
 
-  // ログイン関数
+  // ログイン関数（認証状態管理のみ）
   const login = (newToken: string, newUser: User) => {
     setToken(newToken)
     setUser(newUser)
@@ -86,7 +86,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     console.log('Cookie after setCookie:', document.cookie)
   }
 
-  // ログアウト関数
+  // ログアウト関数（認証状態クリアのみ、画面遷移はミドルウェアが処理）
   const logout = async () => {
     try {
       if (token) {
@@ -104,6 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('auth_user')
       deleteCookie('auth_token')
       console.log('🔓 ローカルログアウト完了')
+      // 画面遷移はミドルウェアに委譲
     }
   }
 

@@ -35,7 +35,7 @@ class Api::V1::AuthController < ApplicationController
           value: token,
           expires: 7.days.from_now,
           path: "/",
-          domain: ".vercel.app",  # Vercelのサブドメインで共有
+          # domain: ".vercel.app",  # Vercelのサブドメインで共有
           same_site: :none,
           secure: true,
           httponly: false
