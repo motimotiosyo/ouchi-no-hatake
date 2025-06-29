@@ -27,15 +27,31 @@ class Api::V1::AuthController < ApplicationController
     if user&.authenticate(params[:password])
       # 認証成功時にJWTトークン発行
       token = JsonWebToken.encode(user_id: user.id)
-      # サーバーサイドでCookieをセット
-      cookies[:auth_token] = {
-        value: token,
-        expires: 7.days.from_now,
-        path: "/",
-        same_site: Rails.env.production? ? :none : :lax,
-        secure: Rails.env.production?,
-        httponly: false
-      }
+
+      # プロダクション環境対応のCookie設定
+      if Rails.env.production?
+        # プロダクションでは、フロントエンドドメインにCookieを設定
+        cookies[:auth_token] = {
+          value: token,
+          expires: 7.days.from_now,
+          path: "/",
+          domain: ".vercel.app",  # Vercelのサブドメインで共有
+          same_site: :none,
+          secure: true,
+          httponly: false
+        }
+      else
+        # 開発環境用の設定
+        cookies[:auth_token] = {
+          value: token,
+          expires: 7.days.from_now,
+          path: "/",
+          same_site: :lax,
+          secure: false,
+          httponly: false
+        }
+      end
+
       # 成功レスポンス返却
       render json: {
         message: "ログインに成功しました",
