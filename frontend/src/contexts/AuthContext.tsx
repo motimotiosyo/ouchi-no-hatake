@@ -26,7 +26,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 const setCookie = (name: string, value: string, days: number = 7) => {
   const expires = new Date()
   expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000)
-  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;SameSite=Lax`
+  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;secure=true;samesite=none`
 }
 
 const getCookie = (name: string): string | null => {
@@ -52,66 +52,90 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ページ読み込み時にlocalStorageからトークンを復元
   useEffect(() => {
-    const savedToken = localStorage.getItem('auth_token')
-    const savedUser = localStorage.getItem('auth_user')
+    const initializeAuth = () => {
+      // まずCookieから確認（ミドルウェアと同じソース）
+      const cookieToken = getCookie('auth_token')
+      const savedToken = localStorage.getItem('auth_token')
+      const savedUser = localStorage.getItem('auth_user')
 
-    if (savedToken && savedUser) {
-      try {
-        setToken(savedToken)
-        setUser(JSON.parse(savedUser))
+      console.log('認証初期化:', { 
+        cookieToken: !!cookieToken, 
+        savedToken: !!savedToken, 
+        savedUser: !!savedUser 
+      })
 
-        // localStorage/Cookie同期
-        if (!localStorage.getItem('auth_token')) {
-          localStorage.setItem('auth_token', savedToken)
+      // CookieまたはlocalStorageにトークンがある場合
+      const finalToken = cookieToken || savedToken
+      
+      if (finalToken && savedUser) {
+        try {
+          const parsedUser = JSON.parse(savedUser)
+          
+          console.log('認証情報復元成功:', parsedUser.name)
+          
+          setToken(finalToken)
+          setUser(parsedUser)
+          
+          // localStorage と Cookie の同期
+          if (finalToken !== savedToken) {
+            localStorage.setItem('auth_token', finalToken)
+          }
+          if (!cookieToken) {
+            setCookie('auth_token', finalToken)
+          }
+        } catch (error) {
+          console.log('認証情報パースエラー:', error)
+          // パース失敗時はクリア
+          localStorage.removeItem('auth_token')
+          localStorage.removeItem('auth_user')
+          deleteCookie('auth_token')
         }
-        if (!getCookie('auth_token')) {
-          setCookie('auth_token', savedToken)
-        }
-      } catch {
-        // パース失敗時はクリア
-        localStorage.removeItem('auth_token')
-        localStorage.removeItem('auth_user')
+      } else if (cookieToken && !savedUser) {
+        // Cookieはあるが localStorage にユーザー情報がない場合
+        console.log('Cookie認証はあるがユーザー情報なし - 状態維持')
+        setToken(cookieToken)
+        localStorage.setItem('auth_token', cookieToken)
+      } else {
+        console.log('認証情報なし')
       }
+      
+      setIsLoading(false)
     }
-    setIsLoading(false)
+
+    initializeAuth()
   }, [])
 
-  // ログイン関数（認証状態管理のみ）
+  // ログイン関数
   const login = (newToken: string, newUser: User) => {
+    console.log('ログイン実行:', newUser.name)
     setToken(newToken)
     setUser(newUser)
     localStorage.setItem('auth_token', newToken)
     localStorage.setItem('auth_user', JSON.stringify(newUser))
     setCookie('auth_token', newToken, 7)
-    console.log('Cookie after setCookie:', document.cookie)
   }
 
-  // ログアウト関数（認証状態クリアのみ、画面遷移はミドルウェアが処理）
+  // ログアウト関数
   const logout = async () => {
     try {
       if (token) {
         await authenticatedApiCall('/api/v1/auth/logout', token, { method: 'DELETE' });
-        console.log('🔓 サーバーサイドログアウト成功')
       }
     } catch (error) {
-      console.error('🔓 ログアウトAPIエラー:', error)
-      // エラーが発生してもローカルのログアウトは実行
+      console.error('Logout API error:', error)
     } finally {
-      // ローカルの認証状態をクリア
       setToken(null)
       setUser(null)
       localStorage.removeItem('auth_token')
       localStorage.removeItem('auth_user')
       deleteCookie('auth_token')
-      console.log('🔓 ローカルログアウト完了')
-      // 画面遷移はミドルウェアに委譲
     }
   }
 
   const value = {
     user,
     token,
-    isAuthenticated: !!user,
+    isAuthenticated: !!user,  // userがあれば認証済み
     isLoading,
     login,
     logout
