@@ -1,32 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-// JWT検証を行う関数
-function verifyJWT(token: string): boolean {
-  try {
-    if (!token) return false
-
-    // JWT の基本的な構造チェック（3つの部分に分かれているか）
-    const parts = token.split('.')
-    if (parts.length !== 3) return false
-
-    // Payloadをデコードして有効期限をチェック
-    const payload = JSON.parse(atob(parts[1]))
-    const currentTime = Math.floor(Date.now() / 1000)
-
-    // 有効期限チェック
-    if (payload.exp && payload.exp < currentTime) {
-      console.log('🔑 JWT有効期限切れ')
-      return false
-    }
-
-    return true
-  } catch (error) {
-    console.error('🔑 JWT検証エラー:', error)
-    return false
-  }
-}
-
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
@@ -56,10 +30,9 @@ export async function middleware(request: NextRequest) {
           'Cookie': `auth_token=${token}`
         },
         credentials: 'include',
-        // next/serverのmiddlewareではfetchのデフォルトがedgeなので注意
       })
       isAuthenticated = verifyRes.status === 200
-    } catch (e) {
+    } catch {
       isAuthenticated = false
     }
   }
