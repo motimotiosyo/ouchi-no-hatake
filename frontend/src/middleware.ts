@@ -27,12 +27,11 @@ function verifyJWT(token: string): boolean {
   }
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Cookieからトークンを取得
   const token = request.cookies.get('auth_token')?.value
-  const isAuthenticated = token ? verifyJWT(token) : false
 
   // 保護されたルート（今後追加予定）
   const protectedRoutes = ['/dashboard', '/profile', '/settings', '/admin']
@@ -45,6 +44,24 @@ export function middleware(request: NextRequest) {
   // 静的ファイルやAPIルートはスキップ
   if (pathname.startsWith('/_next') || pathname.startsWith('/api') || pathname.includes('.')) {
     return NextResponse.next()
+  }
+
+  // サーバー側で認証チェック
+  let isAuthenticated = false
+  if (token) {
+    try {
+      const verifyRes = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://backend:3000'}/api/v1/auth/verify`, {
+        method: 'GET',
+        headers: {
+          'Cookie': `auth_token=${token}`
+        },
+        credentials: 'include',
+        // next/serverのmiddlewareではfetchのデフォルトがedgeなので注意
+      })
+      isAuthenticated = verifyRes.status === 200
+    } catch (e) {
+      isAuthenticated = false
+    }
   }
 
   // 保護されたルートに未認証でアクセス

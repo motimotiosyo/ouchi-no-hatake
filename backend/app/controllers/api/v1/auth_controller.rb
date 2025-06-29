@@ -32,8 +32,8 @@ class Api::V1::AuthController < ApplicationController
         value: token,
         expires: 7.days.from_now,
         path: "/",
-        same_site: :none,   # ← クロスオリジンの場合は :none
-        secure: true,       # ← https環境なら true、ローカルhttpなら false
+        same_site: Rails.env.production? ? :none : :lax,
+        secure: Rails.env.production?,
         httponly: false
       }
       # 成功レスポンス返却
