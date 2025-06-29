@@ -21,7 +21,7 @@ class Api::V1::AuthController < ApplicationController
   # POST /api/v1/auth/login
   def login
     Rails.logger.info "🚀 ログイン処理開始"
-    
+
     # アドレスでユーザー検索
     user = User.find_by(email: params[:email]&.downcase)
     Rails.logger.info "👤 ユーザー検索結果: #{user&.email || 'なし'}"
@@ -29,13 +29,13 @@ class Api::V1::AuthController < ApplicationController
     # パスワード検証
     if user&.authenticate(params[:password])
       Rails.logger.info "✅ 認証成功"
-      
+
       # 認証成功時にJWTトークン発行
       token = JsonWebToken.encode(user_id: user.id)
-      
+
       # デバッグログ追加
       Rails.logger.info "🍪 Cookie設定開始: #{Rails.env}"
-      
+
       if Rails.env.production?
         cookie_options = {
           value: token,
@@ -58,9 +58,9 @@ class Api::V1::AuthController < ApplicationController
           httponly: false
         }
       end
-      
+
       Rails.logger.info "🍪 Cookie設定完了"
-      
+
       # 成功レスポンス返却
       render json: {
         message: "ログインに成功しました",
