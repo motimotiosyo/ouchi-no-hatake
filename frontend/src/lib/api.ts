@@ -17,6 +17,7 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
       ...defaultHeaders,
       ...options.headers,
     },
+    credentials: 'include',
   })
 }
 
@@ -35,6 +36,7 @@ export const authenticatedApiCall = async (endpoint: string, token: string, opti
       ...defaultHeaders,
       ...options.headers,
     },
+    credentials: 'include',
   })
 }
 
