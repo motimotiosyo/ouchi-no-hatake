@@ -48,7 +48,14 @@ export async function middleware(request: NextRequest) {
   // 保護されたルートに未認証でアクセス
   if (isProtectedRoute && !isAuthenticated) {
     console.log(`🔒 認証ガード: ${pathname} → /login (未認証)`)
-    return NextResponse.redirect(new URL('/login', request.url))
+    const redirectResponse = NextResponse.redirect(new URL('/login', request.url))
+    
+    // デバッグ情報をレスポンスヘッダーに追加
+    redirectResponse.headers.set('X-Debug-Token', token ? 'present' : 'missing')
+    redirectResponse.headers.set('X-Debug-Cookies-Count', request.cookies.getAll().length.toString())
+    redirectResponse.headers.set('X-Debug-Reason', 'unauthorized')
+    
+    return redirectResponse
   }
 
   // 認証済みユーザーが認証ページにアクセス
@@ -64,8 +71,13 @@ export async function middleware(request: NextRequest) {
   }
 
   console.log('➡️ 通常処理続行')
-  // その他のページは通常通り処理
-  return NextResponse.next()
+  
+  // デバッグ情報を含む通常レスポンス
+  const response = NextResponse.next()
+  response.headers.set('X-Debug-Token', token ? 'present' : 'missing')
+  response.headers.set('X-Debug-Cookies-Count', request.cookies.getAll().length.toString())
+  
+  return response
 }
 
 // 適用するパスを指定
