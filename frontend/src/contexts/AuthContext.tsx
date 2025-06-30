@@ -1,154 +1,96 @@
-'use client'
+class Api::V1::AuthController < ApplicationController
+  include ActionController::Cookies
+  skip_before_action :authenticate_request, only: [ :register, :login, :verify ]
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { authenticatedApiCall } from '@/lib/api'
+  # POST /api/v1/auth/register
+  def register
+    user = User.create!(user_params)
+    token = JsonWebToken.encode(user_id: user.id)
 
-// ユーザー情報の型定義
-interface User {
-  id: number
-  email: string
-  name: string
-}
+    render json: {
+      message: "ユーザー登録が完了しました",
+      token: token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name
+      }
+    }, status: :created
+  end
 
-// 認証コンテキストの型定義
-interface AuthContextType {
-  user: User | null
-  token: string | null
-  isAuthenticated: boolean
-  isLoading: boolean
-  login: (token: string, user: User) => void
-  logout: () => void
-}
+  # POST /api/v1/auth/login
+  def login
+    # アドレスでユーザー検索
+    user = User.find_by(email: params[:email]&.downcase)
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined)
-
-// Cookie操作のヘルパー関数
-const setCookie = (name: string, value: string, days: number = 7) => {
-  const expires = new Date()
-  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000)
-  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/;secure=true;samesite=none`
-}
-
-const getCookie = (name: string): string | null => {
-  const nameEQ = name + "="
-  const ca = document.cookie.split(';')
-  for (let i = 0; i < ca.length; i++) {
-    let c = ca[i]
-    while (c.charAt(0) === ' ') c = c.substring(1, c.length)
-    if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length)
-  }
-  return null
-}
-
-const deleteCookie = (name: string) => {
-  document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
-}
-
-// AuthProvider コンポーネント
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [token, setToken] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-
-  // ページ読み込み時にlocalStorageからトークンを復元
-  useEffect(() => {
-    const initializeAuth = () => {
-      // まずCookieから確認（ミドルウェアと同じソース）
-      const cookieToken = getCookie('auth_token')
-      const savedToken = localStorage.getItem('auth_token')
-      const savedUser = localStorage.getItem('auth_user')
-
-      console.log('認証初期化:', { 
-        cookieToken: !!cookieToken, 
-        savedToken: !!savedToken, 
-        savedUser: !!savedUser 
-      })
-
-      // CookieまたはlocalStorageにトークンがある場合
-      const finalToken = cookieToken || savedToken
-      
-      if (finalToken && savedUser) {
-        try {
-          const parsedUser = JSON.parse(savedUser)
-          
-          console.log('認証情報復元成功:', parsedUser.name)
-          
-          setToken(finalToken)
-          setUser(parsedUser)
-          
-          // localStorage と Cookie の同期
-          if (finalToken !== savedToken) {
-            localStorage.setItem('auth_token', finalToken)
-          }
-          if (!cookieToken) {
-            setCookie('auth_token', finalToken)
-          }
-        } catch (error) {
-          console.log('認証情報パースエラー:', error)
-          // パース失敗時はクリア
-          localStorage.removeItem('auth_token')
-          localStorage.removeItem('auth_user')
-          deleteCookie('auth_token')
+    # パスワード検証
+    if user&.authenticate(params[:password])
+      # 認証成功時にJWTトークン発行
+      token = JsonWebToken.encode(user_id: user.id)
+      # サーバーサイドでCookieをセット
+      cookies[:auth_token] = {
+        value: token,
+        expires: 7.days.from_now,
+        path: "/",
+        same_site: :none,   # ← クロスオリジンの場合は :none
+        secure: true,       # ← https環境なら true、ローカルhttpなら false
+        httponly: false
+      }
+      # 成功レスポンス返却
+      render json: {
+        message: "ログインに成功しました",
+        token: token,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name
         }
-      } else if (cookieToken && !savedUser) {
-        // Cookieはあるが localStorage にユーザー情報がない場合
-        console.log('Cookie認証はあるがユーザー情報なし - 状態維持')
-        setToken(cookieToken)
-        localStorage.setItem('auth_token', cookieToken)
-      } else {
-        console.log('認証情報なし')
-      }
-      
-      setIsLoading(false)
-    }
+      }, status: :ok
+    else
+      # 失敗時に例外処理
+      raise ExceptionHandler::AuthenticationError, "メールアドレスまたはパスワードが正しくありません"
+    end
+  end
 
-    initializeAuth()
-  }, [])
+  # DELETE /api/v1/auth/logout
+  def logout
+    token = current_token
 
-  // ログイン関数
-  const login = (newToken: string, newUser: User) => {
-    console.log('ログイン実行:', newUser.name)
-    setToken(newToken)
-    setUser(newUser)
-    localStorage.setItem('auth_token', newToken)
-    localStorage.setItem('auth_user', JSON.stringify(newUser))
-    setCookie('auth_token', newToken, 7)
-  }
+    if token.blank?
+      render json: { error: "No token provided" }, status: :bad_request
+      return
+    end
 
-  // ログアウト関数
-  const logout = async () => {
-    try {
-      if (token) {
-        await authenticatedApiCall('/api/v1/auth/logout', token, { method: 'DELETE' });
-      }
-    } catch (error) {
-      console.error('Logout API error:', error)
-    } finally {
-      setToken(null)
-      setUser(null)
-      localStorage.removeItem('auth_token')
-      localStorage.removeItem('auth_user')
-      deleteCookie('auth_token')
-    }
-  }
+    # サーバーサイドでCookie削除
+    cookies.delete(:auth_token, {
+      path: "/",
+      same_site: :none,
+      secure: true
+    })
 
-  const value = {
-    user,
-    token,
-    isAuthenticated: !!user,  // userがあれば認証済み
-    isLoading,
-    login,
-    logout
-  }
+    if JsonWebToken.blacklist_token(token)
+      render json: { message: "ログアウトに成功しました" }, status: :ok
+    else
+      render json: { error: "ログアウトに失敗しました" }, status: :internal_server_error
+    end
+  rescue StandardError => e
+    Rails.logger.error "Logout error: #{e.message}"
+    render json: { error: "ログアウトに失敗しました" }, status: :internal_server_error
+  end
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
+  def verify
+    # Cookieからトークンを取得
+    token = cookies[:auth_token] || request.headers["Authorization"]&.split(" ")&.last
+    if token && JsonWebToken.valid_token?(token)
+      render json: { valid: true }
+    else
+      render json: { valid: false }, status: :unauthorized
+    end
+  end
 
-// useAuth カスタムフック
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
-}
+  private
+
+  def user_params
+    params.require(:user).permit(:email, :password, :password_confirmation, :name)
+  end
+end
