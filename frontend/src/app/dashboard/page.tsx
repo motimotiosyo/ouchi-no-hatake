@@ -4,12 +4,21 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 
 export default function DashboardPage() {
-  const { user, logout } = useAuth()
+  const { user, logout, isLoading } = useAuth()
   const router = useRouter()
 
   const handleLogout = async () => {
     await logout()
-    router.push('/login')
+    router.push('/login')  // ログアウト成功時の遷移
+  }
+
+  // ローディング中の表示
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-600">読み込み中...</div>
+      </div>
+    )
   }
 
   return (

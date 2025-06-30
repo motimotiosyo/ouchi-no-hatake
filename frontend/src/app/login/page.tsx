@@ -33,11 +33,12 @@ export default function LoginPage() {
 
       if (response.ok) {
         const result = await response.json()
-        console.log('ログイン成功:', result)
+        console.log('🔐 ログイン成功:', result)
 
         // useAuthのlogin関数を使ってJWT保存
         login(result.token, result.user)
-        // TODO: JWT保存とダッシュボードリダイレクト
+        
+        // ログイン成功時の遷移
         window.location.href = '/dashboard'
       } else {
         const error = await response.json()

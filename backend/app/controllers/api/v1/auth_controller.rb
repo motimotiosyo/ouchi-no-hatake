@@ -61,6 +61,17 @@ class Api::V1::AuthController < ApplicationController
       return
     end
 
+    # サーバーサイドでCookie削除（複数パターンで確実に削除）
+    cookies.delete(:auth_token, {
+      path: "/",
+      same_site: :none,
+      secure: true
+    })
+
+    # 念のため、属性なしでも削除
+    cookies.delete(:auth_token, { path: "/" })
+    cookies.delete(:auth_token)
+
     if JsonWebToken.blacklist_token(token)
       render json: { message: "ログアウトに成功しました" }, status: :ok
     else

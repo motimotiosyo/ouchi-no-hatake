@@ -45,7 +45,7 @@ services:
       - frontend/.env.development
     depends_on:
       - backend
-    command: npx next dev
+    command: npx next dev --turbopack
 
 volumes:
   db_data:  # ← 修正：volumes定義はここに

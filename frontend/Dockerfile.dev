@@ -2,11 +2,11 @@ FROM node:23
 
 WORKDIR /app
 
-# package.json と package-lock.json をコピー
-COPY package*.json ./
+# package.json をコピー
+COPY package.json ./
 
-# npm ci でクリーンインストール
-RUN npm ci
+# npm install でインストール（新しいpackage-lock.jsonを生成）
+RUN npm install
 
 # PATH に node_modules/.bin を追加
 ENV PATH="/app/node_modules/.bin:$PATH"

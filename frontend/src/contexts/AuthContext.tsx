@@ -26,7 +26,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 const setCookie = (name: string, value: string, days: number = 7) => {
   const expires = new Date()
   expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000)
-  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`
+  const cookieString = `${name}=${value}; expires=${expires.toUTCString()}; path=/; secure=true; samesite=none`
+  document.cookie = cookieString
 }
 
 const getCookie = (name: string): string | null => {
@@ -40,8 +41,26 @@ const getCookie = (name: string): string | null => {
   return null
 }
 
+// 重要：Rails側と同じ属性でCookie削除
 const deleteCookie = (name: string) => {
-  document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`
+  console.log('Cookie削除試行:', name)
+  
+  // パターン1: Rails側と完全に同じ属性
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; secure=true; samesite=none`
+  
+  // パターン2: ドメイン指定なし
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`
+  
+  // パターン3: ルートパスなし
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT`
+  
+  // パターン4: max-age使用
+  document.cookie = `${name}=; max-age=0; path=/; secure=true; samesite=none`
+  
+  // パターン5: max-age使用（属性なし）
+  document.cookie = `${name}=; max-age=0; path=/`
+  
+  console.log('Cookie削除後の状態:', document.cookie)
 }
 
 // AuthProvider コンポーネント
@@ -52,42 +71,73 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ページ読み込み時にlocalStorageからトークンを復元
   useEffect(() => {
-    const savedToken = localStorage.getItem('auth_token')
-    const savedUser = localStorage.getItem('auth_user')
+    const initializeAuth = () => {
+      // まずCookieから確認（ミドルウェアと同じソース）
+      const cookieToken = getCookie('auth_token')
+      const savedToken = localStorage.getItem('auth_token')
+      const savedUser = localStorage.getItem('auth_user')
 
-    if (savedToken && savedUser) {
-      try {
-        setToken(savedToken)
-        setUser(JSON.parse(savedUser))
+      console.log('認証初期化:', { 
+        cookieToken: !!cookieToken, 
+        savedToken: !!savedToken, 
+        savedUser: !!savedUser 
+      })
 
-        // localStorage/Cookie同期
-        if (!localStorage.getItem('auth_token')) {
-          localStorage.setItem('auth_token', savedToken)
+      // CookieまたはlocalStorageにトークンがある場合
+      const finalToken = cookieToken || savedToken
+      
+      if (finalToken && savedUser) {
+        try {
+          const parsedUser = JSON.parse(savedUser)
+          
+          console.log('認証情報復元成功:', parsedUser.name)
+          
+          setToken(finalToken)
+          setUser(parsedUser)
+          
+          // localStorage と Cookie の同期
+          if (finalToken !== savedToken) {
+            localStorage.setItem('auth_token', finalToken)
+          }
+          if (!cookieToken) {
+            setCookie('auth_token', finalToken)
+          }
+        } catch (error) {
+          console.log('認証情報パースエラー:', error)
+          // パース失敗時はクリア
+          localStorage.removeItem('auth_token')
+          localStorage.removeItem('auth_user')
+          deleteCookie('auth_token')
         }
-        if (!getCookie('auth_token')) {
-          setCookie('auth_token', savedToken)
-        }
-      } catch {
-        // パース失敗時はクリア
-        localStorage.removeItem('auth_token')
-        localStorage.removeItem('auth_user')
+      } else if (cookieToken && !savedUser) {
+        // Cookieはあるが localStorage にユーザー情報がない場合
+        console.log('Cookie認証はあるがユーザー情報なし - 状態維持')
+        setToken(cookieToken)
+        localStorage.setItem('auth_token', cookieToken)
+      } else {
+        console.log('認証情報なし')
       }
+      
+      setIsLoading(false)
     }
-    setIsLoading(false)
+
+    initializeAuth()
   }, [])
 
   // ログイン関数
   const login = (newToken: string, newUser: User) => {
+    console.log('ログイン実行:', newUser.name)
     setToken(newToken)
     setUser(newUser)
     localStorage.setItem('auth_token', newToken)
     localStorage.setItem('auth_user', JSON.stringify(newUser))
     setCookie('auth_token', newToken, 7)
-    console.log('Cookie after setCookie:', document.cookie)
   }
 
   // ログアウト関数
   const logout = async () => {
+    console.log('ログアウト開始 - Cookie削除前:', document.cookie)
+    
     try {
       if (token) {
         await authenticatedApiCall('/api/v1/auth/logout', token, { method: 'DELETE' });
@@ -100,13 +150,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('auth_token')
       localStorage.removeItem('auth_user')
       deleteCookie('auth_token')
+      
+      console.log('ログアウト完了 - Cookie削除後:', document.cookie)
     }
   }
 
   const value = {
     user,
     token,
-    isAuthenticated: !!user,
+    isAuthenticated: !!user,  // userがあれば認証済み
     isLoading,
     login,
     logout

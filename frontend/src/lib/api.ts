@@ -6,20 +6,10 @@ export const API_BASE_URL = process.env.NODE_ENV === 'production'
 // API呼び出し用のヘルパー関数
 export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
   const url = `${API_BASE_URL}${endpoint}`
-  
+
   const defaultHeaders = {
     'Content-Type': 'application/json',
   }
-
-  // ここでリクエスト内容をログ出力
-  console.log('APIリクエスト送信:', url, {
-    ...options,
-    headers: {
-      ...defaultHeaders,
-      ...options.headers,
-    },
-    credentials: 'include',
-  })
 
   return fetch(url, {
     ...options,

@@ -6,10 +6,12 @@ import { registerSchema, type RegisterFormData } from '@/lib/validation'
 import { apiCall } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [apiError, setApiError] = useState<string | null>(null)
+  const router = useRouter()
 
   const { login } = useAuth()
 
@@ -33,12 +35,13 @@ export default function SignupPage() {
 
       if (response.ok) {
         const result = await response.json()
-        console.log('新規登録成功:', result)
+        console.log('📝 新規登録成功:', result)
 
         // useAuthのlogin関数を使ってJWT保存
         login(result.token, result.user)
-        // TODO: JWT保存とダッシュボードリダイレクト
-        window.location.href = '/dashboard'
+        
+        // Next.jsのrouterを使用してダッシュボードにリダイレクト
+        router.push('/dashboard')
       } else {
         const error = await response.json()
         setApiError(error.message || '新規登録に失敗しました')
