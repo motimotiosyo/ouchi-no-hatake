@@ -20,47 +20,22 @@ class Api::V1::AuthController < ApplicationController
 
   # POST /api/v1/auth/login
   def login
-    Rails.logger.info "🚀 ログイン処理開始"
-
     # アドレスでユーザー検索
     user = User.find_by(email: params[:email]&.downcase)
-    Rails.logger.info "👤 ユーザー検索結果: #{user&.email || 'なし'}"
 
     # パスワード検証
     if user&.authenticate(params[:password])
-      Rails.logger.info "✅ 認証成功"
-
       # 認証成功時にJWTトークン発行
       token = JsonWebToken.encode(user_id: user.id)
-
-      # デバッグログ追加
-      Rails.logger.info "🍪 Cookie設定開始: #{Rails.env}"
-
-      if Rails.env.production?
-        cookie_options = {
-          value: token,
-          expires: 7.days.from_now,
-          path: "/",
-          same_site: :none,
-          secure: true,
-          httponly: false
-        }
-        Rails.logger.info "🍪 プロダクション Cookie設定: #{cookie_options}"
-        cookies[:auth_token] = cookie_options
-      else
-        # 開発環境用の設定
-        cookies[:auth_token] = {
-          value: token,
-          expires: 7.days.from_now,
-          path: "/",
-          same_site: :lax,
-          secure: false,
-          httponly: false
-        }
-      end
-
-      Rails.logger.info "🍪 Cookie設定完了"
-
+      # サーバーサイドでCookieをセット
+      cookies[:auth_token] = {
+        value: token,
+        expires: 7.days.from_now,
+        path: "/",
+        same_site: :none,   # ← クロスオリジンの場合は :none
+        secure: true,       # ← https環境なら true、ローカルhttpなら false
+        httponly: false
+      }
       # 成功レスポンス返却
       render json: {
         message: "ログインに成功しました",
@@ -72,7 +47,6 @@ class Api::V1::AuthController < ApplicationController
         }
       }, status: :ok
     else
-      Rails.logger.info "❌ 認証失敗"
       # 失敗時に例外処理
       raise ExceptionHandler::AuthenticationError, "メールアドレスまたはパスワードが正しくありません"
     end
@@ -86,6 +60,17 @@ class Api::V1::AuthController < ApplicationController
       render json: { error: "No token provided" }, status: :bad_request
       return
     end
+
+    # サーバーサイドでCookie削除（複数パターンで確実に削除）
+    cookies.delete(:auth_token, {
+      path: "/",
+      same_site: :none,
+      secure: true
+    })
+    
+    # 念のため、属性なしでも削除
+    cookies.delete(:auth_token, { path: "/" })
+    cookies.delete(:auth_token)
 
     if JsonWebToken.blacklist_token(token)
       render json: { message: "ログアウトに成功しました" }, status: :ok

@@ -43,12 +43,24 @@ const getCookie = (name: string): string | null => {
 
 // 重要：Rails側と同じ属性でCookie削除
 const deleteCookie = (name: string) => {
-  // Rails側と同じ属性を指定
-  const deleteString1 = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; secure=true; samesite=none`
-  document.cookie = deleteString1
-  // 念のため、属性なしでも削除を試行
-  const deleteString2 = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`
-  document.cookie = deleteString2
+  console.log('Cookie削除試行:', name)
+  
+  // パターン1: Rails側と完全に同じ属性
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; secure=true; samesite=none`
+  
+  // パターン2: ドメイン指定なし
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`
+  
+  // パターン3: ルートパスなし
+  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT`
+  
+  // パターン4: max-age使用
+  document.cookie = `${name}=; max-age=0; path=/; secure=true; samesite=none`
+  
+  // パターン5: max-age使用（属性なし）
+  document.cookie = `${name}=; max-age=0; path=/`
+  
+  console.log('Cookie削除後の状態:', document.cookie)
 }
 
 // AuthProvider コンポーネント
