@@ -67,7 +67,7 @@ class Api::V1::AuthController < ApplicationController
       same_site: :none,
       secure: true
     })
-    
+
     # 念のため、属性なしでも削除
     cookies.delete(:auth_token, { path: "/" })
     cookies.delete(:auth_token)
