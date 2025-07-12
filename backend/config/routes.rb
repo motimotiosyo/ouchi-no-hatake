@@ -6,6 +6,9 @@ Rails.application.routes.draw do
       post "auth/login", to: "auth#login"
       get "auth/verify", to: "auth#verify"
       delete "auth/logout", to: "auth#logout"
+      
+      # タイムライン関連API
+      resources :posts, only: [:index]
     end
 
     get "health_check", to: "health_check#index"

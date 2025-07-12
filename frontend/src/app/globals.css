@@ -25,6 +25,11 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* アプリ全体で使用する薄緑背景のユーティリティクラス */
+.bg-app {
+  background: #89FD8B33;
+}
+
 /* 認証フォーム用の統一スタイル */
 .auth-container {
   min-height: 100vh;
