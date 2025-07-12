@@ -1,8 +1,7 @@
 import './globals.css'
 
-import PublicHeader from '@/components/layout/PublicHeader'
-import PublicFooter from '@/components/layout/PublicFooter'
 import { AuthProvider } from '@/contexts/AuthContext'
+import LayoutWrapper from '@/components/layout/LayoutWrapper'
 
 export const metadata = {
   title: 'ベジファミリー',
@@ -13,11 +12,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="ja">
       <body className="min-h-screen flex flex-col">
         <AuthProvider>
-          <PublicHeader />
-          <main className="flex-1 container mx-auto p-6">
+          <LayoutWrapper>
             {children}
-          </main>
-          <PublicFooter />
+          </LayoutWrapper>
         </AuthProvider>
       </body>
     </html>

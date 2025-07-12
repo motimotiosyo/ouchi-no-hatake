@@ -14,9 +14,5 @@ export default function DashboardPage() {
     )
   }
 
-  return (
-    <div className="min-h-screen">
-      <Timeline />
-    </div>
-  )
+  return <Timeline />
 }
