@@ -73,7 +73,7 @@ class Api::V1::AuthController < ApplicationController
     cookies.delete(:auth_token)
 
     blacklist_result = JsonWebToken.blacklist_token(token)
-    
+
     # ブラックリスト処理が成功した場合、または期限切れトークンの場合は成功
     if blacklist_result
       render json: { message: "ログアウトに成功しました" }, status: :ok
