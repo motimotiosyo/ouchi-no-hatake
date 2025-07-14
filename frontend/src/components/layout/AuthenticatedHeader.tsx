@@ -4,11 +4,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import HamburgerMenu from './HamburgerMenu'
 
-interface AuthenticatedHeaderProps {
-  onLogout: () => void
-}
-
-export default function AuthenticatedHeader({ onLogout }: AuthenticatedHeaderProps) {
+export default function AuthenticatedHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   
   

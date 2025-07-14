@@ -29,13 +29,6 @@ interface TimelinePostProps {
 export default function TimelinePost({ post }: TimelinePostProps) {
   const { isAuthenticated } = useAuth()
   const [showLoginModal, setShowLoginModal] = useState(false)
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('ja-JP', {
-      month: 'short',
-      day: 'numeric'
-    })
-  }
 
   const handleInteractionClick = () => {
     if (!isAuthenticated) {

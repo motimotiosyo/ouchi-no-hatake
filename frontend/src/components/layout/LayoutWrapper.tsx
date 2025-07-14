@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { useRouter } from 'next/navigation'
 import PublicHeader from './PublicHeader'
 import PublicFooter from './PublicFooter'
 import AuthenticatedHeader from './AuthenticatedHeader'
@@ -13,8 +12,7 @@ interface LayoutWrapperProps {
 }
 
 export default function LayoutWrapper({ children }: LayoutWrapperProps) {
-  const { user, logout, isLoading, isAuthenticated } = useAuth()
-  const router = useRouter()
+  const { user, isLoading, isAuthenticated } = useAuth()
   
   console.log('LayoutWrapper - user:', user, 'isLoading:', isLoading, 'isAuthenticated:', isAuthenticated)
   
@@ -32,10 +30,6 @@ export default function LayoutWrapper({ children }: LayoutWrapperProps) {
     return () => clearTimeout(timer)
   }, [isLoading])
 
-  const handleLogout = async () => {
-    await logout()
-    router.push('/login')
-  }
 
   if (isLoading && !forceShowLayout) {
     console.log('LayoutWrapper - Still loading, showing loading screen')
@@ -51,7 +45,7 @@ export default function LayoutWrapper({ children }: LayoutWrapperProps) {
     console.log('Rendering AuthenticatedLayout')
     return (
       <>
-        <AuthenticatedHeader onLogout={handleLogout} />
+        <AuthenticatedHeader />
         <main className="flex-1">
           {children}
         </main>
