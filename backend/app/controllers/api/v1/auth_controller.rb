@@ -1,6 +1,6 @@
 class Api::V1::AuthController < ApplicationController
   include ActionController::Cookies
-  skip_before_action :authenticate_request, only: [ :register, :login, :verify ]
+  skip_before_action :authenticate_request, only: [ :register, :login, :verify, :logout ]
 
   # POST /api/v1/auth/register
   def register
@@ -72,10 +72,15 @@ class Api::V1::AuthController < ApplicationController
     cookies.delete(:auth_token, { path: "/" })
     cookies.delete(:auth_token)
 
-    if JsonWebToken.blacklist_token(token)
+    blacklist_result = JsonWebToken.blacklist_token(token)
+
+    # ブラックリスト処理が成功した場合、または期限切れトークンの場合は成功
+    if blacklist_result
       render json: { message: "ログアウトに成功しました" }, status: :ok
     else
-      render json: { error: "ログアウトに失敗しました" }, status: :internal_server_error
+      # 期限切れトークンの場合もログアウト成功として扱う
+      Rails.logger.info "Token already expired or invalid, treating as successful logout"
+      render json: { message: "ログアウトに成功しました" }, status: :ok
     end
   rescue StandardError => e
     Rails.logger.error "Logout error: #{e.message}"

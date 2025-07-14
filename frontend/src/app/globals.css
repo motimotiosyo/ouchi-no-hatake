@@ -25,6 +25,11 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* アプリ全体で使用する薄緑背景のユーティリティクラス */
+.bg-app {
+  background: #89FD8B33;
+}
+
 /* 認証フォーム用の統一スタイル */
 .auth-container {
   min-height: 100vh;
@@ -132,4 +137,20 @@ body {
 .auth-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* フラッシュメッセージのアニメーション */
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.3s ease-out;
 }

@@ -1,25 +1,18 @@
-import Link from "next/link"
+'use client'
 
-export default function Home() {
-  return (
-    <section>
-      <h1 className="text-2xl font-bold text-center">
-        あなたにピッタリの野菜を見つけてみよう！
-      </h1>
-      <Link href="/diagnosis">
-        <div className="bg-white rounded-lg p-4 shadow-lg p-6 max-w-md mx-auto text-center">
-          <h2 className="text-xl font-bold">🔍家庭菜園チェッカー🔰</h2>
-          <p className="mt-2">
-            まずは簡単な質問に答えて、
-          </p>
-          <p className="mt-2">
-            おすすめの野菜を見つけてみましょう🌱
-          </p>
-          <p className="mt-2">
-            ピッタリな野菜が見つかるかも！？
-          </p>
-        </div>
-      </Link>
-    </section>
-  )
+import { useAuth } from '@/contexts/AuthContext'
+import Timeline from '@/components/timeline/Timeline'
+
+export default function HomePage() {
+  const { isLoading } = useAuth()
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-gray-600">読み込み中...</div>
+      </div>
+    )
+  }
+
+  return <Timeline />
 }

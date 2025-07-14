@@ -1,0 +1,152 @@
+'use client'
+
+import { useState, useEffect, useCallback, useRef } from 'react'
+import TimelinePost from './TimelinePost'
+import { API_BASE_URL } from '@/lib/api'
+
+interface Post {
+  id: number
+  title: string
+  content: string
+  created_at: string
+  user: {
+    id: number
+    name: string
+  }
+  growth_record: {
+    id: number
+    record_name: string
+    plant: {
+      id: number
+      name: string
+    }
+  }
+  category: {
+    id: number
+    name: string
+  }
+}
+
+interface PaginationInfo {
+  current_page: number
+  per_page: number
+  total_count: number
+  has_more: boolean
+}
+
+export default function Timeline() {
+  const [posts, setPosts] = useState<Post[]>([])
+  const [loading, setLoading] = useState(true)
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [pagination, setPagination] = useState<PaginationInfo | null>(null)
+  const observer = useRef<IntersectionObserver | null>(null)
+
+  const fetchPosts = async (page: number = 1, append: boolean = false) => {
+    try {
+      if (page === 1) {
+        setLoading(true)
+      } else {
+        setLoadingMore(true)
+      }
+      
+      // 認証なしでもアクセス可能にするため、直接fetchを使用
+      const response = await fetch(`${API_BASE_URL}/api/v1/posts?page=${page}&per_page=10`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('API Error Response:', response.status, errorText)
+        throw new Error(`Failed to fetch posts: ${response.status} ${errorText}`)
+      }
+      
+      const data = await response.json()
+      
+      if (data.posts && data.pagination) {
+        if (append) {
+          setPosts(prev => [...prev, ...data.posts])
+        } else {
+          setPosts(data.posts)
+        }
+        setPagination(data.pagination)
+      }
+    } catch (err) {
+      setError('投稿を読み込めませんでした')
+      console.error('Error fetching posts:', err)
+      console.error('Full error details:', err)
+    } finally {
+      setLoading(false)
+      setLoadingMore(false)
+    }
+  }
+
+  const lastPostElementRef = useCallback((node: HTMLDivElement | null) => {
+    if (loading || loadingMore) return
+    if (observer.current) observer.current.disconnect()
+    
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && pagination?.has_more) {
+        fetchPosts(pagination.current_page + 1, true)
+      }
+    })
+    
+    if (node) observer.current.observe(node)
+  }, [loading, loadingMore, pagination])
+
+  useEffect(() => {
+    fetchPosts()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <div className="text-gray-600">読み込み中...</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center py-8">
+        <div className="text-red-600">{error}</div>
+      </div>
+    )
+  }
+
+  if (!loading && posts.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <div className="text-gray-500">投稿がありません</div>
+      </div>
+    )
+  }
+
+  return (
+    <div>
+      {posts.map((post, index) => (
+        <div
+          key={post.id}
+          ref={index === posts.length - 1 ? lastPostElementRef : undefined}
+        >
+          <TimelinePost post={post} />
+        </div>
+      ))}
+      
+      {loadingMore && (
+        <div className="flex justify-center items-center py-4">
+          <div className="text-gray-600">さらに読み込み中...</div>
+        </div>
+      )}
+      
+      {pagination && !pagination.has_more && posts.length > 0 && (
+        <div className="text-center py-8">
+          <div className="text-gray-500">すべての投稿を表示しました</div>
+        </div>
+      )}
+    </div>
+  )
+}

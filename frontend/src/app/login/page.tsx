@@ -38,8 +38,8 @@ export default function LoginPage() {
         // useAuthのlogin関数を使ってJWT保存
         login(result.token, result.user)
         
-        // ログイン成功時の遷移
-        window.location.href = '/dashboard'
+        // ログイン成功時の遷移（フラッシュメッセージ付き）
+        window.location.href = '/?flash_message=' + encodeURIComponent('ログインしました') + '&flash_type=success'
       } else {
         const error = await response.json()
         setApiError(error.message || 'ログインに失敗しました')
