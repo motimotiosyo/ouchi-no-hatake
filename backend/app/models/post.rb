@@ -8,10 +8,10 @@ class Post < ApplicationRecord
   validates :destination_type, presence: true
 
   enum destination_type: {
-    public: 0,
-    friends: 1,
-    private: 2
+    public_post: 0,
+    friends_only: 1,
+    private_post: 2
   }
 
-  scope :timeline, -> { where(destination_type: :public).includes(:user, :category, growth_record: :plant).order(created_at: :desc) }
+  scope :timeline, -> { where(destination_type: :public_post).includes(:user, :category, growth_record: :plant).order(created_at: :desc) }
 end
