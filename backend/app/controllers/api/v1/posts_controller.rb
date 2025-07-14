@@ -1,5 +1,5 @@
 class Api::V1::PostsController < ApplicationController
-  skip_before_action :authenticate_user!, only: [:index]
+  skip_before_action :authenticate_request, only: [:index]
   def index
     begin
       page = params[:page]&.to_i || 1

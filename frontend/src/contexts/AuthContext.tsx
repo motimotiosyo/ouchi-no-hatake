@@ -18,6 +18,7 @@ interface AuthContextType {
   isLoading: boolean
   login: (token: string, user: User) => void
   logout: () => void
+  setToken: (token: string | null) => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -71,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ページ読み込み時にlocalStorageからトークンを復元
   useEffect(() => {
+    console.log('AuthContext useEffect triggered')
     const initializeAuth = () => {
       // まずCookieから確認（ミドルウェアと同じソース）
       const cookieToken = getCookie('auth_token')
@@ -118,10 +120,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('認証情報なし')
       }
       
+      console.log('認証初期化完了 - isLoadingをfalseに設定')
       setIsLoading(false)
     }
 
     initializeAuth()
+    
+    // フォールバック: 一定時間後に強制的にローディングを終了
+    const fallbackTimeout = setTimeout(() => {
+      console.log('Fallback: 強制的にisLoadingをfalseに設定')
+      setIsLoading(false)
+    }, 3000) // 3秒後
+    
+    return () => clearTimeout(fallbackTimeout)
   }, [])
 
   // ログイン関数
@@ -161,7 +172,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: !!user,  // userがあれば認証済み
     isLoading,
     login,
-    logout
+    logout,
+    setToken
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

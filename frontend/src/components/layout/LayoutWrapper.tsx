@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
 import PublicHeader from './PublicHeader'
@@ -12,15 +13,32 @@ interface LayoutWrapperProps {
 }
 
 export default function LayoutWrapper({ children }: LayoutWrapperProps) {
-  const { user, logout, isLoading } = useAuth()
+  const { user, logout, isLoading, isAuthenticated } = useAuth()
   const router = useRouter()
+  
+  console.log('LayoutWrapper - user:', user, 'isLoading:', isLoading, 'isAuthenticated:', isAuthenticated)
+  
+  // フォールバック: 3秒以上ローディングが続く場合は強制的に判定
+  const [forceShowLayout, setForceShowLayout] = useState(false)
+  
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isLoading) {
+        console.log('LayoutWrapper - 強制的にレイアウト表示')
+        setForceShowLayout(true)
+      }
+    }, 3000)
+    
+    return () => clearTimeout(timer)
+  }, [isLoading])
 
   const handleLogout = async () => {
     await logout()
     router.push('/login')
   }
 
-  if (isLoading) {
+  if (isLoading && !forceShowLayout) {
+    console.log('LayoutWrapper - Still loading, showing loading screen')
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-gray-600">読み込み中...</div>
@@ -30,6 +48,7 @@ export default function LayoutWrapper({ children }: LayoutWrapperProps) {
 
   if (user) {
     // ログイン後のレイアウト
+    console.log('Rendering AuthenticatedLayout')
     return (
       <>
         <AuthenticatedHeader onLogout={handleLogout} />
@@ -42,6 +61,7 @@ export default function LayoutWrapper({ children }: LayoutWrapperProps) {
   }
 
   // ログイン前のレイアウト
+  console.log('Rendering PublicLayout')
   return (
     <>
       <PublicHeader />
