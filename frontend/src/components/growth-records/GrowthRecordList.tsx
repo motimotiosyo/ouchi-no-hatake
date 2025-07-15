@@ -40,7 +40,7 @@ export default function GrowthRecordList() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const observer = useRef<IntersectionObserver | null>(null)
 
-  const fetchGrowthRecords = async (page: number = 1, append: boolean = false) => {
+  const fetchGrowthRecords = useCallback(async (page: number = 1, append: boolean = false) => {
     try {
       if (page === 1) {
         setLoading(true)
@@ -79,7 +79,7 @@ export default function GrowthRecordList() {
       setLoading(false)
       setLoadingMore(false)
     }
-  }
+  }, [token])
 
   const lastRecordElementRef = useCallback((node: HTMLDivElement | null) => {
     if (loading || loadingMore) return
@@ -92,13 +92,13 @@ export default function GrowthRecordList() {
     })
     
     if (node) observer.current.observe(node)
-  }, [loading, loadingMore, pagination])
+  }, [loading, loadingMore, pagination, fetchGrowthRecords])
 
   useEffect(() => {
     if (token) {
       fetchGrowthRecords()
     }
-  }, [token])
+  }, [token, fetchGrowthRecords])
 
   const handleCreateSuccess = () => {
     // 成長記録作成成功時に一覧を再取得

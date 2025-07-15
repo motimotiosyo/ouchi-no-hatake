@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import CreateGrowthRecordModal from './CreateGrowthRecordModal'
@@ -49,11 +49,7 @@ export default function GrowthRecordDetail({ id }: Props) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
-  useEffect(() => {
-    fetchGrowthRecord()
-  }, [id, token])
-
-  const fetchGrowthRecord = async () => {
+  const fetchGrowthRecord = useCallback(async () => {
     try {
       setLoading(true)
       const response = await fetch(`${API_BASE_URL}/api/v1/growth_records/${id}`, {
@@ -82,7 +78,11 @@ export default function GrowthRecordDetail({ id }: Props) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [id, token])
+
+  useEffect(() => {
+    fetchGrowthRecord()
+  }, [fetchGrowthRecord])
 
   const handleEditSuccess = () => {
     // 編集成功時に詳細情報を再取得
