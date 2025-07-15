@@ -113,6 +113,7 @@ class Api::V1::GrowthRecordsController < ApplicationController
       @growth_record.record_number = next_record_number
 
       if @growth_record.save
+        
         render json: {
           growth_record: {
             id: @growth_record.id,

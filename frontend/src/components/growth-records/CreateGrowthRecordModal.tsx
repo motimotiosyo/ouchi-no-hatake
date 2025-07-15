@@ -1,0 +1,276 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useAuth } from '@/contexts/AuthContext'
+import { API_BASE_URL } from '@/lib/api'
+
+interface Plant {
+  id: number
+  name: string
+  description: string
+}
+
+interface Props {
+  isOpen: boolean
+  onClose: () => void
+  onSuccess: () => void
+}
+
+export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess }: Props) {
+  const { token } = useAuth()
+  const [plants, setPlants] = useState<Plant[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  // フォーム状態
+  const [formData, setFormData] = useState({
+    plant_id: '',
+    record_name: '',
+    location: '',
+    started_on: '',
+    status: 'planning' as const
+  })
+
+  // 植物一覧取得
+  useEffect(() => {
+    if (isOpen) {
+      fetchPlants()
+    }
+  }, [isOpen])
+
+  const fetchPlants = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/plants`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error('植物一覧の取得に失敗しました')
+      }
+
+      const data = await response.json()
+      setPlants(data.plants)
+    } catch (err) {
+      console.error('Error fetching plants:', err)
+      setError('植物一覧の取得に失敗しました')
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError(null)
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/growth_records`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          growth_record: formData
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || '成長記録の作成に失敗しました')
+      }
+
+      // 成功時
+      onSuccess()
+      onClose()
+      
+      // フォームリセット
+      setFormData({
+        plant_id: '',
+        record_name: '',
+        location: '',
+        started_on: '',
+        status: 'planning'
+      })
+    } catch (err) {
+      console.error('Error creating growth record:', err)
+      setError(err instanceof Error ? err.message : '成長記録の作成に失敗しました')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
+  const handleClose = () => {
+    onClose()
+    setError(null)
+    setFormData({
+      plant_id: '',
+      record_name: '',
+      location: '',
+      started_on: '',
+      status: 'planning'
+    })
+  }
+
+  if (!isOpen) return null
+
+  return (
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        backdropFilter: 'brightness(0.7)'
+      }}
+      onClick={handleClose}
+    >
+      <div 
+        className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold text-gray-900">成長記録を登録</h2>
+            <button
+              onClick={handleClose}
+              className="text-gray-400 hover:text-gray-600 text-2xl"
+            >
+              ×
+            </button>
+          </div>
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-md">
+              <p className="text-red-700 text-sm">{error}</p>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* 品種選択 */}
+            <div>
+              <label htmlFor="plant_id" className="block text-sm font-medium text-gray-700 mb-2">
+                品種
+              </label>
+              <select
+                id="plant_id"
+                name="plant_id"
+                value={formData.plant_id}
+                onChange={handleInputChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              >
+                <option value="">選択してください</option>
+                {plants.map(plant => (
+                  <option key={plant.id} value={plant.id}>
+                    {plant.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* 記録名 */}
+            <div>
+              <label htmlFor="record_name" className="block text-sm font-medium text-gray-700 mb-2">
+                記録名
+              </label>
+              <input
+                type="text"
+                id="record_name"
+                name="record_name"
+                value={formData.record_name}
+                onChange={handleInputChange}
+                required
+                placeholder="例: 春のミニトマト栽培"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              />
+            </div>
+
+            {/* 栽培場所 */}
+            <div>
+              <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
+                栽培場所
+              </label>
+              <select
+                id="location"
+                name="location"
+                value={formData.location}
+                onChange={handleInputChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              >
+                <option value="">選択してください</option>
+                <option value="室内">室内</option>
+                <option value="ベランダ">ベランダ</option>
+                <option value="庭">庭</option>
+                <option value="畑">畑</option>
+                <option value="その他">その他</option>
+              </select>
+            </div>
+
+            {/* 栽培開始日 */}
+            <div>
+              <label htmlFor="started_on" className="block text-sm font-medium text-gray-700 mb-2">
+                栽培開始日
+              </label>
+              <input
+                type="date"
+                id="started_on"
+                name="started_on"
+                value={formData.started_on}
+                onChange={handleInputChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              />
+            </div>
+
+            {/* ステータス */}
+            <div>
+              <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
+                ステータス
+              </label>
+              <select
+                id="status"
+                name="status"
+                value={formData.status}
+                onChange={handleInputChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              >
+                <option value="planning">計画中</option>
+                <option value="growing">育成中</option>
+                <option value="completed">収穫済み</option>
+                <option value="failed">失敗</option>
+              </select>
+            </div>
+
+            {/* ボタン */}
+            <div className="flex justify-end space-x-3 pt-4">
+              <button
+                type="button"
+                onClick={handleClose}
+                className="px-4 py-2 text-gray-600 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+              >
+                キャンセル
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              >
+                {loading ? '登録中...' : '登録する'}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  )
+}
