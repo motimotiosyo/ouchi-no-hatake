@@ -154,7 +154,7 @@ export default function GrowthRecordList() {
               key={record.id}
               ref={index === growthRecords.length - 1 ? lastRecordElementRef : undefined}
             >
-              <GrowthRecordCard record={record} />
+              <GrowthRecordCard record={record} onUpdate={() => fetchGrowthRecords()} />
             </div>
           ))}
         </>

@@ -2,6 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import CreateGrowthRecordModal from './CreateGrowthRecordModal'
+import DeleteConfirmDialog from './DeleteConfirmDialog'
 
 interface GrowthRecord {
   id: number
@@ -22,10 +24,13 @@ interface GrowthRecord {
 
 interface Props {
   record: GrowthRecord
+  onUpdate: () => void
 }
 
-export default function GrowthRecordCard({ record }: Props) {
+export default function GrowthRecordCard({ record, onUpdate }: Props) {
   const [showMenu, setShowMenu] = useState(false)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
   const getStatusText = (status: string | null) => {
     if (!status) return '計画中'
@@ -95,13 +100,27 @@ export default function GrowthRecordCard({ record }: Props) {
               </button>
               {showMenu && (
                 <div className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
-                  <button className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-gray-50">
+                  <Link href={`/growth-records/${record.id}`} className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-gray-50 block">
                     詳細
-                  </button>
-                  <button className="w-full px-4 py-2 text-left text-sm text-orange-600 hover:bg-gray-50">
+                  </Link>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault()
+                      setShowMenu(false)
+                      setIsEditModalOpen(true)
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm text-orange-600 hover:bg-gray-50"
+                  >
                     編集
                   </button>
-                  <button className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50">
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault()
+                      setShowMenu(false)
+                      setIsDeleteDialogOpen(true)
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50"
+                  >
                     削除
                   </button>
                 </div>
@@ -146,19 +165,59 @@ export default function GrowthRecordCard({ record }: Props) {
               {record.ended_on ? formatDate(record.ended_on) : '---.--.-'}
             </div>
             <div className="flex items-center justify-end space-x-2">
-              <button className="px-3 py-1 text-sm text-blue-600 bg-blue-50 rounded hover:bg-blue-100 transition-colors">
+              <Link href={`/growth-records/${record.id}`} className="px-3 py-1 text-sm text-blue-600 bg-blue-50 rounded hover:bg-blue-100 transition-colors">
                 詳細
-              </button>
-              <button className="px-3 py-1 text-sm text-orange-600 bg-orange-50 rounded hover:bg-orange-100 transition-colors">
+              </Link>
+              <button
+                onClick={(e) => {
+                  e.preventDefault()
+                  setIsEditModalOpen(true)
+                }}
+                className="px-3 py-1 text-sm text-orange-600 bg-orange-50 rounded hover:bg-orange-100 transition-colors"
+              >
                 編集
               </button>
-              <button className="px-3 py-1 text-sm text-red-600 bg-red-50 rounded hover:bg-red-100 transition-colors">
+              <button
+                onClick={(e) => {
+                  e.preventDefault()
+                  setIsDeleteDialogOpen(true)
+                }}
+                className="px-3 py-1 text-sm text-red-600 bg-red-50 rounded hover:bg-red-100 transition-colors"
+              >
                 削除
               </button>
             </div>
           </div>
         </Link>
       </div>
+
+      {/* 編集モーダル */}
+      <CreateGrowthRecordModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSuccess={onUpdate}
+        editData={{
+          id: record.id,
+          plant_id: record.plant.id,
+          record_name: record.record_name,
+          location: record.location,
+          started_on: record.started_on,
+          ended_on: record.ended_on,
+          status: record.status
+        }}
+      />
+
+      {/* 削除確認ダイアログ */}
+      <DeleteConfirmDialog
+        isOpen={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+        onSuccess={onUpdate}
+        growthRecord={{
+          id: record.id,
+          plant_name: record.plant.name,
+          record_name: record.record_name
+        }}
+      />
     </div>
   )
 }

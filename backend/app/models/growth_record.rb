@@ -2,7 +2,6 @@ class GrowthRecord < ApplicationRecord
   belongs_to :user
   belongs_to :plant
   has_many :posts, dependent: :destroy
-  has_many :growth_record_steps, dependent: :destroy
 
   validates :record_number, presence: true
   validates :started_on, presence: true, unless: :planning?

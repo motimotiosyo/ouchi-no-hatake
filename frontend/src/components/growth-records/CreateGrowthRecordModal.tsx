@@ -10,13 +10,24 @@ interface Plant {
   description: string
 }
 
+interface GrowthRecord {
+  id: number
+  plant_id: number
+  record_name: string
+  location: string
+  started_on: string
+  ended_on?: string
+  status: 'planning' | 'growing' | 'completed' | 'failed'
+}
+
 interface Props {
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
+  editData?: GrowthRecord
 }
 
-export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess }: Props) {
+export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, editData }: Props) {
   const { token } = useAuth()
   const [plants, setPlants] = useState<Plant[]>([])
   const [loading, setLoading] = useState(false)
@@ -32,12 +43,24 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess }: 
     status: 'planning' as const
   })
 
-  // 植物一覧取得
+  // 植物一覧取得と編集データ設定
   useEffect(() => {
     if (isOpen) {
       fetchPlants()
+      
+      // 編集モードの場合、初期値を設定
+      if (editData) {
+        setFormData({
+          plant_id: editData.plant_id.toString(),
+          record_name: editData.record_name || '',
+          location: editData.location || '',
+          started_on: editData.started_on || '',
+          ended_on: editData.ended_on || '',
+          status: editData.status || 'planning'
+        })
+      }
     }
-  }, [isOpen])
+  }, [isOpen, editData])
 
   const fetchPlants = async () => {
     try {
@@ -66,8 +89,15 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess }: 
     setError(null)
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/growth_records`, {
-        method: 'POST',
+      const isEditMode = !!editData
+      const url = isEditMode 
+        ? `${API_BASE_URL}/api/v1/growth_records/${editData.id}`
+        : `${API_BASE_URL}/api/v1/growth_records`
+      
+      const method = isEditMode ? 'PUT' : 'POST'
+
+      const response = await fetch(url, {
+        method: method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -79,7 +109,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess }: 
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || '成長記録の作成に失敗しました')
+        throw new Error(errorData.error || `成長記録の${isEditMode ? '更新' : '作成'}に失敗しました`)
       }
 
       // 成功時
@@ -96,8 +126,8 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess }: 
         status: 'planning'
       })
     } catch (err) {
-      console.error('Error creating growth record:', err)
-      setError(err instanceof Error ? err.message : '成長記録の作成に失敗しました')
+      console.error(`Error ${editData ? 'updating' : 'creating'} growth record:`, err)
+      setError(err instanceof Error ? err.message : `成長記録の${editData ? '更新' : '作成'}に失敗しました`)
     } finally {
       setLoading(false)
     }
@@ -141,7 +171,9 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess }: 
       >
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold text-gray-900">成長記録を登録</h2>
+            <h2 className="text-xl font-bold text-gray-900">
+              {editData ? '成長記録を編集' : '成長記録を登録'}
+            </h2>
             <button
               onClick={handleClose}
               className="text-gray-400 hover:text-gray-600 text-2xl"
@@ -285,7 +317,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess }: 
                 disabled={loading}
                 className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
-                {loading ? '登録中...' : '登録する'}
+                {loading ? (editData ? '更新中...' : '登録中...') : (editData ? '更新する' : '登録する')}
               </button>
             </div>
           </form>
