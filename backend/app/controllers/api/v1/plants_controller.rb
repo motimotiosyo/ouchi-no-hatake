@@ -1,10 +1,10 @@
 class Api::V1::PlantsController < ApplicationController
-  skip_before_action :authenticate_request, only: [:index]
+  skip_before_action :authenticate_request, only: [ :index ]
 
   def index
     begin
       plants = Plant.all.order(:name)
-      
+
       plants_data = plants.map do |plant|
         {
           id: plant.id,

@@ -1,6 +1,6 @@
 class Api::V1::GrowthRecordsController < ApplicationController
   before_action :authenticate_request
-  before_action :set_growth_record, only: [:show, :update, :destroy]
+  before_action :set_growth_record, only: [ :show, :update, :destroy ]
 
   def index
     begin
@@ -104,7 +104,7 @@ class Api::V1::GrowthRecordsController < ApplicationController
   def create
     begin
       plant = Plant.find(growth_record_params[:plant_id])
-      
+
       # record_numberを自動生成
       last_record = current_user.growth_records.where(plant: plant).order(:record_number).last
       next_record_number = last_record ? last_record.record_number + 1 : 1
@@ -113,7 +113,7 @@ class Api::V1::GrowthRecordsController < ApplicationController
       @growth_record.record_number = next_record_number
 
       if @growth_record.save
-        
+
         render json: {
           growth_record: {
             id: @growth_record.id,
