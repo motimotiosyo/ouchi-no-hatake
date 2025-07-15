@@ -9,6 +9,12 @@ Rails.application.routes.draw do
 
       # タイムライン関連API
       resources :posts, only: [ :index ]
+
+      # 成長記録関連API
+      resources :growth_records, only: [ :index, :show, :create, :update, :destroy ]
+
+      # 植物関連API
+      resources :plants, only: [ :index ]
     end
 
     get "health_check", to: "health_check#index"
