@@ -40,7 +40,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
     location: '',
     started_on: '',
     ended_on: '',
-    status: 'planning' as const
+    status: 'planning' as 'planning' | 'growing' | 'completed' | 'failed'
   })
 
   // 植物一覧取得と編集データ設定
