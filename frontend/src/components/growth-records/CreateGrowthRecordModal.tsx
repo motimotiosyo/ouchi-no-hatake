@@ -28,6 +28,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess }: 
     record_name: '',
     location: '',
     started_on: '',
+    ended_on: '',
     status: 'planning' as const
   })
 
@@ -91,6 +92,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess }: 
         record_name: '',
         location: '',
         started_on: '',
+        ended_on: '',
         status: 'planning'
       })
     } catch (err) {
@@ -117,6 +119,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess }: 
       record_name: '',
       location: '',
       started_on: '',
+      ended_on: '',
       status: 'planning'
     })
   }
@@ -154,6 +157,26 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess }: 
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* ステータス */}
+            <div>
+              <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
+                ステータス
+              </label>
+              <select
+                id="status"
+                name="status"
+                value={formData.status}
+                onChange={handleInputChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              >
+                <option value="planning">計画中</option>
+                <option value="growing">育成中</option>
+                <option value="completed">収穫済み</option>
+                <option value="failed">失敗</option>
+              </select>
+            </div>
+
             {/* 品種選択 */}
             <div>
               <label htmlFor="plant_id" className="block text-sm font-medium text-gray-700 mb-2">
@@ -187,7 +210,6 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess }: 
                 name="record_name"
                 value={formData.record_name}
                 onChange={handleInputChange}
-                required
                 placeholder="例: 春のミニトマト栽培"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
               />
@@ -226,30 +248,28 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess }: 
                 name="started_on"
                 value={formData.started_on}
                 onChange={handleInputChange}
-                required
+                required={formData.status !== 'planning'}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
               />
             </div>
 
-            {/* ステータス */}
-            <div>
-              <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
-                ステータス
-              </label>
-              <select
-                id="status"
-                name="status"
-                value={formData.status}
-                onChange={handleInputChange}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              >
-                <option value="planning">計画中</option>
-                <option value="growing">育成中</option>
-                <option value="completed">収穫済み</option>
-                <option value="failed">失敗</option>
-              </select>
-            </div>
+            {/* 栽培終了日 - 収穫済み・失敗の場合のみ表示 */}
+            {(formData.status === 'completed' || formData.status === 'failed') && (
+              <div>
+                <label htmlFor="ended_on" className="block text-sm font-medium text-gray-700 mb-2">
+                  栽培終了日
+                </label>
+                <input
+                  type="date"
+                  id="ended_on"
+                  name="ended_on"
+                  value={formData.ended_on}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                />
+              </div>
+            )}
 
             {/* ボタン */}
             <div className="flex justify-end space-x-3 pt-4">

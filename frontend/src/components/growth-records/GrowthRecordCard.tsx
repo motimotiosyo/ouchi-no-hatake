@@ -115,7 +115,7 @@ export default function GrowthRecordCard({ record }: Props) {
               </span>
             </div>
             <div>
-              {formatDate(record.started_on)} 〜 {record.ended_on ? formatDate(record.ended_on) : '---.--.-'}
+              {record.started_on ? formatDate(record.started_on) : '---.--.-'} 〜 {record.ended_on ? formatDate(record.ended_on) : '---.--.-'}
             </div>
           </div>
         </Link>
@@ -140,7 +140,7 @@ export default function GrowthRecordCard({ record }: Props) {
               {record.location}
             </div>
             <div className="flex items-center text-gray-600">
-              {formatDate(record.started_on)}
+              {record.started_on ? formatDate(record.started_on) : '---.--.-'}
             </div>
             <div className="flex items-center text-gray-600">
               {record.ended_on ? formatDate(record.ended_on) : '---.--.-'}
