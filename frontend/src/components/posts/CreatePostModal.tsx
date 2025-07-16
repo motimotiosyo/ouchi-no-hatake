@@ -22,9 +22,9 @@ interface PostData {
   id: number
   title: string
   content: string
-  growth_record_id: number
+  growth_record_id?: number
   category_id: number
-  destination_type: 'public_post' | 'friends_only' | 'private_post'
+  post_type: 'growth_record_post' | 'general_post'
 }
 
 interface Props {
@@ -54,7 +54,7 @@ export default function CreatePostModal({
     content: '',
     growth_record_id: preselectedGrowthRecordId?.toString() || '',
     category_id: '',
-    destination_type: 'public_post' as 'public_post' | 'friends_only' | 'private_post'
+    post_type: 'growth_record_post' as 'growth_record_post' | 'general_post'
   })
 
   // データ取得とフォーム初期化
@@ -68,15 +68,16 @@ export default function CreatePostModal({
         setFormData({
           title: editData.title,
           content: editData.content,
-          growth_record_id: editData.growth_record_id.toString(),
+          growth_record_id: editData.growth_record_id?.toString() || '',
           category_id: editData.category_id.toString(),
-          destination_type: editData.destination_type
+          post_type: editData.post_type
         })
       } else if (preselectedGrowthRecordId) {
         // 成長記録が事前選択されている場合
         setFormData(prev => ({
           ...prev,
-          growth_record_id: preselectedGrowthRecordId.toString()
+          growth_record_id: preselectedGrowthRecordId.toString(),
+          post_type: 'growth_record_post'
         }))
       }
     }
@@ -142,9 +143,9 @@ export default function CreatePostModal({
           post: {
             title: formData.title,
             content: formData.content,
-            growth_record_id: parseInt(formData.growth_record_id),
+            growth_record_id: formData.growth_record_id ? parseInt(formData.growth_record_id) : null,
             category_id: parseInt(formData.category_id),
-            destination_type: formData.destination_type
+            post_type: formData.post_type
           }
         })
       })
@@ -171,7 +172,7 @@ export default function CreatePostModal({
       content: '',
       growth_record_id: preselectedGrowthRecordId?.toString() || '',
       category_id: '',
-      destination_type: 'public_post'
+      post_type: 'growth_record_post'
     })
     setError(null)
     onClose()
@@ -179,10 +180,20 @@ export default function CreatePostModal({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }))
+    
+    // 投稿タイプが変更された場合、成長記録をリセット
+    if (name === 'post_type') {
+      setFormData(prev => ({
+        ...prev,
+        post_type: value as 'growth_record_post' | 'general_post',
+        growth_record_id: value === 'general_post' ? '' : prev.growth_record_id
+      }))
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }))
+    }
   }
 
   if (!isOpen) return null
@@ -213,28 +224,63 @@ export default function CreatePostModal({
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* 成長記録選択 */}
+            {/* 投稿タイプ選択 */}
             <div>
-              <label htmlFor="growth_record_id" className="block text-sm font-medium text-gray-700 mb-2">
-                成長記録 <span className="text-red-500">*</span>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                投稿タイプ <span className="text-red-500">*</span>
               </label>
-              <select
-                id="growth_record_id"
-                name="growth_record_id"
-                value={formData.growth_record_id}
-                onChange={handleInputChange}
-                required
-                disabled={!!preselectedGrowthRecordId}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100"
-              >
-                <option value="">成長記録を選択してください</option>
-                {growthRecords.map((record) => (
-                  <option key={record.id} value={record.id}>
-                    {record.plant.name} - {record.record_name}
-                  </option>
-                ))}
-              </select>
+              <div className="space-y-2">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="post_type"
+                    value="growth_record_post"
+                    checked={formData.post_type === 'growth_record_post'}
+                    onChange={handleInputChange}
+                    disabled={!!preselectedGrowthRecordId}
+                    className="mr-2"
+                  />
+                  <span className="text-sm">🌱 成長記録として投稿（成長記録 + タイムライン）</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="post_type"
+                    value="general_post"
+                    checked={formData.post_type === 'general_post'}
+                    onChange={handleInputChange}
+                    disabled={!!preselectedGrowthRecordId}
+                    className="mr-2"
+                  />
+                  <span className="text-sm">💬 雑談として投稿（タイムラインのみ）</span>
+                </label>
+              </div>
             </div>
+
+            {/* 成長記録選択（成長記録投稿の場合のみ表示） */}
+            {formData.post_type === 'growth_record_post' && (
+              <div>
+                <label htmlFor="growth_record_id" className="block text-sm font-medium text-gray-700 mb-2">
+                  成長記録 <span className="text-red-500">*</span>
+                </label>
+                <select
+                  id="growth_record_id"
+                  name="growth_record_id"
+                  value={formData.growth_record_id}
+                  onChange={handleInputChange}
+                  required
+                  disabled={!!preselectedGrowthRecordId}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100"
+                >
+                  <option value="">成長記録を選択してください</option>
+                  {growthRecords.map((record) => (
+                    <option key={record.id} value={record.id}>
+                      {record.plant.name} - {record.record_name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* カテゴリ選択 */}
             <div>
@@ -297,47 +343,6 @@ export default function CreatePostModal({
               </div>
             </div>
 
-            {/* 公開範囲 */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                公開範囲
-              </label>
-              <div className="space-y-2">
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="destination_type"
-                    value="public_post"
-                    checked={formData.destination_type === 'public_post'}
-                    onChange={handleInputChange}
-                    className="mr-2"
-                  />
-                  <span className="text-sm">公開（全ユーザーが閲覧可能）</span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="destination_type"
-                    value="friends_only"
-                    checked={formData.destination_type === 'friends_only'}
-                    onChange={handleInputChange}
-                    className="mr-2"
-                  />
-                  <span className="text-sm">フレンドのみ</span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="destination_type"
-                    value="private_post"
-                    checked={formData.destination_type === 'private_post'}
-                    onChange={handleInputChange}
-                    className="mr-2"
-                  />
-                  <span className="text-sm">非公開（自分のみ）</span>
-                </label>
-              </div>
-            </div>
 
             {/* ボタン */}
             <div className="flex justify-end space-x-3">

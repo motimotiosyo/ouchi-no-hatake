@@ -10,12 +10,13 @@ interface Post {
   id: number
   title: string
   content: string
+  post_type: 'growth_record_post' | 'general_post'
   created_at: string
   user: {
     id: number
     name: string
   }
-  growth_record: {
+  growth_record?: {
     id: number
     record_name: string
     plant: {
