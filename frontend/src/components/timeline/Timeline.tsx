@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import TimelinePost from './TimelinePost'
+import CreatePostModal from '../posts/CreatePostModal'
+import { useAuth } from '@/contexts/AuthContext'
 import { API_BASE_URL } from '@/lib/api'
 
 interface Post {
@@ -35,11 +37,13 @@ interface PaginationInfo {
 }
 
 export default function Timeline() {
+  const { user } = useAuth()
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pagination, setPagination] = useState<PaginationInfo | null>(null)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const observer = useRef<IntersectionObserver | null>(null)
 
   const fetchPosts = async (page: number = 1, append: boolean = false) => {
@@ -101,6 +105,11 @@ export default function Timeline() {
     fetchPosts()
   }, [])
 
+  const handleCreateSuccess = () => {
+    // 投稿作成成功時にタイムラインを再取得
+    fetchPosts()
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -126,27 +135,50 @@ export default function Timeline() {
   }
 
   return (
-    <div>
-      {posts.map((post, index) => (
-        <div
-          key={post.id}
-          ref={index === posts.length - 1 ? lastPostElementRef : undefined}
-        >
-          <TimelinePost post={post} />
-        </div>
-      ))}
-      
-      {loadingMore && (
-        <div className="flex justify-center items-center py-4">
-          <div className="text-gray-600">さらに読み込み中...</div>
+    <div className="space-y-4">
+      {/* 投稿作成ボタン（ログインユーザーのみ表示） */}
+      {user && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+          <button
+            onClick={() => setIsCreateModalOpen(true)}
+            className="w-full py-3 px-4 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition-colors flex items-center justify-center"
+          >
+            <span className="text-lg mr-2">✏️</span>
+            新しい投稿を作成
+          </button>
         </div>
       )}
-      
-      {pagination && !pagination.has_more && posts.length > 0 && (
-        <div className="text-center py-8">
-          <div className="text-gray-500">すべての投稿を表示しました</div>
-        </div>
-      )}
+
+      {/* 投稿一覧 */}
+      <div>
+        {posts.map((post, index) => (
+          <div
+            key={post.id}
+            ref={index === posts.length - 1 ? lastPostElementRef : undefined}
+          >
+            <TimelinePost post={post} />
+          </div>
+        ))}
+        
+        {loadingMore && (
+          <div className="flex justify-center items-center py-4">
+            <div className="text-gray-600">さらに読み込み中...</div>
+          </div>
+        )}
+        
+        {pagination && !pagination.has_more && posts.length > 0 && (
+          <div className="text-center py-8">
+            <div className="text-gray-500">すべての投稿を表示しました</div>
+          </div>
+        )}
+      </div>
+
+      {/* 投稿作成モーダル */}
+      <CreatePostModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={handleCreateSuccess}
+      />
     </div>
   )
 }

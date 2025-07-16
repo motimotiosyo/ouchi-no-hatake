@@ -9,32 +9,39 @@ class Api::V1::PostsController < ApplicationController
       offset = (page - 1) * per_page
 
       posts = Post.timeline.limit(per_page).offset(offset)
-      total_count = Post.where(destination_type: :public_post).count
+      total_count = Post.count
       has_more = (offset + per_page) < total_count
 
     posts_data = posts.map do |post|
-      {
+      post_data = {
         id: post.id,
         title: post.title,
         content: post.content,
+        post_type: post.post_type,
         created_at: post.created_at,
         user: {
           id: post.user.id,
           name: post.user.name
-        },
-        growth_record: {
-          id: post.growth_record.id,
-          record_name: post.growth_record.record_name,
-          plant: {
-            id: post.growth_record.plant.id,
-            name: post.growth_record.plant.name
-          }
         },
         category: {
           id: post.category.id,
           name: post.category.name
         }
       }
+      
+      # 成長記録がある場合のみ追加
+      if post.growth_record
+        post_data[:growth_record] = {
+          id: post.growth_record.id,
+          record_name: post.growth_record.record_name,
+          plant: {
+            id: post.growth_record.plant.id,
+            name: post.growth_record.plant.name
+          }
+        }
+      end
+      
+      post_data
     end
 
       render json: {
@@ -66,32 +73,36 @@ class Api::V1::PostsController < ApplicationController
       @post = current_user.posts.build(post_params)
       
       if @post.save
-        render json: {
-          post: {
-            id: @post.id,
-            title: @post.title,
-            content: @post.content,
-            destination_type: @post.destination_type,
-            created_at: @post.created_at,
-            updated_at: @post.updated_at,
-            user: {
-              id: @post.user.id,
-              name: @post.user.name
-            },
-            growth_record: {
-              id: @post.growth_record.id,
-              record_name: @post.growth_record.record_name,
-              plant: {
-                id: @post.growth_record.plant.id,
-                name: @post.growth_record.plant.name
-              }
-            },
-            category: {
-              id: @post.category.id,
-              name: @post.category.name
+        post_response = {
+          id: @post.id,
+          title: @post.title,
+          content: @post.content,
+          post_type: @post.post_type,
+          created_at: @post.created_at,
+          updated_at: @post.updated_at,
+          user: {
+            id: @post.user.id,
+            name: @post.user.name
+          },
+          category: {
+            id: @post.category.id,
+            name: @post.category.name
+          }
+        }
+        
+        # 成長記録がある場合のみ追加
+        if @post.growth_record
+          post_response[:growth_record] = {
+            id: @post.growth_record.id,
+            record_name: @post.growth_record.record_name,
+            plant: {
+              id: @post.growth_record.plant.id,
+              name: @post.growth_record.plant.name
             }
           }
-        }, status: :created
+        end
+        
+        render json: { post: post_response }, status: :created
       else
         render json: {
           error: "投稿の作成に失敗しました",
@@ -114,32 +125,36 @@ class Api::V1::PostsController < ApplicationController
   def update
     begin
       if @post.update(post_params)
-        render json: {
-          post: {
-            id: @post.id,
-            title: @post.title,
-            content: @post.content,
-            destination_type: @post.destination_type,
-            created_at: @post.created_at,
-            updated_at: @post.updated_at,
-            user: {
-              id: @post.user.id,
-              name: @post.user.name
-            },
-            growth_record: {
-              id: @post.growth_record.id,
-              record_name: @post.growth_record.record_name,
-              plant: {
-                id: @post.growth_record.plant.id,
-                name: @post.growth_record.plant.name
-              }
-            },
-            category: {
-              id: @post.category.id,
-              name: @post.category.name
-            }
+        post_response = {
+          id: @post.id,
+          title: @post.title,
+          content: @post.content,
+          post_type: @post.post_type,
+          created_at: @post.created_at,
+          updated_at: @post.updated_at,
+          user: {
+            id: @post.user.id,
+            name: @post.user.name
+          },
+          category: {
+            id: @post.category.id,
+            name: @post.category.name
           }
         }
+        
+        # 成長記録がある場合のみ追加
+        if @post.growth_record
+          post_response[:growth_record] = {
+            id: @post.growth_record.id,
+            record_name: @post.growth_record.record_name,
+            plant: {
+              id: @post.growth_record.plant.id,
+              name: @post.growth_record.plant.name
+            }
+          }
+        end
+        
+        render json: { post: post_response }
       else
         render json: {
           error: "投稿の更新に失敗しました",
@@ -183,6 +198,6 @@ class Api::V1::PostsController < ApplicationController
   end
 
   def post_params
-    params.require(:post).permit(:title, :content, :growth_record_id, :category_id, :destination_type)
+    params.require(:post).permit(:title, :content, :growth_record_id, :category_id, :post_type)
   end
 end
