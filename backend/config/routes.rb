@@ -16,8 +16,6 @@ Rails.application.routes.draw do
       # 植物関連API
       resources :plants, only: [ :index ]
 
-      # カテゴリ関連API
-      resources :categories, only: [ :index ]
     end
 
     get "health_check", to: "health_check#index"

@@ -13,10 +13,18 @@ interface GrowthRecord {
   }
 }
 
-interface Category {
-  id: number
-  name: string
-}
+// 固定カテゴリリスト
+const CATEGORIES = [
+  { id: 1, name: "栽培記録" },
+  { id: 2, name: "種まき" },
+  { id: 3, name: "水やり" },
+  { id: 4, name: "収穫" },
+  { id: 5, name: "雑談" },
+  { id: 6, name: "質問" },
+  { id: 7, name: "病気・害虫" },
+  { id: 8, name: "肥料" },
+  { id: 9, name: "その他" }
+]
 
 interface PostData {
   id: number
@@ -44,7 +52,6 @@ export default function CreatePostModal({
 }: Props) {
   const { token } = useAuth()
   const [growthRecords, setGrowthRecords] = useState<GrowthRecord[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -61,7 +68,6 @@ export default function CreatePostModal({
   useEffect(() => {
     if (isOpen) {
       fetchGrowthRecords()
-      fetchCategories()
       
       // 編集モードの場合、初期値を設定
       if (editData) {
@@ -102,23 +108,6 @@ export default function CreatePostModal({
     }
   }, [token])
 
-  const fetchCategories = useCallback(async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/categories`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setCategories(data.categories || [])
-      }
-    } catch (err) {
-      console.error('Error fetching categories:', err)
-    }
-  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -305,7 +294,7 @@ export default function CreatePostModal({
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 >
                   <option value="">カテゴリを選択してください</option>
-                  {categories.map((category) => (
+                  {CATEGORIES.map((category) => (
                     <option key={category.id} value={category.id}>
                       {category.name}
                     </option>
