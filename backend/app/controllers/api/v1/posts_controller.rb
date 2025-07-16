@@ -1,7 +1,7 @@
 class Api::V1::PostsController < ApplicationController
   skip_before_action :authenticate_request, only: [ :index ]
-  before_action :set_post, only: [:update, :destroy]
-  
+  before_action :set_post, only: [ :update, :destroy ]
+
   def index
     begin
       page = params[:page]&.to_i || 1
@@ -22,9 +22,9 @@ class Api::V1::PostsController < ApplicationController
         user: {
           id: post.user.id,
           name: post.user.name
-        },
+        }
       }
-      
+
       # カテゴリがある場合のみ追加
       if post.category
         post_data[:category] = {
@@ -32,7 +32,7 @@ class Api::V1::PostsController < ApplicationController
           name: post.category.name
         }
       end
-      
+
       # 成長記録がある場合のみ追加
       if post.growth_record
         post_data[:growth_record] = {
@@ -44,7 +44,7 @@ class Api::V1::PostsController < ApplicationController
           }
         }
       end
-      
+
       post_data
     end
 
@@ -75,7 +75,7 @@ class Api::V1::PostsController < ApplicationController
   def create
     begin
       @post = current_user.posts.build(post_params)
-      
+
       if @post.save
         post_response = {
           id: @post.id,
@@ -89,7 +89,7 @@ class Api::V1::PostsController < ApplicationController
             name: @post.user.name
           }
         }
-        
+
         # カテゴリがある場合のみ追加
         if @post.category
           post_response[:category] = {
@@ -97,7 +97,7 @@ class Api::V1::PostsController < ApplicationController
             name: @post.category.name
           }
         end
-        
+
         # 成長記録がある場合のみ追加
         if @post.growth_record
           post_response[:growth_record] = {
@@ -109,7 +109,7 @@ class Api::V1::PostsController < ApplicationController
             }
           }
         end
-        
+
         render json: { post: post_response }, status: :created
       else
         render json: {
@@ -145,7 +145,7 @@ class Api::V1::PostsController < ApplicationController
             name: @post.user.name
           }
         }
-        
+
         # カテゴリがある場合のみ追加
         if @post.category
           post_response[:category] = {
@@ -153,7 +153,7 @@ class Api::V1::PostsController < ApplicationController
             name: @post.category.name
           }
         end
-        
+
         # 成長記録がある場合のみ追加
         if @post.growth_record
           post_response[:growth_record] = {
@@ -165,7 +165,7 @@ class Api::V1::PostsController < ApplicationController
             }
           }
         end
-        
+
         render json: { post: post_response }
       else
         render json: {
