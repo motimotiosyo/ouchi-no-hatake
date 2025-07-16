@@ -67,7 +67,7 @@ class Api::V1::GrowthRecordsController < ApplicationController
           content: post.content,
           created_at: post.created_at
         }
-        
+
         # カテゴリがある場合のみ追加
         if post.category
           post_data[:category] = {
@@ -75,7 +75,7 @@ class Api::V1::GrowthRecordsController < ApplicationController
             name: post.category.name
           }
         end
-        
+
         post_data
       end
 

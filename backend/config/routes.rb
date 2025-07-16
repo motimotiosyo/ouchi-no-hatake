@@ -15,7 +15,6 @@ Rails.application.routes.draw do
 
       # 植物関連API
       resources :plants, only: [ :index ]
-
     end
 
     get "health_check", to: "health_check#index"
