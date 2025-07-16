@@ -1,6 +1,6 @@
 class Api::V1::PostsController < ApplicationController
   skip_before_action :authenticate_request, only: [ :index ]
-  before_action :set_post, only: [:show, :update, :destroy]
+  before_action :set_post, only: [:update, :destroy]
   
   def index
     begin
@@ -23,11 +23,15 @@ class Api::V1::PostsController < ApplicationController
           id: post.user.id,
           name: post.user.name
         },
-        category: {
+      }
+      
+      # カテゴリがある場合のみ追加
+      if post.category
+        post_data[:category] = {
           id: post.category.id,
           name: post.category.name
         }
-      }
+      end
       
       # 成長記録がある場合のみ追加
       if post.growth_record
@@ -83,12 +87,16 @@ class Api::V1::PostsController < ApplicationController
           user: {
             id: @post.user.id,
             name: @post.user.name
-          },
-          category: {
+          }
+        }
+        
+        # カテゴリがある場合のみ追加
+        if @post.category
+          post_response[:category] = {
             id: @post.category.id,
             name: @post.category.name
           }
-        }
+        end
         
         # 成長記録がある場合のみ追加
         if @post.growth_record
@@ -135,12 +143,16 @@ class Api::V1::PostsController < ApplicationController
           user: {
             id: @post.user.id,
             name: @post.user.name
-          },
-          category: {
+          }
+        }
+        
+        # カテゴリがある場合のみ追加
+        if @post.category
+          post_response[:category] = {
             id: @post.category.id,
             name: @post.category.name
           }
-        }
+        end
         
         # 成長記録がある場合のみ追加
         if @post.growth_record

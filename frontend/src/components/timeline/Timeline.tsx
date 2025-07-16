@@ -24,7 +24,7 @@ interface Post {
       name: string
     }
   }
-  category: {
+  category?: {
     id: number
     name: string
   }
@@ -137,19 +137,6 @@ export default function Timeline() {
 
   return (
     <div className="space-y-4">
-      {/* 投稿作成ボタン（ログインユーザーのみ表示） */}
-      {user && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-          <button
-            onClick={() => setIsCreateModalOpen(true)}
-            className="w-full py-3 px-4 bg-green-500 hover:bg-green-600 text-white font-semibold rounded-lg transition-colors flex items-center justify-center"
-          >
-            <span className="text-lg mr-2">✏️</span>
-            新しい投稿を作成
-          </button>
-        </div>
-      )}
-
       {/* 投稿一覧 */}
       <div>
         {posts.map((post, index) => (
@@ -173,6 +160,18 @@ export default function Timeline() {
           </div>
         )}
       </div>
+
+      {/* Floating Action Button（ログインユーザーのみ表示） */}
+      {user && (
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="fixed bottom-20 right-4 w-14 h-14 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center z-40"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+        </button>
+      )}
 
       {/* 投稿作成モーダル */}
       <CreatePostModal

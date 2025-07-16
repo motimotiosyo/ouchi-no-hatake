@@ -20,7 +20,7 @@ interface TimelinePostProps {
         name: string
       }
     }
-    category: {
+    category?: {
       id: number
       name: string
     }
@@ -73,9 +73,11 @@ export default function TimelinePost({ post }: TimelinePostProps) {
           }`}>
             {post.post_type === 'growth_record_post' ? '🌱 成長記録' : '💬 雑談'}
           </span>
-          <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
-            {post.category.name}
-          </span>
+          {post.post_type === 'growth_record_post' && post.category && (
+            <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
+              {post.category.name}
+            </span>
+          )}
         </div>
         
         {/* 成長記録がある場合の画像プレースホルダー */}
@@ -135,8 +137,15 @@ export default function TimelinePost({ post }: TimelinePostProps) {
 
       {/* ログインモーダル */}
       {showLoginModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 m-4 max-w-sm w-full">
+        <div 
+          className="fixed inset-0 flex items-center justify-center z-50"
+          style={{
+            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+            backdropFilter: 'brightness(0.7)'
+          }}
+          onClick={() => setShowLoginModal(false)}
+        >
+          <div className="bg-white rounded-lg p-6 m-4 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-lg font-semibold mb-4 text-center">ログインが必要です</h2>
             <p className="text-gray-600 mb-6 text-center">
               投稿へのいいね、コメント、シェアを行うにはログインが必要です。

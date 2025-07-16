@@ -144,7 +144,7 @@ export default function CreatePostModal({
             title: formData.title,
             content: formData.content,
             growth_record_id: formData.growth_record_id ? parseInt(formData.growth_record_id) : null,
-            category_id: parseInt(formData.category_id),
+            category_id: formData.post_type === 'growth_record_post' ? parseInt(formData.category_id) : null,
             post_type: formData.post_type
           }
         })
@@ -181,12 +181,13 @@ export default function CreatePostModal({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
     
-    // 投稿タイプが変更された場合、成長記録をリセット
+    // 投稿タイプが変更された場合、成長記録とカテゴリをリセット
     if (name === 'post_type') {
       setFormData(prev => ({
         ...prev,
         post_type: value as 'growth_record_post' | 'general_post',
-        growth_record_id: value === 'general_post' ? '' : prev.growth_record_id
+        growth_record_id: value === 'general_post' ? '' : prev.growth_record_id,
+        category_id: value === 'general_post' ? '' : prev.category_id
       }))
     } else {
       setFormData(prev => ({
@@ -199,7 +200,14 @@ export default function CreatePostModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 p-4">
+    <div 
+      className="fixed inset-0 flex items-center justify-center z-50 p-4"
+      style={{
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+        backdropFilter: 'brightness(0.7)'
+      }}
+      onClick={handleClose}
+    >
       <div 
         className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
@@ -282,27 +290,29 @@ export default function CreatePostModal({
               </div>
             )}
 
-            {/* カテゴリ選択 */}
-            <div>
-              <label htmlFor="category_id" className="block text-sm font-medium text-gray-700 mb-2">
-                カテゴリ <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="category_id"
-                name="category_id"
-                value={formData.category_id}
-                onChange={handleInputChange}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              >
-                <option value="">カテゴリを選択してください</option>
-                {categories.map((category) => (
-                  <option key={category.id} value={category.id}>
-                    {category.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* カテゴリ選択（成長記録投稿の場合のみ表示） */}
+            {formData.post_type === 'growth_record_post' && (
+              <div>
+                <label htmlFor="category_id" className="block text-sm font-medium text-gray-700 mb-2">
+                  カテゴリ <span className="text-red-500">*</span>
+                </label>
+                <select
+                  id="category_id"
+                  name="category_id"
+                  value={formData.category_id}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                >
+                  <option value="">カテゴリを選択してください</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             {/* タイトル */}
             <div>

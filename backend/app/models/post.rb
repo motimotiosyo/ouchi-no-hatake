@@ -1,7 +1,7 @@
 class Post < ApplicationRecord
   belongs_to :user
   belongs_to :growth_record, optional: true
-  belongs_to :category
+  belongs_to :category, optional: true
 
   validates :title, presence: true
   validates :content, presence: true
