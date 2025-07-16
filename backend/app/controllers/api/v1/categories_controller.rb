@@ -1,10 +1,10 @@
 class Api::V1::CategoriesController < ApplicationController
-  skip_before_action :authenticate_request, only: [:index]
+  skip_before_action :authenticate_request, only: [ :index ]
 
   def index
     begin
       categories = Category.all.order(:name)
-      
+
       categories_data = categories.map do |category|
         {
           id: category.id,
