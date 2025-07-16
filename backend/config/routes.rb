@@ -8,13 +8,16 @@ Rails.application.routes.draw do
       delete "auth/logout", to: "auth#logout"
 
       # タイムライン関連API
-      resources :posts, only: [ :index ]
+      resources :posts, only: [ :index, :create, :update, :destroy ]
 
       # 成長記録関連API
       resources :growth_records, only: [ :index, :show, :create, :update, :destroy ]
 
       # 植物関連API
       resources :plants, only: [ :index ]
+
+      # カテゴリ関連API
+      resources :categories, only: [ :index ]
     end
 
     get "health_check", to: "health_check#index"

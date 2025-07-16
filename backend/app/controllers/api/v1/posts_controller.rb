@@ -1,5 +1,7 @@
 class Api::V1::PostsController < ApplicationController
   skip_before_action :authenticate_request, only: [ :index ]
+  before_action :set_post, only: [:show, :update, :destroy]
+  
   def index
     begin
       page = params[:page]&.to_i || 1
@@ -57,5 +59,130 @@ class Api::V1::PostsController < ApplicationController
         }
       }
     end
+  end
+
+  def create
+    begin
+      @post = current_user.posts.build(post_params)
+      
+      if @post.save
+        render json: {
+          post: {
+            id: @post.id,
+            title: @post.title,
+            content: @post.content,
+            destination_type: @post.destination_type,
+            created_at: @post.created_at,
+            updated_at: @post.updated_at,
+            user: {
+              id: @post.user.id,
+              name: @post.user.name
+            },
+            growth_record: {
+              id: @post.growth_record.id,
+              record_name: @post.growth_record.record_name,
+              plant: {
+                id: @post.growth_record.plant.id,
+                name: @post.growth_record.plant.name
+              }
+            },
+            category: {
+              id: @post.category.id,
+              name: @post.category.name
+            }
+          }
+        }, status: :created
+      else
+        render json: {
+          error: "投稿の作成に失敗しました",
+          details: @post.errors.full_messages
+        }, status: :unprocessable_entity
+      end
+    rescue ActiveRecord::RecordNotFound => e
+      render json: {
+        error: "指定された成長記録またはカテゴリが見つかりません"
+      }, status: :not_found
+    rescue => e
+      Rails.logger.error "Error in PostsController#create: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+      render json: {
+        error: "投稿の作成に失敗しました"
+      }, status: :internal_server_error
+    end
+  end
+
+  def update
+    begin
+      if @post.update(post_params)
+        render json: {
+          post: {
+            id: @post.id,
+            title: @post.title,
+            content: @post.content,
+            destination_type: @post.destination_type,
+            created_at: @post.created_at,
+            updated_at: @post.updated_at,
+            user: {
+              id: @post.user.id,
+              name: @post.user.name
+            },
+            growth_record: {
+              id: @post.growth_record.id,
+              record_name: @post.growth_record.record_name,
+              plant: {
+                id: @post.growth_record.plant.id,
+                name: @post.growth_record.plant.name
+              }
+            },
+            category: {
+              id: @post.category.id,
+              name: @post.category.name
+            }
+          }
+        }
+      else
+        render json: {
+          error: "投稿の更新に失敗しました",
+          details: @post.errors.full_messages
+        }, status: :unprocessable_entity
+      end
+    rescue ActiveRecord::RecordNotFound => e
+      render json: {
+        error: "指定された成長記録またはカテゴリが見つかりません"
+      }, status: :not_found
+    rescue => e
+      Rails.logger.error "Error in PostsController#update: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+      render json: {
+        error: "投稿の更新に失敗しました"
+      }, status: :internal_server_error
+    end
+  end
+
+  def destroy
+    begin
+      @post.destroy
+      render json: { message: "投稿を削除しました" }
+    rescue => e
+      Rails.logger.error "Error in PostsController#destroy: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+      render json: {
+        error: "投稿の削除に失敗しました"
+      }, status: :internal_server_error
+    end
+  end
+
+  private
+
+  def set_post
+    @post = current_user.posts.find(params[:id])
+  rescue ActiveRecord::RecordNotFound
+    render json: {
+      error: "投稿が見つかりません"
+    }, status: :not_found
+  end
+
+  def post_params
+    params.require(:post).permit(:title, :content, :growth_record_id, :category_id, :destination_type)
   end
 end
