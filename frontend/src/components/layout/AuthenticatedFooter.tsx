@@ -21,14 +21,6 @@ export default function AuthenticatedFooter() {
             <span className="text-xs">ベジログ</span>
           </Link>
           
-          {/* 新規投稿 */}
-          <Link href="/post/new" className="flex flex-col items-center space-y-1">
-            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z" clipRule="evenodd" />
-            </svg>
-            <span className="text-xs">新規投稿</span>
-          </Link>
-          
           {/* 育て方指南 */}
           <Link href="/guides" className="flex flex-col items-center space-y-1">
             <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">

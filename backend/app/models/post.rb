@@ -1,17 +1,18 @@
 class Post < ApplicationRecord
   belongs_to :user
-  belongs_to :growth_record
-  belongs_to :category
+  belongs_to :growth_record, optional: true
+  belongs_to :category, optional: true
 
   validates :title, presence: true
   validates :content, presence: true
-  validates :destination_type, presence: true
+  validates :post_type, presence: true
 
-  enum destination_type: {
-    public_post: 0,
-    friends_only: 1,
-    private_post: 2
+  enum post_type: {
+    growth_record_post: 0,
+    general_post: 1
   }
 
-  scope :timeline, -> { where(destination_type: :public_post).includes(:user, :category, growth_record: :plant).order(created_at: :desc) }
+  scope :timeline, -> { includes(:user, :category, growth_record: [ :plant ]).order(created_at: :desc) }
+  scope :growth_record_posts, -> { where(post_type: :growth_record_post) }
+  scope :general_posts, -> { where(post_type: :general_post) }
 end

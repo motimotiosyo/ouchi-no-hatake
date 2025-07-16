@@ -8,7 +8,7 @@ Rails.application.routes.draw do
       delete "auth/logout", to: "auth#logout"
 
       # タイムライン関連API
-      resources :posts, only: [ :index ]
+      resources :posts, only: [ :index, :create, :update, :destroy ]
 
       # 成長記録関連API
       resources :growth_records, only: [ :index, :show, :create, :update, :destroy ]

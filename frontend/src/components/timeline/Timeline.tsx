@@ -2,18 +2,21 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import TimelinePost from './TimelinePost'
+import CreatePostModal from '../posts/CreatePostModal'
+import { useAuth } from '@/contexts/AuthContext'
 import { API_BASE_URL } from '@/lib/api'
 
 interface Post {
   id: number
   title: string
   content: string
+  post_type: 'growth_record_post' | 'general_post'
   created_at: string
   user: {
     id: number
     name: string
   }
-  growth_record: {
+  growth_record?: {
     id: number
     record_name: string
     plant: {
@@ -21,7 +24,7 @@ interface Post {
       name: string
     }
   }
-  category: {
+  category?: {
     id: number
     name: string
   }
@@ -35,11 +38,13 @@ interface PaginationInfo {
 }
 
 export default function Timeline() {
+  const { user } = useAuth()
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [pagination, setPagination] = useState<PaginationInfo | null>(null)
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const observer = useRef<IntersectionObserver | null>(null)
 
   const fetchPosts = async (page: number = 1, append: boolean = false) => {
@@ -101,6 +106,11 @@ export default function Timeline() {
     fetchPosts()
   }, [])
 
+  const handleCreateSuccess = () => {
+    // 投稿作成成功時にタイムラインを再取得
+    fetchPosts()
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -126,27 +136,49 @@ export default function Timeline() {
   }
 
   return (
-    <div>
-      {posts.map((post, index) => (
-        <div
-          key={post.id}
-          ref={index === posts.length - 1 ? lastPostElementRef : undefined}
+    <div className="space-y-4">
+      {/* 投稿一覧 */}
+      <div>
+        {posts.map((post, index) => (
+          <div
+            key={post.id}
+            ref={index === posts.length - 1 ? lastPostElementRef : undefined}
+          >
+            <TimelinePost post={post} />
+          </div>
+        ))}
+        
+        {loadingMore && (
+          <div className="flex justify-center items-center py-4">
+            <div className="text-gray-600">さらに読み込み中...</div>
+          </div>
+        )}
+        
+        {pagination && !pagination.has_more && posts.length > 0 && (
+          <div className="text-center py-8">
+            <div className="text-gray-500">すべての投稿を表示しました</div>
+          </div>
+        )}
+      </div>
+
+      {/* Floating Action Button（ログインユーザーのみ表示） */}
+      {user && (
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="fixed bottom-20 right-4 w-14 h-14 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center z-40"
         >
-          <TimelinePost post={post} />
-        </div>
-      ))}
-      
-      {loadingMore && (
-        <div className="flex justify-center items-center py-4">
-          <div className="text-gray-600">さらに読み込み中...</div>
-        </div>
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+        </button>
       )}
-      
-      {pagination && !pagination.has_more && posts.length > 0 && (
-        <div className="text-center py-8">
-          <div className="text-gray-500">すべての投稿を表示しました</div>
-        </div>
-      )}
+
+      {/* 投稿作成モーダル */}
+      <CreatePostModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={handleCreateSuccess}
+      />
     </div>
   )
 }

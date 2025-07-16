@@ -61,16 +61,22 @@ class Api::V1::GrowthRecordsController < ApplicationController
         .order(created_at: :desc)
 
       posts_data = posts.map do |post|
-        {
+        post_data = {
           id: post.id,
           title: post.title,
           content: post.content,
-          created_at: post.created_at,
-          category: {
+          created_at: post.created_at
+        }
+
+        # カテゴリがある場合のみ追加
+        if post.category
+          post_data[:category] = {
             id: post.category.id,
             name: post.category.name
           }
-        }
+        end
+
+        post_data
       end
 
       render json: {

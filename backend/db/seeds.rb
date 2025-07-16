@@ -63,3 +63,22 @@ plants_data.each do |plant_data|
 end
 
 puts "植物データの登録が完了しました。"
+
+# カテゴリデータ
+categories_data = [
+  { name: "栽培記録" },
+  { name: "種まき" },
+  { name: "水やり" },
+  { name: "収穫" },
+  { name: "雑談" },
+  { name: "質問" },
+  { name: "病気・害虫" },
+  { name: "肥料" },
+  { name: "その他" }
+]
+
+categories_data.each do |category_data|
+  Category.find_or_create_by!(name: category_data[:name])
+end
+
+puts "カテゴリデータの登録が完了しました。"

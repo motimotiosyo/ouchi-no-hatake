@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import CreateGrowthRecordModal from './CreateGrowthRecordModal'
 import DeleteConfirmDialog from './DeleteConfirmDialog'
+import CreatePostModal from '../posts/CreatePostModal'
 import { API_BASE_URL } from '@/lib/api'
 
 interface GrowthRecord {
@@ -48,6 +49,7 @@ export default function GrowthRecordDetail({ id }: Props) {
   const [error, setError] = useState<string | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false)
 
   const fetchGrowthRecord = useCallback(async () => {
     try {
@@ -92,6 +94,11 @@ export default function GrowthRecordDetail({ id }: Props) {
   const handleDeleteSuccess = () => {
     // 削除成功時に一覧ページに戻る
     router.push('/growth-records')
+  }
+
+  const handleCreatePostSuccess = () => {
+    // 投稿作成成功時に詳細情報を再取得
+    fetchGrowthRecord()
   }
 
   const getStatusText = (status: string | null) => {
@@ -246,9 +253,17 @@ export default function GrowthRecordDetail({ id }: Props) {
 
       {/* 関連投稿 */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          関連投稿 ({posts.length}件)
-        </h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">
+            関連投稿 ({posts.length}件)
+          </h2>
+          <button
+            onClick={() => setIsCreatePostModalOpen(true)}
+            className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-md transition-colors"
+          >
+            ＋ 投稿を作成
+          </button>
+        </div>
         
         {posts.length === 0 ? (
           <div className="text-center py-8">
@@ -305,6 +320,14 @@ export default function GrowthRecordDetail({ id }: Props) {
           }}
         />
       )}
+
+      {/* 投稿作成モーダル */}
+      <CreatePostModal
+        isOpen={isCreatePostModalOpen}
+        onClose={() => setIsCreatePostModalOpen(false)}
+        onSuccess={handleCreatePostSuccess}
+        preselectedGrowthRecordId={growthRecord?.id}
+      />
     </div>
   )
 }
