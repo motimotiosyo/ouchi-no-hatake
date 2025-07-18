@@ -38,7 +38,7 @@ export default function TimelinePost({ post }: TimelinePostProps) {
   }
 
   return (
-    <div className="bg-white border-b border-gray-100 px-4 py-4">
+    <div>
       {/* ヘッダー部分 */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center space-x-2">
