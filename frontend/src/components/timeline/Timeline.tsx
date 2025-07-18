@@ -136,9 +136,10 @@ export default function Timeline() {
   }
 
   return (
-    <div className="space-y-4">
-      {/* 投稿一覧 */}
-      <div>
+    <div className="flex justify-center">
+      <div className="w-full max-w-2xl min-w-80 space-y-4">
+        {/* 投稿一覧 */}
+        <div>
         {posts.map((post, index) => (
           <div
             key={post.id}
@@ -179,6 +180,7 @@ export default function Timeline() {
         onClose={() => setIsCreateModalOpen(false)}
         onSuccess={handleCreateSuccess}
       />
+      </div>
     </div>
   )
 }
