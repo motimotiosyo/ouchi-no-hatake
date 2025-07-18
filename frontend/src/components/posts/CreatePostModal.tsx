@@ -239,18 +239,19 @@ export default function CreatePostModal({
                   />
                   <span className="text-sm">🌱 成長記録として投稿（成長記録 + タイムライン）</span>
                 </label>
-                <label className="flex items-center">
-                  <input
-                    type="radio"
-                    name="post_type"
-                    value="general_post"
-                    checked={formData.post_type === 'general_post'}
-                    onChange={handleInputChange}
-                    disabled={!!preselectedGrowthRecordId}
-                    className="mr-2"
-                  />
-                  <span className="text-sm">💬 雑談として投稿（タイムラインのみ）</span>
-                </label>
+                {!preselectedGrowthRecordId && (
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="post_type"
+                      value="general_post"
+                      checked={formData.post_type === 'general_post'}
+                      onChange={handleInputChange}
+                      className="mr-2"
+                    />
+                    <span className="text-sm">💬 雑談として投稿（タイムラインのみ）</span>
+                  </label>
+                )}
               </div>
             </div>
 
@@ -294,7 +295,7 @@ export default function CreatePostModal({
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 >
                   <option value="">カテゴリを選択してください</option>
-                  {CATEGORIES.map((category) => (
+                  {CATEGORIES.filter(category => category.name !== '雑談' && category.id !== 5).map((category) => (
                     <option key={category.id} value={category.id}>
                       {category.name}
                     </option>
