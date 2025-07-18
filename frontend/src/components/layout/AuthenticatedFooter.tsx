@@ -2,11 +2,12 @@ import Link from 'next/link'
 
 export default function AuthenticatedFooter() {
   return (
-    <footer className="bg-[#6AF484] p-4 shadow">
-      <nav className="container mx-auto px-4">
+    <footer className="fixed bottom-0 left-0 right-0 bg-[#6AF484] p-4 shadow z-50">
+      <div className="flex justify-center">
+        <nav className="w-full max-w-2xl min-w-80 px-4">
         <div className="flex items-center justify-around">
           {/* ホーム */}
-          <Link href="/dashboard" className="flex flex-col items-center space-y-1">
+          <Link href="/" className="flex flex-col items-center space-y-1">
             <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
               <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
             </svg>
@@ -37,7 +38,8 @@ export default function AuthenticatedFooter() {
             <span className="text-xs">マイページ</span>
           </Link>
         </div>
-      </nav>
+        </nav>
+      </div>
     </footer>
   )
 }

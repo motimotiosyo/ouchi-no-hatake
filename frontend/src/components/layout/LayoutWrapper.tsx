@@ -46,7 +46,7 @@ export default function LayoutWrapper({ children }: LayoutWrapperProps) {
     return (
       <>
         <AuthenticatedHeader />
-        <main className="flex-1">
+        <main className="flex-1 pt-20 pb-20">
           {children}
         </main>
         <AuthenticatedFooter />
@@ -59,7 +59,7 @@ export default function LayoutWrapper({ children }: LayoutWrapperProps) {
   return (
     <>
       <PublicHeader />
-      <main className="flex-1 container mx-auto p-6">
+      <main className="flex-1 container mx-auto p-6 pt-20 pb-20">
         {children}
       </main>
       <PublicFooter />

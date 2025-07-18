@@ -33,8 +33,10 @@ export default function GrowthRecordDetailPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-6">
-      <GrowthRecordDetail id={id as string} />
+    <div className="flex justify-center">
+      <div className="w-full max-w-2xl min-w-80 px-4 py-6">
+        <GrowthRecordDetail id={id as string} />
+      </div>
     </div>
   )
 }

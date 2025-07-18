@@ -9,8 +9,9 @@ export default function AuthenticatedHeader() {
   
   
   return (
-    <header className="bg-[#6AF484] p-4 shadow">
-      <nav className="container mx-auto flex items-center justify-between px-4">
+    <header className="fixed top-0 left-0 right-0 bg-[#6AF484] p-4 shadow z-50">
+      <div className="flex justify-center">
+        <nav className="w-full max-w-2xl min-w-80 flex items-center justify-between px-4">
         <Link href="/" className="font-medium">🌱 Vegetamily</Link>
         
         <div className="flex items-center space-x-3">
@@ -29,7 +30,8 @@ export default function AuthenticatedHeader() {
             </svg>
           </button>
         </div>
-      </nav>
+        </nav>
+      </div>
       
       {/* ハンバーガーメニュー */}
       <HamburgerMenu 

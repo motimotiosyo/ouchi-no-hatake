@@ -136,13 +136,15 @@ export default function Timeline() {
   }
 
   return (
-    <div className="space-y-4">
-      {/* 投稿一覧 */}
-      <div>
+    <div className="flex justify-center">
+      <div className="w-full max-w-2xl min-w-80 space-y-4">
+        {/* 投稿一覧 */}
+        <div>
         {posts.map((post, index) => (
           <div
             key={post.id}
             ref={index === posts.length - 1 ? lastPostElementRef : undefined}
+            className="hover:bg-white/20 hover:shadow-sm transition-all duration-200 px-4 py-4 border-b border-gray-300/60"
           >
             <TimelinePost post={post} />
           </div>
@@ -179,6 +181,7 @@ export default function Timeline() {
         onClose={() => setIsCreateModalOpen(false)}
         onSuccess={handleCreateSuccess}
       />
+      </div>
     </div>
   )
 }

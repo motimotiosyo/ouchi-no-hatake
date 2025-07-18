@@ -70,7 +70,7 @@ export default function GrowthRecordCard({ record, onUpdate }: Props) {
       year: 'numeric',
       month: 'numeric',
       day: 'numeric'
-    })
+    }).replace(/\//g, ' / ')
   }
 
   return (
@@ -109,7 +109,7 @@ export default function GrowthRecordCard({ record, onUpdate }: Props) {
                       setShowMenu(false)
                       setIsEditModalOpen(true)
                     }}
-                    className="w-full px-4 py-2 text-left text-sm text-orange-600 hover:bg-gray-50"
+                    className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
                   >
                     編集
                   </button>
@@ -119,7 +119,7 @@ export default function GrowthRecordCard({ record, onUpdate }: Props) {
                       setShowMenu(false)
                       setIsDeleteDialogOpen(true)
                     }}
-                    className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50"
+                    className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
                   >
                     削除
                   </button>
@@ -142,53 +142,80 @@ export default function GrowthRecordCard({ record, onUpdate }: Props) {
 
       {/* デスクトップ表示 */}
       <div className="hidden md:block">
-        <Link href={`/growth-records/${record.id}`} className="block">
-          <div className="grid grid-cols-6 gap-4 py-4 px-4 hover:bg-gray-50 transition-colors">
-            <div className="flex items-center">
-              <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(record.status)}`}>
-                {getStatusText(record.status)}
-              </span>
+        <div className="py-3 px-4 hover:bg-gray-50 transition-colors">
+          <div className="flex items-center space-x-4">
+            {/* サムネイル用スペース */}
+            <div className="w-20 h-20 min-h-20 aspect-square bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <span className="text-2xl">🌱</span>
             </div>
-            <div className="flex items-center">
-              <div>
-                <div className="font-semibold text-gray-900">{record.plant.name}</div>
-                <div className="text-sm text-gray-600">{record.record_name}</div>
+            
+            {/* メイン情報 */}
+            <div className="flex-1 min-w-0">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Link href={`/growth-records/${record.id}`} className="font-semibold text-gray-900 text-lg truncate">
+                    {record.plant.name}
+                    {record.record_name && ` - ${record.record_name}`}
+                  </Link>
+                  <div className="flex items-center space-x-2 ml-4">
+                    <span className="inline-block px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                      {record.location}
+                    </span>
+                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(record.status)}`}>
+                      {getStatusText(record.status)}
+                    </span>
+                    <div className="relative">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setShowMenu(!showMenu)
+                        }}
+                        className="px-2 py-1 text-gray-400 hover:text-gray-600"
+                      >
+                        <span className="text-2xl">⋯</span>
+                      </button>
+                      {showMenu && (
+                        <>
+                          <div 
+                            className="fixed inset-0 z-10" 
+                            onClick={() => setShowMenu(false)}
+                          />
+                          <div className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault()
+                                setShowMenu(false)
+                                setIsEditModalOpen(true)
+                              }}
+                              className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
+                            >
+                              編集
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault()
+                                setShowMenu(false)
+                                setIsDeleteDialogOpen(true)
+                              }}
+                              className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
+                            >
+                              削除
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <Link href={`/growth-records/${record.id}`} className="block">
+                  <div className="text-sm text-gray-600">
+                    <div>栽培期間： {record.started_on ? formatDate(record.started_on) : '---.--.-'} 〜 {record.ended_on ? formatDate(record.ended_on) : '---.--.-'}</div>
+                  </div>
+                </Link>
               </div>
             </div>
-            <div className="flex items-center text-gray-600">
-              {record.location}
-            </div>
-            <div className="flex items-center text-gray-600">
-              {record.started_on ? formatDate(record.started_on) : '---.--.-'}
-            </div>
-            <div className="flex items-center text-gray-600">
-              {record.ended_on ? formatDate(record.ended_on) : '---.--.-'}
-            </div>
-            <div className="flex items-center justify-end space-x-2">
-              <Link href={`/growth-records/${record.id}`} className="px-3 py-1 text-sm text-blue-600 bg-blue-50 rounded hover:bg-blue-100 transition-colors">
-                詳細
-              </Link>
-              <button
-                onClick={(e) => {
-                  e.preventDefault()
-                  setIsEditModalOpen(true)
-                }}
-                className="px-3 py-1 text-sm text-orange-600 bg-orange-50 rounded hover:bg-orange-100 transition-colors"
-              >
-                編集
-              </button>
-              <button
-                onClick={(e) => {
-                  e.preventDefault()
-                  setIsDeleteDialogOpen(true)
-                }}
-                className="px-3 py-1 text-sm text-red-600 bg-red-50 rounded hover:bg-red-100 transition-colors"
-              >
-                削除
-              </button>
-            </div>
           </div>
-        </Link>
+        </div>
       </div>
 
       {/* 編集モーダル */}
