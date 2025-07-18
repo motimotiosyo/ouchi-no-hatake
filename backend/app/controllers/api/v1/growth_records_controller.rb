@@ -1,6 +1,7 @@
 class Api::V1::GrowthRecordsController < ApplicationController
-  before_action :authenticate_request
-  before_action :set_growth_record, only: [ :show, :update, :destroy ]
+  skip_before_action :authenticate_request, only: [ :show ]
+  before_action :set_growth_record, only: [ :update, :destroy ]
+  before_action :set_growth_record_for_show, only: [ :show ]
 
   def index
     begin
@@ -94,6 +95,10 @@ class Api::V1::GrowthRecordsController < ApplicationController
             id: @growth_record.plant.id,
             name: @growth_record.plant.name,
             description: @growth_record.plant.description
+          },
+          user: {
+            id: @growth_record.user.id,
+            name: @growth_record.user.name
           }
         },
         posts: posts_data
@@ -210,6 +215,14 @@ class Api::V1::GrowthRecordsController < ApplicationController
 
   def set_growth_record
     @growth_record = current_user.growth_records.find(params[:id])
+  rescue ActiveRecord::RecordNotFound
+    render json: {
+      error: "成長記録が見つかりません"
+    }, status: :not_found
+  end
+
+  def set_growth_record_for_show
+    @growth_record = GrowthRecord.includes(:plant, :user).find(params[:id])
   rescue ActiveRecord::RecordNotFound
     render json: {
       error: "成長記録が見つかりません"
