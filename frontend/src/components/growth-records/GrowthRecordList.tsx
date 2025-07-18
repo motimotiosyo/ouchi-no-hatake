@@ -122,7 +122,7 @@ export default function GrowthRecordList() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-1">
       {/* 記録を始めるボタン */}
       <div className="flex justify-center mb-6">
         <button
@@ -140,15 +140,6 @@ export default function GrowthRecordList() {
         </div>
       ) : (
         <>
-          {/* ヘッダー */}
-          <div className="hidden md:grid grid-cols-6 gap-4 py-3 px-4 bg-gray-50 rounded-lg text-sm font-medium text-gray-600">
-            <div>ステータス</div>
-            <div>品種</div>
-            <div>栽培場所</div>
-            <div>栽培開始</div>
-            <div>栽培終了</div>
-            <div>アクション</div>
-          </div>
           {growthRecords.map((record, index) => (
             <div
               key={record.id}
