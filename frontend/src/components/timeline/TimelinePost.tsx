@@ -49,11 +49,28 @@ export default function TimelinePost({ post }: TimelinePostProps) {
           </div>
           <span className="font-medium text-gray-900">{post.user.name}</span>
         </div>
-        <button className="text-gray-400">
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-          </svg>
-        </button>
+        <div className="flex items-center space-x-2">
+          {/* 投稿タイプ表示 */}
+          <div className="flex items-center space-x-2">
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+              post.post_type === 'growth_record_post' 
+                ? 'bg-green-100 text-green-800' 
+                : 'bg-blue-100 text-blue-800'
+            }`}>
+              {post.post_type === 'growth_record_post' ? '🌱 成長記録' : '💬 雑談'}
+            </span>
+            {post.post_type === 'growth_record_post' && post.category && (
+              <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
+                {post.category.name}
+              </span>
+            )}
+          </div>
+          <button className="text-gray-400">
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* 投稿内容 */}
@@ -63,27 +80,9 @@ export default function TimelinePost({ post }: TimelinePostProps) {
         </p>
       </div>
 
-      {/* 投稿タイプ表示と成長記録情報 */}
-      <div className="mb-4">
-        <div className="flex items-center space-x-2 mb-2">
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-            post.post_type === 'growth_record_post' 
-              ? 'bg-green-100 text-green-800' 
-              : 'bg-blue-100 text-blue-800'
-          }`}>
-            {post.post_type === 'growth_record_post' ? '🌱 成長記録' : '💬 雑談'}
-          </span>
-          {post.post_type === 'growth_record_post' && post.category && (
-            <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
-              {post.category.name}
-            </span>
-          )}
-        </div>
-        
-      </div>
 
       {/* アクションボタン */}
-      <div className="flex items-center justify-around py-2 border-t border-gray-100">
+      <div className="flex items-center justify-around py-2">
         <button 
           onClick={handleInteractionClick}
           className={`flex items-center space-x-1 ${
