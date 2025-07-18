@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export default function AuthenticatedFooter() {
   return (
-    <footer className="bg-[#6AF484] p-4 shadow">
+    <footer className="fixed bottom-0 left-0 right-0 bg-[#6AF484] p-4 shadow z-50">
       <nav className="container mx-auto px-4">
         <div className="flex items-center justify-around">
           {/* ホーム */}
