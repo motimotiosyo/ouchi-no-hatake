@@ -1,5 +1,6 @@
 import { useAuth } from '@/contexts/AuthContext'
 import { useState } from 'react'
+import Link from 'next/link'
 
 interface TimelinePostProps {
   post: {
@@ -52,13 +53,22 @@ export default function TimelinePost({ post }: TimelinePostProps) {
         <div className="flex items-center space-x-2">
           {/* 投稿タイプ表示 */}
           <div className="flex items-center space-x-2">
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-              post.post_type === 'growth_record_post' 
-                ? 'bg-green-100 text-green-800' 
-                : 'bg-blue-100 text-blue-800'
-            }`}>
-              {post.post_type === 'growth_record_post' ? '🌱 成長記録' : '💬 雑談'}
-            </span>
+            {post.post_type === 'growth_record_post' && post.growth_record ? (
+              <Link 
+                href={`/growth-records/${post.growth_record.id}`}
+                className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 hover:bg-green-200 transition-colors cursor-pointer"
+              >
+                🌱 成長記録
+              </Link>
+            ) : (
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                post.post_type === 'growth_record_post' 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-blue-100 text-blue-800'
+              }`}>
+                {post.post_type === 'growth_record_post' ? '🌱 成長記録' : '💬 雑談'}
+              </span>
+            )}
             {post.post_type === 'growth_record_post' && post.category && (
               <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
                 {post.category.name}
