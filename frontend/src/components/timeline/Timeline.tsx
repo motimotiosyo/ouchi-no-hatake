@@ -127,41 +127,45 @@ export default function Timeline() {
     )
   }
 
-  if (!loading && posts.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <div className="text-gray-500">投稿がありません</div>
-      </div>
-    )
-  }
+  const renderEmptyState = () => (
+    <div className="text-center py-8">
+      <div className="text-gray-500">投稿がありません</div>
+    </div>
+  )
 
   return (
     <div className="flex justify-center">
       <div className="w-full max-w-2xl min-w-80 space-y-4">
         {/* 投稿一覧 */}
         <div>
-        {posts.map((post, index) => (
-          <div
-            key={post.id}
-            ref={index === posts.length - 1 ? lastPostElementRef : undefined}
-            className="hover:bg-white/20 hover:shadow-sm transition-all duration-200 px-4 py-4 border-b border-gray-300/60"
-          >
-            <TimelinePost post={post} />
-          </div>
-        ))}
-        
-        {loadingMore && (
-          <div className="flex justify-center items-center py-4">
-            <div className="text-gray-600">さらに読み込み中...</div>
-          </div>
+        {posts.length === 0 ? (
+          renderEmptyState()
+        ) : (
+          <>
+            {posts.map((post, index) => (
+              <div
+                key={post.id}
+                ref={index === posts.length - 1 ? lastPostElementRef : undefined}
+                className="hover:bg-white/20 hover:shadow-sm transition-all duration-200 px-4 py-4 border-b border-gray-300/60"
+              >
+                <TimelinePost post={post} />
+              </div>
+            ))}
+            
+            {loadingMore && (
+              <div className="flex justify-center items-center py-4">
+                <div className="text-gray-600">さらに読み込み中...</div>
+              </div>
+            )}
+            
+            {pagination && !pagination.has_more && posts.length > 0 && (
+              <div className="text-center py-8">
+                <div className="text-gray-500">すべての投稿を表示しました</div>
+              </div>
+            )}
+          </>
         )}
-        
-        {pagination && !pagination.has_more && posts.length > 0 && (
-          <div className="text-center py-8">
-            <div className="text-gray-500">すべての投稿を表示しました</div>
-          </div>
-        )}
-      </div>
+        </div>
 
       {/* Floating Action Button（ログインユーザーのみ表示） */}
       {user && (
