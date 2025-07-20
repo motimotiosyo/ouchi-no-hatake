@@ -33,7 +33,7 @@ export default function GrowthRecordsPage() {
     <div className="flex justify-center">
       <div className="w-full max-w-2xl min-w-80 px-4 py-6">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">ベジログ</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">成長記録</h1>
         <p className="text-gray-600">あなたの成長記録一覧</p>
       </div>
       
