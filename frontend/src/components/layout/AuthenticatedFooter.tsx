@@ -14,12 +14,12 @@ export default function AuthenticatedFooter() {
             <span className="text-xs">ホーム</span>
           </Link>
           
-          {/* ベジログ */}
+          {/* 成長記録 */}
           <Link href="/growth-records" className="flex flex-col items-center space-y-1">
             <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
               <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zm0 4a1 1 0 011-1h12a1 1 0 011 1v8a1 1 0 01-1 1H4a1 1 0 01-1-1V8zm4 4a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
             </svg>
-            <span className="text-xs">ベジログ</span>
+            <span className="text-xs">成長記録</span>
           </Link>
           
           {/* 育て方指南 */}

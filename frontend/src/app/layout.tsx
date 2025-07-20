@@ -6,7 +6,7 @@ import LayoutWrapper from '@/components/layout/LayoutWrapper'
 import FlashMessages from '@/components/ui/FlashMessages'
 
 export const metadata = {
-  title: 'ベジファミリー',
+  title: 'おうちの畑',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -25,6 +25,11 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* スクロールバーによるレイアウトシフトを防ぐ */
+html {
+  overflow-y: scroll;
+}
+
 /* アプリ全体で使用する薄緑背景のユーティリティクラス */
 .bg-app {
   background: #89FD8B33;

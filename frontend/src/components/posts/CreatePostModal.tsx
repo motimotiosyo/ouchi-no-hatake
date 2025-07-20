@@ -237,7 +237,7 @@ export default function CreatePostModal({
                     disabled={!!preselectedGrowthRecordId}
                     className="mr-2"
                   />
-                  <span className="text-sm">🌱 成長記録として投稿（成長記録 + タイムライン）</span>
+                  <span className="text-sm">🌱 成長メモ（成長メモ + タイムライン）</span>
                 </label>
                 {!preselectedGrowthRecordId && (
                   <label className="flex items-center">
@@ -249,7 +249,7 @@ export default function CreatePostModal({
                       onChange={handleInputChange}
                       className="mr-2"
                     />
-                    <span className="text-sm">💬 雑談として投稿（タイムラインのみ）</span>
+                    <span className="text-sm">💬 雑談（タイムラインのみ）</span>
                   </label>
                 )}
               </div>
@@ -341,7 +341,7 @@ export default function CreatePostModal({
                 disabled={loading}
                 className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
-                {loading ? (editData ? '更新中...' : '投稿中...') : (editData ? '更新する' : '投稿する')}
+                {loading ? (editData ? '更新中...' : '作成中...') : (editData ? '更新する' : '作成する')}
               </button>
             </div>
           </form>

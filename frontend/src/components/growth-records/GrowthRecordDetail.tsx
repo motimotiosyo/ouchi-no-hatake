@@ -262,18 +262,18 @@ export default function GrowthRecordDetail({ id }: Props) {
         </div>
       </div>
 
-      {/* 関連投稿 */}
+      {/* 成長メモ */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-semibold text-gray-900">
-            関連投稿 ({posts.length}件)
+            成長メモ ({posts.length}件)
           </h2>
           {user && user.id === growthRecord.user.id && (
             <button
               onClick={() => setIsCreatePostModalOpen(true)}
               className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-md transition-colors"
             >
-              ＋ 投稿を作成
+              ＋ 成長メモを作成
             </button>
           )}
         </div>
