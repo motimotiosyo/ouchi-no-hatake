@@ -23,6 +23,10 @@ interface GrowthRecord {
     name: string
     description: string
   }
+  user: {
+    id: number
+    name: string
+  }
 }
 
 interface Post {
@@ -41,7 +45,7 @@ interface Props {
 }
 
 export default function GrowthRecordDetail({ id }: Props) {
-  const { token } = useAuth()
+  const { token, user } = useAuth()
   const router = useRouter()
   const [growthRecord, setGrowthRecord] = useState<GrowthRecord | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
@@ -54,12 +58,17 @@ export default function GrowthRecordDetail({ id }: Props) {
   const fetchGrowthRecord = useCallback(async () => {
     try {
       setLoading(true)
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      }
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`
+      }
+
       const response = await fetch(`${API_BASE_URL}/api/v1/growth_records/${id}`, {
         method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
+        headers
       })
 
       if (!response.ok) {
@@ -190,10 +199,10 @@ export default function GrowthRecordDetail({ id }: Props) {
       {/* 戻るボタン */}
       <div>
         <button
-          onClick={() => router.push('/growth-records')}
+          onClick={() => router.push(user && user.id === growthRecord.user.id ? '/growth-records' : '/')}
           className="text-blue-600 hover:text-blue-800 flex items-center"
         >
-          ← 一覧に戻る
+          {user && user.id === growthRecord.user.id ? '一覧に戻る' : 'タイムラインに戻る'}
         </button>
       </div>
 
@@ -211,20 +220,22 @@ export default function GrowthRecordDetail({ id }: Props) {
               {getStatusText(growthRecord.status)}
             </span>
           </div>
-          <div className="flex space-x-2">
-            <button
-              onClick={() => setIsEditModalOpen(true)}
-              className="px-4 py-2 text-sm text-orange-600 bg-orange-50 rounded hover:bg-orange-100 transition-colors"
-            >
-              編集
-            </button>
-            <button
-              onClick={() => setIsDeleteDialogOpen(true)}
-              className="px-4 py-2 text-sm text-red-600 bg-red-50 rounded hover:bg-red-100 transition-colors"
-            >
-              削除
-            </button>
-          </div>
+          {user && user.id === growthRecord.user.id && (
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setIsEditModalOpen(true)}
+                className="px-4 py-2 text-sm text-orange-600 bg-orange-50 rounded hover:bg-orange-100 transition-colors"
+              >
+                編集
+              </button>
+              <button
+                onClick={() => setIsDeleteDialogOpen(true)}
+                className="px-4 py-2 text-sm text-red-600 bg-red-50 rounded hover:bg-red-100 transition-colors"
+              >
+                削除
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -257,12 +268,14 @@ export default function GrowthRecordDetail({ id }: Props) {
           <h2 className="text-lg font-semibold text-gray-900">
             関連投稿 ({posts.length}件)
           </h2>
-          <button
-            onClick={() => setIsCreatePostModalOpen(true)}
-            className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-md transition-colors"
-          >
-            ＋ 投稿を作成
-          </button>
+          {user && user.id === growthRecord.user.id && (
+            <button
+              onClick={() => setIsCreatePostModalOpen(true)}
+              className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-md transition-colors"
+            >
+              ＋ 投稿を作成
+            </button>
+          )}
         </div>
         
         {posts.length === 0 ? (
