@@ -38,48 +38,66 @@ export default function TimelinePost({ post }: TimelinePostProps) {
     }
   }
 
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleString('ja-JP', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
   return (
     <div>
       {/* ヘッダー部分 */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center">
-            <span className="text-white font-medium text-sm">
-              {post.user.name.charAt(0)}
-            </span>
-          </div>
-          <span className="font-medium text-gray-900">{post.user.name}</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          {/* 投稿タイプ表示 */}
+      <div className="mb-3">
+        {/* 1行目: ユーザー名（左）+ 日時・メニュー（右） */}
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center space-x-2">
-            {post.post_type === 'growth_record_post' && post.growth_record ? (
-              <Link 
-                href={`/growth-records/${post.growth_record.id}`}
-                className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 hover:bg-green-200 transition-colors cursor-pointer"
-              >
-                🌱 成長記録
-              </Link>
-            ) : (
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                post.post_type === 'growth_record_post' 
-                  ? 'bg-green-100 text-green-800' 
-                  : 'bg-blue-100 text-blue-800'
-              }`}>
-                {post.post_type === 'growth_record_post' ? '🌱 成長記録' : '💬 雑談'}
+            <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center">
+              <span className="text-white font-medium text-sm">
+                {post.user.name.charAt(0)}
               </span>
-            )}
-            {post.post_type === 'growth_record_post' && post.category && (
-              <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
-                {post.category.name}
-              </span>
-            )}
+            </div>
+            <span className="font-medium text-gray-900">{post.user.name}</span>
           </div>
-          <button className="text-gray-400">
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-            </svg>
-          </button>
+          <div className="flex items-center space-x-2">
+            <span className="text-sm text-gray-500">
+              {formatDateTime(post.created_at)}
+            </span>
+            <button className="text-gray-400">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+        
+        {/* 2行目: 成長記録・カテゴリ（左寄せ） */}
+        <div className="flex items-center space-x-2">
+          {post.post_type === 'growth_record_post' && post.growth_record ? (
+            <Link 
+              href={`/growth-records/${post.growth_record.id}`}
+              className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 hover:bg-green-200 transition-colors cursor-pointer"
+            >
+              🌱 成長記録
+            </Link>
+          ) : (
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+              post.post_type === 'growth_record_post' 
+                ? 'bg-green-100 text-green-800' 
+                : 'bg-blue-100 text-blue-800'
+            }`}>
+              {post.post_type === 'growth_record_post' ? '🌱 成長記録' : '💬 雑談'}
+            </span>
+          )}
+          {post.post_type === 'growth_record_post' && post.category && (
+            <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs">
+              {post.category.name}
+            </span>
+          )}
         </div>
       </div>
 

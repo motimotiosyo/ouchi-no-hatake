@@ -287,12 +287,9 @@ export default function GrowthRecordDetail({ id }: Props) {
             {posts.map((post) => (
               <div key={post.id} className="border-b border-gray-200 pb-4 last:border-b-0">
                 <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <h3 className="font-medium text-gray-900">{post.title}</h3>
-                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                      {post.category.name}
-                    </span>
-                  </div>
+                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                    {post.category.name}
+                  </span>
                   <div className="text-sm text-gray-500">
                     {formatDateTime(post.created_at)}
                   </div>
