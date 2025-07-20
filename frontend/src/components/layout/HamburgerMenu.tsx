@@ -91,42 +91,39 @@ export default function HamburgerMenu({ isOpen, onClose }: HamburgerMenuProps) {
         {/* メニューアイテム */}
         <div className="py-2">
           {/* アカウント設定 */}
-          <a
-            href="/account"
-            className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-100"
-            onClick={onClose}
+          <button
+            disabled
+            className="flex items-center px-4 py-3 text-gray-400 cursor-not-allowed w-full text-left"
           >
             <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
-            アカウント設定
-          </a>
+            アカウント設定（準備中）
+          </button>
 
           {/* 通知設定 */}
-          <a
-            href="/notifications"
-            className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-100"
-            onClick={onClose}
+          <button
+            disabled
+            className="flex items-center px-4 py-3 text-gray-400 cursor-not-allowed w-full text-left"
           >
             <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-3.12-3.12A3.945 3.945 0 0116 11.5a4 4 0 10-7.56 1.38L15 17z" />
             </svg>
-            通知設定
-          </a>
+            通知設定（準備中）
+          </button>
 
           <hr className="my-2" />
 
           {/* ヘルプ・サポート */}
-          <a
-            href="/help"
-            className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-100"
-            onClick={onClose}
+          <button
+            disabled
+            className="flex items-center px-4 py-3 text-gray-400 cursor-not-allowed w-full text-left"
           >
             <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            ヘルプ・サポート
-          </a>
+            ヘルプ・サポート（準備中）
+          </button>
 
           {/* お問い合わせ */}
           <a
@@ -144,7 +141,7 @@ export default function HamburgerMenu({ isOpen, onClose }: HamburgerMenuProps) {
 
           {/* 利用規約 */}
           <a
-            href="/terms"
+            href="/terms-of-service"
             className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-100"
             onClick={onClose}
           >
@@ -156,7 +153,7 @@ export default function HamburgerMenu({ isOpen, onClose }: HamburgerMenuProps) {
 
           {/* プライバシーポリシー */}
           <a
-            href="/privacy"
+            href="/privacy-policy"
             className="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-100"
             onClick={onClose}
           >
