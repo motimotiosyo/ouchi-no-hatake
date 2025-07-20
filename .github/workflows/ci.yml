@@ -17,11 +17,7 @@ jobs:
           bundler-cache: true
       - name: Scan for common Rails security vulnerabilities using static analysis
         working-directory: backend
-        run: |
-          echo "Running brakeman with detailed output..."
-          bin/brakeman --no-pager -f text -v || echo "Brakeman failed with exit code $?"
-          echo "Running brakeman debug mode..."
-          bin/brakeman --no-pager --debug || echo "Brakeman debug failed with exit code $?"
+        run: bin/brakeman --no-pager
 
   lint_and_fix:
     runs-on: ubuntu-latest
