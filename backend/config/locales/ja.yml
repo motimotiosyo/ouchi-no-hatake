@@ -1,0 +1,27 @@
+ja:
+  activerecord:
+    errors:
+      models:
+        user:
+          attributes:
+            email:
+              blank: "Eメールアドレスを入力してください"
+              taken: "登録できませんでした。入力内容をご確認ください"
+              invalid: "正しいEメールアドレスの形式で入力してください"
+            password:
+              blank: "パスワードを入力してください"
+              too_short: "パスワードは%{count}文字以上で入力してください"
+            name:
+              blank: "お名前を入力してください"
+    attributes:
+      user:
+        email: "Eメールアドレス"
+        password: "パスワード"
+        name: "お名前"
+  
+  errors:
+    messages:
+      blank: "を入力してください"
+      taken: "は既に使用されています"
+      too_short: "は%{count}文字以上で入力してください"
+      invalid: "の形式が正しくありません"

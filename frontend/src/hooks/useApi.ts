@@ -26,7 +26,7 @@ export function useApi() {
   // ログアウトAPI専用関数
   const logout = async () => {
     if (!token) {
-      throw new Error('No token available')
+      throw new Error('トークンがありません')
     }
 
     return authenticatedCall('/api/v1/auth/logout', {
