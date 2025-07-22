@@ -75,7 +75,7 @@ export function FlashProvider({ children }: { children: ReactNode }) {
 export function useFlash() {
   const context = useContext(FlashContext)
   if (context === undefined) {
-    throw new Error('useFlash must be used within a FlashProvider')
+    throw new Error('useFlashはFlashProviderの内部で使用する必要があります')
   }
   return context
 }

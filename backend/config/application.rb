@@ -32,5 +32,8 @@ module Backend
     # Cookieとセッションのミドルウェアを追加
     config.middleware.use ActionDispatch::Cookies
     config.middleware.use ActionDispatch::Session::CookieStore
+    
+    # 日本語をデフォルト言語に設定
+    config.i18n.default_locale = :ja
   end
 end

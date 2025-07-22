@@ -4,18 +4,25 @@ class Api::V1::AuthController < ApplicationController
 
   # POST /api/v1/auth/register
   def register
-    user = User.create!(user_params)
-    token = JsonWebToken.encode(user_id: user.id)
-
-    render json: {
-      message: "ユーザー登録が完了しました",
-      token: token,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name
-      }
-    }, status: :created
+    user = User.new(user_params)
+    
+    if user.save
+      token = JsonWebToken.encode(user_id: user.id)
+      render json: {
+        message: "ユーザー登録が完了しました",
+        token: token,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name
+        }
+      }, status: :created
+    else
+      # セキュリティのため、詳細なエラーは返さず曖昧なメッセージにする
+      render json: {
+        error: "登録できませんでした。入力内容をご確認ください"
+      }, status: :unprocessable_entity
+    end
   end
 
   # POST /api/v1/auth/login
@@ -57,7 +64,7 @@ class Api::V1::AuthController < ApplicationController
     token = current_token
 
     if token.blank?
-      render json: { error: "No token provided" }, status: :bad_request
+      render json: { error: "トークンが提供されていません" }, status: :bad_request
       return
     end
 
