@@ -5,7 +5,7 @@ class Api::V1::AuthController < ApplicationController
   # POST /api/v1/auth/register
   def register
     user = User.new(user_params)
-    
+
     if user.save
       token = JsonWebToken.encode(user_id: user.id)
       render json: {
