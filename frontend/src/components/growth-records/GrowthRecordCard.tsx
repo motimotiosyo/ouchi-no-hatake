@@ -75,7 +75,7 @@ export default function GrowthRecordCard({ record, onUpdate }: Props) {
 
   return (
     <div 
-      className="bg-white rounded-lg shadow-md hover:shadow-lg border border-gray-200 transition-all duration-200 relative"
+      className="bg-white rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02] border border-gray-200 transition-all duration-200 relative"
       style={{ 
         zIndex: showMenu ? 9999 : 'auto'
       }}
