@@ -146,7 +146,7 @@ export default function Timeline() {
               <div
                 key={post.id}
                 ref={index === posts.length - 1 ? lastPostElementRef : undefined}
-                className="hover:bg-white/20 hover:shadow-sm transition-all duration-200 px-4 py-4 border-b border-gray-300/60"
+                className="bg-white rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02] border border-gray-200 transition-all duration-200 px-4 py-4 mb-4"
               >
                 <TimelinePost post={post} />
               </div>
