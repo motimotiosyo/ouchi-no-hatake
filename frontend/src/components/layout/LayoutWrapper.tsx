@@ -46,7 +46,7 @@ export default function LayoutWrapper({ children }: LayoutWrapperProps) {
     return (
       <>
         <AuthenticatedHeader />
-        <main className="flex-1 pt-20 pb-20">
+        <main className="flex-1 pt-20 pb-20" style={{ minWidth: '360px' }}>
           {children}
         </main>
         <AuthenticatedFooter />

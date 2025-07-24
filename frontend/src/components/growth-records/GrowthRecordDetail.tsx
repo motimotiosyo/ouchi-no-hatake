@@ -179,7 +179,7 @@ export default function GrowthRecordDetail({ id }: Props) {
             onClick={() => router.push('/growth-records')}
             className="text-blue-600 hover:text-blue-800"
           >
-            一覧に戻る
+            {'< '}成長記録一覧に戻る
           </button>
         </div>
       </div>
@@ -202,7 +202,7 @@ export default function GrowthRecordDetail({ id }: Props) {
           onClick={() => router.push(user && user.id === growthRecord.user.id ? '/growth-records' : '/')}
           className="text-blue-600 hover:text-blue-800 flex items-center"
         >
-          {user && user.id === growthRecord.user.id ? '一覧に戻る' : 'タイムラインに戻る'}
+          {'< '}{user && user.id === growthRecord.user.id ? '成長記録一覧に戻る' : 'タイムラインに戻る'}
         </button>
       </div>
 

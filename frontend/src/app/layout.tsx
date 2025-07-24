@@ -12,7 +12,7 @@ export const metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ja">
-      <body className="min-h-screen flex flex-col">
+      <body className="min-h-screen flex flex-col" style={{ minWidth: '360px' }}>
         <FlashProvider>
           <AuthProvider>
             <LayoutWrapper>

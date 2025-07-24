@@ -74,61 +74,79 @@ export default function GrowthRecordCard({ record, onUpdate }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+    <div 
+      className="bg-white rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02] border border-gray-200 transition-all duration-200 relative"
+      style={{ 
+        zIndex: showMenu ? 9999 : 'auto'
+      }}
+    >
+      {/* 背景リンク */}
+      {!showMenu && !isEditModalOpen && !isDeleteDialogOpen && (
+        <Link 
+          href={`/growth-records/${record.id}`} 
+          className="absolute inset-0 z-0 rounded-lg"
+        />
+      )}
       {/* モバイル表示 */}
-      <div className="md:hidden">
-        <Link href={`/growth-records/${record.id}`} className="block p-4">
+      <div className="md:hidden relative z-10 pointer-events-none">
+        <div className="p-4">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                <span className="text-2xl">🌱</span>
+              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center pointer-events-auto">
+                <span className="text-2xl pointer-events-none">🌱</span>
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900">{record.plant.name}</h3>
                 <p className="text-sm text-gray-600">{record.record_name}</p>
               </div>
             </div>
-            <div className="relative">
+            <div className="relative pointer-events-auto" style={{ zIndex: 100 }}>
               <button
-                onClick={(e) => {
-                  e.preventDefault()
-                  setShowMenu(!showMenu)
-                }}
-                className="p-2 text-gray-400 hover:text-gray-600"
+                onClick={() => setShowMenu(!showMenu)}
+                className="p-2 text-gray-400 hover:text-gray-600 cursor-pointer"
               >
                 <span className="text-lg">⋯</span>
               </button>
               {showMenu && (
-                <div className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
-                  <Link href={`/growth-records/${record.id}`} className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-gray-50 block">
-                    詳細
-                  </Link>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault()
-                      setShowMenu(false)
-                      setIsEditModalOpen(true)
-                    }}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
-                  >
-                    編集
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault()
-                      setShowMenu(false)
-                      setIsDeleteDialogOpen(true)
-                    }}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
-                  >
-                    削除
-                  </button>
-                </div>
+                <>
+                  <div 
+                    className="fixed inset-0" 
+                    style={{ zIndex: 999 }}
+                    onClick={() => setShowMenu(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-200" style={{ zIndex: 1000 }}>
+                    <Link href={`/growth-records/${record.id}`} className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-gray-50 block">
+                      詳細
+                    </Link>
+                    <button
+                      onClick={() => {
+                        setShowMenu(false)
+                        setIsEditModalOpen(true)
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
+                    >
+                      編集
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowMenu(false)
+                        setIsDeleteDialogOpen(true)
+                      }}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
+                    >
+                      削除
+                    </button>
+                  </div>
+                </>
               )}
             </div>
           </div>
           <div className="flex items-center justify-between text-sm text-gray-600">
-            <div>
+            <div 
+              className="pointer-events-auto cursor-default relative" 
+              style={{ zIndex: 10 }}
+              onClick={(e) => e.preventDefault()}
+            >
               <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(record.status)}`}>
                 {getStatusText(record.status)}
               </span>
@@ -137,53 +155,60 @@ export default function GrowthRecordCard({ record, onUpdate }: Props) {
               {record.started_on ? formatDate(record.started_on) : '---.--.-'} 〜 {record.ended_on ? formatDate(record.ended_on) : '---.--.-'}
             </div>
           </div>
-        </Link>
+        </div>
       </div>
 
       {/* デスクトップ表示 */}
-      <div className="hidden md:block">
-        <div className="py-3 px-4 hover:bg-gray-50 transition-colors">
+      <div className="hidden md:block relative z-10 pointer-events-none">
+        <div className="py-3 px-4">
           <div className="flex items-center space-x-4">
             {/* サムネイル用スペース */}
-            <div className="w-20 h-20 min-h-20 aspect-square bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-              <span className="text-2xl">🌱</span>
+            <div className="w-20 h-20 min-h-20 aspect-square bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 pointer-events-auto">
+              <span className="text-2xl pointer-events-none">🌱</span>
             </div>
             
             {/* メイン情報 */}
             <div className="flex-1 min-w-0">
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Link href={`/growth-records/${record.id}`} className="font-semibold text-gray-900 text-lg truncate">
+                  <div className="font-semibold text-gray-900 text-lg truncate">
                     {record.plant.name}
                     {record.record_name && ` - ${record.record_name}`}
-                  </Link>
-                  <div className="flex items-center space-x-2 ml-4">
-                    <span className="inline-block px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
-                      {record.location}
-                    </span>
-                    <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(record.status)}`}>
-                      {getStatusText(record.status)}
-                    </span>
-                    <div className="relative">
+                  </div>
+                  <div className="flex items-center space-x-2 ml-4" style={{ position: 'relative', zIndex: 10 }}>
+                    <div 
+                      className="pointer-events-auto cursor-default"
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      <span className="inline-block px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                        {record.location}
+                      </span>
+                    </div>
+                    <div 
+                      className="pointer-events-auto cursor-default"
+                      onClick={(e) => e.preventDefault()}
+                    >
+                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(record.status)}`}>
+                        {getStatusText(record.status)}
+                      </span>
+                    </div>
+                    <div className="relative pointer-events-auto" style={{ zIndex: 100 }}>
                       <button
-                        onClick={(e) => {
-                          e.preventDefault()
-                          setShowMenu(!showMenu)
-                        }}
-                        className="px-2 py-1 text-gray-400 hover:text-gray-600"
+                        onClick={() => setShowMenu(!showMenu)}
+                        className="px-2 py-1 text-gray-400 hover:text-gray-600 cursor-pointer"
                       >
                         <span className="text-2xl">⋯</span>
                       </button>
                       {showMenu && (
                         <>
                           <div 
-                            className="fixed inset-0 z-10" 
+                            className="fixed inset-0" 
+                            style={{ zIndex: 999 }}
                             onClick={() => setShowMenu(false)}
                           />
-                          <div className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
+                          <div className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-200" style={{ zIndex: 1000 }}>
                             <button
-                              onClick={(e) => {
-                                e.preventDefault()
+                              onClick={() => {
                                 setShowMenu(false)
                                 setIsEditModalOpen(true)
                               }}
@@ -192,8 +217,7 @@ export default function GrowthRecordCard({ record, onUpdate }: Props) {
                               編集
                             </button>
                             <button
-                              onClick={(e) => {
-                                e.preventDefault()
+                              onClick={() => {
                                 setShowMenu(false)
                                 setIsDeleteDialogOpen(true)
                               }}
@@ -207,11 +231,9 @@ export default function GrowthRecordCard({ record, onUpdate }: Props) {
                     </div>
                   </div>
                 </div>
-                <Link href={`/growth-records/${record.id}`} className="block">
-                  <div className="text-sm text-gray-600">
-                    <div>栽培期間： {record.started_on ? formatDate(record.started_on) : '---.--.-'} 〜 {record.ended_on ? formatDate(record.ended_on) : '---.--.-'}</div>
-                  </div>
-                </Link>
+                <div className="text-sm text-gray-600">
+                  <div>栽培期間： {record.started_on ? formatDate(record.started_on) : '---.--.-'} 〜 {record.ended_on ? formatDate(record.ended_on) : '---.--.-'}</div>
+                </div>
               </div>
             </div>
           </div>

@@ -122,7 +122,7 @@ export default function GrowthRecordList() {
   }
 
   return (
-    <div className="space-y-1">
+    <div style={{ minWidth: '360px' }}>
       {/* 記録を始めるボタン */}
       <div className="flex justify-center mb-6">
         <button
@@ -144,6 +144,7 @@ export default function GrowthRecordList() {
             <div
               key={record.id}
               ref={index === growthRecords.length - 1 ? lastRecordElementRef : undefined}
+              className="mb-4"
             >
               <GrowthRecordCard record={record} onUpdate={() => fetchGrowthRecords()} />
             </div>
