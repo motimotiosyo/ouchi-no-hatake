@@ -43,6 +43,18 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
     status: 'planning' as 'planning' | 'growing' | 'completed' | 'failed'
   })
 
+  const fetchPlants = useCallback(async () => {
+    try {
+      const data = await publicCall('/api/v1/plants')
+      
+      if (data) {
+        setPlants(data.plants)
+      }
+    } catch (err) {
+      console.error('Error fetching plants:', err)
+    }
+  }, [publicCall])
+
   // 植物一覧取得と編集データ設定
   useEffect(() => {
     if (isOpen) {
@@ -61,18 +73,6 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
       }
     }
   }, [isOpen, editData, fetchPlants])
-
-  const fetchPlants = useCallback(async () => {
-    try {
-      const data = await publicCall('/api/v1/plants')
-      
-      if (data) {
-        setPlants(data.plants)
-      }
-    } catch (err) {
-      console.error('Error fetching plants:', err)
-    }
-  }, [publicCall])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
