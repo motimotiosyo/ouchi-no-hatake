@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { authenticatedApiCall, apiCall } from '@/lib/api'
 
@@ -9,7 +9,7 @@ export function useApi() {
   const [error, setError] = useState<string | null>(null)
 
   // 認証付きAPI呼び出し関数
-  const authenticatedCall = async (endpoint: string, options: RequestInit = {}) => {
+  const authenticatedCall = useCallback(async (endpoint: string, options: RequestInit = {}) => {
     if (!token) {
       setError('認証トークンがありません')
       return null
@@ -37,10 +37,10 @@ export function useApi() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [token])
 
   // ログアウトAPI専用関数
-  const logout = async () => {
+  const logout = useCallback(async () => {
     if (!token) {
       throw new Error('トークンがありません')
     }
@@ -48,14 +48,16 @@ export function useApi() {
     return authenticatedCall('/api/v1/auth/logout', {
       method: 'DELETE'
     })
-  }
+  }, [token, authenticatedCall])
+
+  const clearError = useCallback(() => setError(null), [])
 
   return {
     authenticatedCall,
     logout,
     loading,
     error,
-    clearError: () => setError(null)
+    clearError
   }
 }
 
@@ -64,7 +66,7 @@ export function usePublicApi() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const publicCall = async (endpoint: string, options: RequestInit = {}) => {
+  const publicCall = useCallback(async (endpoint: string, options: RequestInit = {}) => {
     setLoading(true)
     setError(null)
 
@@ -84,12 +86,14 @@ export function usePublicApi() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  const clearError = useCallback(() => setError(null), [])
 
   return {
     publicCall,
     loading,
     error,
-    clearError: () => setError(null)
+    clearError
   }
 }
