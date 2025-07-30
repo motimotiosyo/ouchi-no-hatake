@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useApi, usePublicApi } from '@/hooks/useApi'
 
@@ -28,7 +28,7 @@ interface Props {
 }
 
 export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, editData }: Props) {
-  const { user } = useAuth()
+  const { } = useAuth()
   const { authenticatedCall, loading, error, clearError } = useApi()
   const { publicCall } = usePublicApi()
   const [plants, setPlants] = useState<Plant[]>([])
@@ -60,9 +60,9 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
         })
       }
     }
-  }, [isOpen, editData])
+  }, [isOpen, editData, fetchPlants])
 
-  const fetchPlants = async () => {
+  const fetchPlants = useCallback(async () => {
     try {
       const data = await publicCall('/api/v1/plants')
       
@@ -72,7 +72,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
     } catch (err) {
       console.error('Error fetching plants:', err)
     }
-  }
+  }, [publicCall])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

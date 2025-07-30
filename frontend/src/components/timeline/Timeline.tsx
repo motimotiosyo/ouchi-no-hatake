@@ -46,7 +46,7 @@ export default function Timeline() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const observer = useRef<IntersectionObserver | null>(null)
 
-  const fetchPosts = async (page: number = 1, append: boolean = false) => {
+  const fetchPosts = useCallback(async (page: number = 1, append: boolean = false) => {
     try {
       if (page > 1) {
         setLoadingMore(true)
@@ -67,7 +67,7 @@ export default function Timeline() {
     } finally {
       setLoadingMore(false)
     }
-  }
+  }, [publicCall])
 
   const lastPostElementRef = useCallback((node: HTMLDivElement | null) => {
     if (loading || loadingMore) return
@@ -80,11 +80,11 @@ export default function Timeline() {
     })
     
     if (node) observer.current.observe(node)
-  }, [loading, loadingMore, pagination])
+  }, [loading, loadingMore, pagination, fetchPosts])
 
   useEffect(() => {
     fetchPosts()
-  }, [])
+  }, [fetchPosts])
 
   const handleCreateSuccess = () => {
     // 投稿作成成功時にタイムラインを再取得

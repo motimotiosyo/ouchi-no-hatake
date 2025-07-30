@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useApi } from '@/hooks/useApi'
 
@@ -16,7 +16,7 @@ interface Props {
 }
 
 export default function DeleteConfirmDialog({ isOpen, onClose, onSuccess, growthRecord }: Props) {
-  const { user } = useAuth()
+  const { } = useAuth()
   const { authenticatedCall, loading, error, clearError } = useApi()
 
   const handleDelete = async () => {

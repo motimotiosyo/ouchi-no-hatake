@@ -50,7 +50,7 @@ export default function CreatePostModal({
   editData, 
   preselectedGrowthRecordId 
 }: Props) {
-  const { user } = useAuth()
+  const { } = useAuth()
   const { authenticatedCall, loading, error, clearError } = useApi()
   const [growthRecords, setGrowthRecords] = useState<GrowthRecord[]>([])
 
@@ -62,6 +62,18 @@ export default function CreatePostModal({
     category_id: '',
     post_type: 'growth_record_post' as 'growth_record_post' | 'general_post'
   })
+
+  const fetchGrowthRecords = useCallback(async () => {
+    try {
+      const data = await authenticatedCall('/api/v1/growth_records?per_page=100')
+      
+      if (data) {
+        setGrowthRecords(data.growth_records || [])
+      }
+    } catch (err) {
+      console.error('Error fetching growth records:', err)
+    }
+  }, [authenticatedCall])
 
   // データ取得とフォーム初期化
   useEffect(() => {
@@ -86,19 +98,7 @@ export default function CreatePostModal({
         }))
       }
     }
-  }, [isOpen, editData, preselectedGrowthRecordId])
-
-  const fetchGrowthRecords = useCallback(async () => {
-    try {
-      const data = await authenticatedCall('/api/v1/growth_records?per_page=100')
-      
-      if (data) {
-        setGrowthRecords(data.growth_records || [])
-      }
-    } catch (err) {
-      console.error('Error fetching growth records:', err)
-    }
-  }, [authenticatedCall])
+  }, [isOpen, editData, preselectedGrowthRecordId, fetchGrowthRecords])
 
 
   const handleSubmit = async (e: React.FormEvent) => {
