@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import TimelinePost from './TimelinePost'
 import CreatePostModal from '../posts/CreatePostModal'
 import { useAuth } from '@/contexts/AuthContext'
-import { API_BASE_URL } from '@/lib/api'
+import { usePublicApi } from '@/hooks/useApi'
 
 interface Post {
   id: number
@@ -39,37 +39,20 @@ interface PaginationInfo {
 
 export default function Timeline() {
   const { user } = useAuth()
+  const { publicCall, loading, error } = usePublicApi()
   const [posts, setPosts] = useState<Post[]>([])
-  const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [pagination, setPagination] = useState<PaginationInfo | null>(null)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const observer = useRef<IntersectionObserver | null>(null)
 
   const fetchPosts = async (page: number = 1, append: boolean = false) => {
     try {
-      if (page === 1) {
-        setLoading(true)
-      } else {
+      if (page > 1) {
         setLoadingMore(true)
       }
       
-      // 認証なしでもアクセス可能にするため、直接fetchを使用
-      const response = await fetch(`${API_BASE_URL}/api/v1/posts?page=${page}&per_page=10`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-      
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error('API Error Response:', response.status, errorText)
-        throw new Error(`Failed to fetch posts: ${response.status} ${errorText}`)
-      }
-      
-      const data = await response.json()
+      const data = await publicCall(`/api/v1/posts?page=${page}&per_page=10`)
       
       if (data.posts && data.pagination) {
         if (append) {
@@ -80,11 +63,8 @@ export default function Timeline() {
         setPagination(data.pagination)
       }
     } catch (err) {
-      setError('投稿を読み込めませんでした')
       console.error('Error fetching posts:', err)
-      console.error('Full error details:', err)
     } finally {
-      setLoading(false)
       setLoadingMore(false)
     }
   }

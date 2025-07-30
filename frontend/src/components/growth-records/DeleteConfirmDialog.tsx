@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { API_BASE_URL } from '@/lib/api'
+import { useApi } from '@/hooks/useApi'
 
 interface Props {
   isOpen: boolean
@@ -16,42 +16,33 @@ interface Props {
 }
 
 export default function DeleteConfirmDialog({ isOpen, onClose, onSuccess, growthRecord }: Props) {
-  const { token } = useAuth()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const { user } = useAuth()
+  const { authenticatedCall, loading, error, clearError } = useApi()
 
   const handleDelete = async () => {
-    setLoading(true)
-    setError(null)
+    clearError()
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/growth_records/${growthRecord.id}`, {
+      const data = await authenticatedCall(`/api/v1/growth_records/${growthRecord.id}`, {
         method: 'DELETE',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         }
       })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || '成長記録の削除に失敗しました')
+      if (data !== null) {
+        // 成功時
+        onSuccess()
+        onClose()
       }
-
-      // 成功時
-      onSuccess()
-      onClose()
     } catch (err) {
       console.error('Error deleting growth record:', err)
-      setError(err instanceof Error ? err.message : '成長記録の削除に失敗しました')
-    } finally {
-      setLoading(false)
     }
   }
 
   const handleClose = () => {
     onClose()
-    setError(null)
+    clearError()
   }
 
   if (!isOpen) return null

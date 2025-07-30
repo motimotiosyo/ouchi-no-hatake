@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { API_BASE_URL } from '@/lib/api'
+import { useApi, usePublicApi } from '@/hooks/useApi'
 
 interface Plant {
   id: number
@@ -28,10 +28,10 @@ interface Props {
 }
 
 export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, editData }: Props) {
-  const { token } = useAuth()
+  const { user } = useAuth()
+  const { authenticatedCall, loading, error, clearError } = useApi()
+  const { publicCall } = usePublicApi()
   const [plants, setPlants] = useState<Plant[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   // フォーム状態
   const [formData, setFormData] = useState({
@@ -64,72 +64,55 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
 
   const fetchPlants = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/plants`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error('植物一覧の取得に失敗しました')
+      const data = await publicCall('/api/v1/plants')
+      
+      if (data) {
+        setPlants(data.plants)
       }
-
-      const data = await response.json()
-      setPlants(data.plants)
     } catch (err) {
       console.error('Error fetching plants:', err)
-      setError('植物一覧の取得に失敗しました')
     }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
-    setError(null)
+    clearError()
 
     try {
       const isEditMode = !!editData
-      const url = isEditMode 
-        ? `${API_BASE_URL}/api/v1/growth_records/${editData.id}`
-        : `${API_BASE_URL}/api/v1/growth_records`
+      const endpoint = isEditMode 
+        ? `/api/v1/growth_records/${editData.id}`
+        : '/api/v1/growth_records'
       
       const method = isEditMode ? 'PUT' : 'POST'
 
-      const response = await fetch(url, {
+      const data = await authenticatedCall(endpoint, {
         method: method,
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({
           growth_record: formData
         })
       })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || `成長記録の${isEditMode ? '更新' : '作成'}に失敗しました`)
+      if (data) {
+        // 成功時
+        onSuccess()
+        onClose()
+        
+        // フォームリセット
+        setFormData({
+          plant_id: '',
+          record_name: '',
+          location: '',
+          started_on: '',
+          ended_on: '',
+          status: 'planning'
+        })
       }
-
-      // 成功時
-      onSuccess()
-      onClose()
-      
-      // フォームリセット
-      setFormData({
-        plant_id: '',
-        record_name: '',
-        location: '',
-        started_on: '',
-        ended_on: '',
-        status: 'planning'
-      })
     } catch (err) {
       console.error(`Error ${editData ? 'updating' : 'creating'} growth record:`, err)
-      setError(err instanceof Error ? err.message : `成長記録の${editData ? '更新' : '作成'}に失敗しました`)
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -143,7 +126,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
 
   const handleClose = () => {
     onClose()
-    setError(null)
+    clearError()
     setFormData({
       plant_id: '',
       record_name: '',

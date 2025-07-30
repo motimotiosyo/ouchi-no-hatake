@@ -21,7 +21,15 @@ export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
   })
 }
 
-// 認証付きAPI呼び出し関数
+// 自動ログアウト用コールバック（AuthContextから設定される）
+let autoLogoutCallback: (() => void) | null = null
+
+// 自動ログアウトコールバックを設定する関数
+export const setAutoLogoutCallback = (callback: () => void) => {
+  autoLogoutCallback = callback
+}
+
+// 認証付きAPI呼び出し関数（JWT期限切れ自動検知機能付き）
 export const authenticatedApiCall = async (endpoint: string, token: string, options: RequestInit = {}) => {
   const url = `${API_BASE_URL}${endpoint}`
 
@@ -30,7 +38,7 @@ export const authenticatedApiCall = async (endpoint: string, token: string, opti
     'Authorization': `Bearer ${token}`,
   }
 
-  return fetch(url, {
+  const response = await fetch(url, {
     ...options,
     headers: {
       ...defaultHeaders,
@@ -38,6 +46,31 @@ export const authenticatedApiCall = async (endpoint: string, token: string, opti
     },
     credentials: 'include',
   })
+
+  // 422エラー「Signature has expired」を検知
+  if (response.status === 422) {
+    try {
+      const errorData = await response.clone().json()
+      if (errorData.message === 'Signature has expired') {
+        console.log('JWT期限切れを検知 - 自動ログアウトを実行')
+        
+        // 自動ログアウトを実行
+        if (autoLogoutCallback) {
+          autoLogoutCallback()
+        }
+        
+        // カスタムエラーを投げる
+        throw new Error('JWT_EXPIRED')
+      }
+    } catch (jsonError) {
+      // JSONパースに失敗した場合は通常のレスポンスとして処理
+      if (jsonError instanceof Error && jsonError.message === 'JWT_EXPIRED') {
+        throw jsonError
+      }
+    }
+  }
+
+  return response
 }
 
 // ログアウトAPI呼び出し関数

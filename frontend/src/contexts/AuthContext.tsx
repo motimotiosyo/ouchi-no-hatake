@@ -1,7 +1,8 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { authenticatedApiCall } from '@/lib/api'
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
+import { useRouter } from 'next/navigation'
+import { authenticatedApiCall, setAutoLogoutCallback } from '@/lib/api'
 
 // ユーザー情報の型定義
 interface User {
@@ -19,6 +20,8 @@ interface AuthContextType {
   login: (token: string, user: User) => void
   logout: () => void
   setToken: (token: string | null) => void
+  autoLogoutMessage: string | null
+  clearAutoLogoutMessage: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -66,9 +69,11 @@ const deleteCookie = (name: string) => {
 
 // AuthProvider コンポーネント
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [autoLogoutMessage, setAutoLogoutMessage] = useState<string | null>(null)
 
   // ページ読み込み時にlocalStorageからトークンを復元
   useEffect(() => {
@@ -145,7 +150,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setCookie('auth_token', newToken, 7)
   }
 
-  // ログアウト関数
+  // 通常のログアウト関数
   const logout = async () => {
     console.log('ログアウト開始 - Cookie削除前:', document.cookie)
     
@@ -166,6 +171,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  // JWT期限切れ時の自動ログアウト関数（useCallbackでメモ化）
+  const autoLogout = useCallback(async () => {
+    console.log('JWT期限切れによる自動ログアウト開始')
+    
+    try {
+      // API呼び出しは行わない（既にトークンが無効なため）
+      setToken(null)
+      setUser(null)
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('auth_user')
+      deleteCookie('auth_token')
+      
+      // ユーザーへのメッセージ設定
+      setAutoLogoutMessage('セッションの有効期限が切れました。再度ログインしてください。')
+      
+      // ログイン画面へリダイレクト
+      router.push('/login')
+      
+      console.log('自動ログアウト完了')
+    } catch (error) {
+      console.error('Auto logout error:', error)
+    }
+  }, [router])
+
+  // メッセージクリア関数
+  const clearAutoLogoutMessage = () => {
+    setAutoLogoutMessage(null)
+  }
+
+  // 初期化時にAPI.tsにコールバックを設定
+  useEffect(() => {
+    setAutoLogoutCallback(autoLogout)
+  }, [autoLogout])
+
   const value = {
     user,
     token,
@@ -173,7 +212,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLoading,
     login,
     logout,
-    setToken
+    setToken,
+    autoLogoutMessage,
+    clearAutoLogoutMessage
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

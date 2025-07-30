@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { useApi } from '@/hooks/useApi'
 import GrowthRecordCard from './GrowthRecordCard'
 import CreateGrowthRecordModal from './CreateGrowthRecordModal'
-import { API_BASE_URL } from '@/lib/api'
 
 interface GrowthRecord {
   id: number
@@ -31,38 +31,21 @@ interface PaginationInfo {
 }
 
 export default function GrowthRecordList() {
-  const { token } = useAuth()
+  const { user } = useAuth()
+  const { authenticatedCall, loading, error } = useApi()
   const [growthRecords, setGrowthRecords] = useState<GrowthRecord[]>([])
-  const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [pagination, setPagination] = useState<PaginationInfo | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const observer = useRef<IntersectionObserver | null>(null)
 
   const fetchGrowthRecords = useCallback(async (page: number = 1, append: boolean = false) => {
     try {
-      if (page === 1) {
-        setLoading(true)
-      } else {
+      if (page > 1) {
         setLoadingMore(true)
       }
       
-      const response = await fetch(`${API_BASE_URL}/api/v1/growth_records?page=${page}&per_page=10`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      })
-      
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error('API Error Response:', response.status, errorText)
-        throw new Error(`Failed to fetch growth records: ${response.status} ${errorText}`)
-      }
-      
-      const data = await response.json()
+      const data = await authenticatedCall(`/api/v1/growth_records?page=${page}&per_page=10`)
       
       if (data.growth_records && data.pagination) {
         if (append) {
@@ -73,13 +56,11 @@ export default function GrowthRecordList() {
         setPagination(data.pagination)
       }
     } catch (err) {
-      setError('成長記録を読み込めませんでした')
       console.error('Error fetching growth records:', err)
     } finally {
-      setLoading(false)
       setLoadingMore(false)
     }
-  }, [token])
+  }, [authenticatedCall])
 
   const lastRecordElementRef = useCallback((node: HTMLDivElement | null) => {
     if (loading || loadingMore) return
@@ -95,10 +76,10 @@ export default function GrowthRecordList() {
   }, [loading, loadingMore, pagination, fetchGrowthRecords])
 
   useEffect(() => {
-    if (token) {
+    if (user) {
       fetchGrowthRecords()
     }
-  }, [token, fetchGrowthRecords])
+  }, [user, fetchGrowthRecords])
 
   const handleCreateSuccess = () => {
     // 成長記録作成成功時に一覧を再取得
