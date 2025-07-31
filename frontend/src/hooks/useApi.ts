@@ -4,7 +4,7 @@ import { authenticatedApiCall, apiCall } from '@/lib/api'
 
 // 認証付きAPI呼び出し用のカスタムフック（強化版）
 export function useApi() {
-  const { token } = useAuth()
+  const { token, checkTokenValidity } = useAuth()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -12,6 +12,12 @@ export function useApi() {
   const authenticatedCall = useCallback(async (endpoint: string, options: RequestInit = {}) => {
     if (!token) {
       setError('認証トークンがありません')
+      return null
+    }
+
+    // JWT有効性を事前チェック
+    if (!checkTokenValidity()) {
+      setError('認証の有効期限が切れています')
       return null
     }
 
@@ -37,7 +43,7 @@ export function useApi() {
     } finally {
       setLoading(false)
     }
-  }, [token])
+  }, [token, checkTokenValidity])
 
   // ログアウトAPI専用関数
   const logout = useCallback(async () => {

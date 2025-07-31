@@ -38,7 +38,7 @@ interface PaginationInfo {
 }
 
 export default function Timeline() {
-  const { user } = useAuth()
+  const { user, checkTokenValidity } = useAuth()
   const { publicCall, loading, error } = usePublicApi()
   const [posts, setPosts] = useState<Post[]>([])
   const [loadingMore, setLoadingMore] = useState(false)
@@ -54,7 +54,7 @@ export default function Timeline() {
       
       const data = await publicCall(`/api/v1/posts?page=${page}&per_page=10`)
       
-      if (data.posts && data.pagination) {
+      if (data && data.posts && data.pagination) {
         if (append) {
           setPosts(prev => [...prev, ...data.posts])
         } else {
@@ -89,6 +89,14 @@ export default function Timeline() {
   const handleCreateSuccess = () => {
     // 投稿作成成功時にタイムラインを再取得
     fetchPosts()
+  }
+
+  const handleCreateButtonClick = () => {
+    // JWT有効性を事前チェック
+    if (!checkTokenValidity()) {
+      return // 自動ログアウトが実行されるため処理中断
+    }
+    setIsCreateModalOpen(true)
   }
 
   if (loading) {
@@ -152,7 +160,7 @@ export default function Timeline() {
         <div className="fixed bottom-28 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4 pointer-events-none z-40">
           <div className="flex justify-end">
             <button
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={handleCreateButtonClick}
               className="w-14 h-14 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center pointer-events-auto"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

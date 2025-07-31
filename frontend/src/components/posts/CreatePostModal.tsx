@@ -50,7 +50,7 @@ export default function CreatePostModal({
   editData, 
   preselectedGrowthRecordId 
 }: Props) {
-  const { } = useAuth()
+  const { checkTokenValidity } = useAuth()
   const { authenticatedCall, loading, error, clearError } = useApi()
   const [growthRecords, setGrowthRecords] = useState<GrowthRecord[]>([])
 
@@ -104,6 +104,11 @@ export default function CreatePostModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     clearError()
+
+    // JWT有効性を事前チェック
+    if (!checkTokenValidity()) {
+      return // 自動ログアウトが実行されるため処理中断
+    }
 
     try {
       const isEditMode = !!editData

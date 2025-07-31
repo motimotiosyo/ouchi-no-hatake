@@ -22,6 +22,8 @@ interface AuthContextType {
   setToken: (token: string | null) => void
   autoLogoutMessage: string | null
   clearAutoLogoutMessage: () => void
+  checkTokenValidity: () => boolean
+  updateLastActivity: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -122,7 +124,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setToken(cookieToken)
         localStorage.setItem('auth_token', cookieToken)
       } else {
-        console.log('認証情報なし')
+        console.log('認証情報なし - ユーザー情報もクリア')
+        // トークンがない場合はユーザー情報もクリア
+        localStorage.removeItem('auth_user')
+        setUser(null)
+        setToken(null)
       }
       
       console.log('認証初期化完了 - isLoadingをfalseに設定')
@@ -147,6 +153,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(newUser)
     localStorage.setItem('auth_token', newToken)
     localStorage.setItem('auth_user', JSON.stringify(newUser))
+    localStorage.setItem('last_activity', Date.now().toString()) // 初回アクティビティ記録
     setCookie('auth_token', newToken, 7)
   }
 
@@ -165,6 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null)
       localStorage.removeItem('auth_token')
       localStorage.removeItem('auth_user')
+      localStorage.removeItem('last_activity')
       deleteCookie('auth_token')
       
       console.log('ログアウト完了 - Cookie削除後:', document.cookie)
@@ -181,6 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null)
       localStorage.removeItem('auth_token')
       localStorage.removeItem('auth_user')
+      localStorage.removeItem('last_activity')
       deleteCookie('auth_token')
       
       // ユーザーへのメッセージ設定
@@ -200,6 +209,77 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAutoLogoutMessage(null)
   }
 
+  // 最終活動日時を更新する関数
+  const updateLastActivity = useCallback(() => {
+    localStorage.setItem('last_activity', Date.now().toString())
+  }, [])
+
+  // 非アクティブ期間をチェックする関数（6ヶ月）
+  const checkInactivity = useCallback(() => {
+    const lastActivity = localStorage.getItem('last_activity')
+    if (!lastActivity) {
+      // 初回の場合は現在時刻を設定
+      updateLastActivity()
+      return true
+    }
+    
+    const sixMonthsInMs = 6 * 30 * 24 * 60 * 60 * 1000 // 6ヶ月（ミリ秒）
+    const inactiveTime = Date.now() - parseInt(lastActivity)
+    
+    if (inactiveTime > sixMonthsInMs) {
+      console.log('6ヶ月間非アクティブのため自動ログアウト')
+      return false
+    }
+    
+    return true
+  }, [updateLastActivity])
+
+  // 認証有効性チェック関数（JWT期限 + アクティビティ）
+  const checkTokenValidity = useCallback(() => {
+    // 常にlocalStorageから最新のトークンを取得
+    const currentToken = localStorage.getItem('auth_token')
+    
+    if (!currentToken) {
+      console.log('トークンなし - ユーザー情報をクリア')
+      // トークンがない場合は即座にユーザー情報もクリア
+      setUser(null)
+      setToken(null)
+      localStorage.removeItem('auth_user')
+      localStorage.removeItem('last_activity')
+      return false
+    }
+
+    // アクティビティチェック（6ヶ月間非アクティブ）
+    if (!checkInactivity()) {
+      console.log('長期間非アクティブのため自動ログアウト')
+      autoLogout()
+      return false
+    }
+
+    try {
+      // JWTトークンをデコード（Base64）
+      const payload = JSON.parse(atob(currentToken.split('.')[1]))
+      const currentTime = Math.floor(Date.now() / 1000)
+      
+      // 有効期限をチェック
+      if (payload.exp && payload.exp < currentTime) {
+        console.log('JWT期限切れを事前検知 - 自動ログアウトを実行')
+        autoLogout()
+        return false
+      }
+      
+      // 有効な操作なので最終活動日時を更新
+      updateLastActivity()
+      
+      return true
+    } catch (error) {
+      console.error('JWT解析エラー:', error)
+      // 解析に失敗した場合は無効とみなす
+      autoLogout()
+      return false
+    }
+  }, [token, autoLogout, checkInactivity, updateLastActivity])
+
   // 初期化時にAPI.tsにコールバックを設定
   useEffect(() => {
     setAutoLogoutCallback(autoLogout)
@@ -208,13 +288,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value = {
     user,
     token,
-    isAuthenticated: !!user,  // userがあれば認証済み
+    isAuthenticated: !!user && !!token,  // userとtokenの両方があれば認証済み
     isLoading,
     login,
     logout,
     setToken,
     autoLogoutMessage,
-    clearAutoLogoutMessage
+    clearAutoLogoutMessage,
+    checkTokenValidity,
+    updateLastActivity
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

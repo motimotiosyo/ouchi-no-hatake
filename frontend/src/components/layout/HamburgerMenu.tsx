@@ -10,12 +10,17 @@ interface HamburgerMenuProps {
 }
 
 export default function HamburgerMenu({ isOpen, onClose }: HamburgerMenuProps) {
-  const { user } = useAuth()
+  const { user, checkTokenValidity } = useAuth()
   const { logout } = useApi()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   
 
   const handleLogout = async () => {
+    // JWT有効性を事前チェック（期限切れでもログアウトは実行）
+    if (!checkTokenValidity()) {
+      console.log('JWT期限切れでもログアウト処理を継続')
+    }
+    
     try {
       setIsLoggingOut(true)
       console.log('ログアウト開始')

@@ -31,7 +31,7 @@ interface PaginationInfo {
 }
 
 export default function GrowthRecordList() {
-  const { user } = useAuth()
+  const { user, checkTokenValidity } = useAuth()
   const { authenticatedCall, loading, error } = useApi()
   const [growthRecords, setGrowthRecords] = useState<GrowthRecord[]>([])
   const [loadingMore, setLoadingMore] = useState(false)
@@ -86,6 +86,14 @@ export default function GrowthRecordList() {
     fetchGrowthRecords()
   }
 
+  const handleCreateButtonClick = () => {
+    // JWT有効性を事前チェック
+    if (!checkTokenValidity()) {
+      return // 自動ログアウトが実行されるため処理中断
+    }
+    setIsModalOpen(true)
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -107,7 +115,7 @@ export default function GrowthRecordList() {
       {/* 記録を始めるボタン */}
       <div className="flex justify-center mb-6">
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={handleCreateButtonClick}
           className="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
         >
           ＋ 記録を始める

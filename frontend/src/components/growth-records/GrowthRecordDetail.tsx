@@ -45,7 +45,7 @@ interface Props {
 }
 
 export default function GrowthRecordDetail({ id }: Props) {
-  const { user } = useAuth()
+  const { user, checkTokenValidity } = useAuth()
   const { authenticatedCall, loading, error } = useApi()
   const router = useRouter()
   const [growthRecord, setGrowthRecord] = useState<GrowthRecord | null>(null)
@@ -116,6 +116,28 @@ export default function GrowthRecordDetail({ id }: Props) {
       default:
         return 'bg-gray-100 text-gray-800'
     }
+  }
+
+  // JWT有効性チェック付きボタンハンドラー
+  const handleEditButtonClick = () => {
+    if (!checkTokenValidity()) {
+      return // 自動ログアウトが実行されるため処理中断
+    }
+    setIsEditModalOpen(true)
+  }
+
+  const handleDeleteButtonClick = () => {
+    if (!checkTokenValidity()) {
+      return // 自動ログアウトが実行されるため処理中断
+    }
+    setIsDeleteDialogOpen(true)
+  }
+
+  const handleCreatePostButtonClick = () => {
+    if (!checkTokenValidity()) {
+      return // 自動ログアウトが実行されるため処理中断
+    }
+    setIsCreatePostModalOpen(true)
   }
 
   const formatDate = (dateString: string) => {
@@ -199,13 +221,13 @@ export default function GrowthRecordDetail({ id }: Props) {
           {user && user.id === growthRecord.user.id && (
             <div className="flex space-x-2">
               <button
-                onClick={() => setIsEditModalOpen(true)}
+                onClick={handleEditButtonClick}
                 className="px-4 py-2 text-sm text-orange-600 bg-orange-50 rounded hover:bg-orange-100 transition-colors"
               >
                 編集
               </button>
               <button
-                onClick={() => setIsDeleteDialogOpen(true)}
+                onClick={handleDeleteButtonClick}
                 className="px-4 py-2 text-sm text-red-600 bg-red-50 rounded hover:bg-red-100 transition-colors"
               >
                 削除
@@ -246,7 +268,7 @@ export default function GrowthRecordDetail({ id }: Props) {
           </h2>
           {user && user.id === growthRecord.user.id && (
             <button
-              onClick={() => setIsCreatePostModalOpen(true)}
+              onClick={handleCreatePostButtonClick}
               className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-md transition-colors"
             >
               ＋ 成長メモを作成

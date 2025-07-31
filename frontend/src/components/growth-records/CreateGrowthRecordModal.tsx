@@ -28,7 +28,7 @@ interface Props {
 }
 
 export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, editData }: Props) {
-  const { } = useAuth()
+  const { checkTokenValidity } = useAuth()
   const { authenticatedCall, loading, error, clearError } = useApi()
   const { publicCall } = usePublicApi()
   const [plants, setPlants] = useState<Plant[]>([])
@@ -77,6 +77,11 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     clearError()
+
+    // JWT有効性を事前チェック
+    if (!checkTokenValidity()) {
+      return // 自動ログアウトが実行されるため処理中断
+    }
 
     try {
       const isEditMode = !!editData

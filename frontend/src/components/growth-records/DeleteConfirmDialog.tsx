@@ -16,11 +16,16 @@ interface Props {
 }
 
 export default function DeleteConfirmDialog({ isOpen, onClose, onSuccess, growthRecord }: Props) {
-  const { } = useAuth()
+  const { checkTokenValidity } = useAuth()
   const { authenticatedCall, loading, error, clearError } = useApi()
 
   const handleDelete = async () => {
     clearError()
+
+    // JWT有効性を事前チェック
+    if (!checkTokenValidity()) {
+      return // 自動ログアウトが実行されるため処理中断
+    }
 
     try {
       const data = await authenticatedCall(`/api/v1/growth_records/${growthRecord.id}`, {
