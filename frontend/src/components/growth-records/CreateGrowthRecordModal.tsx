@@ -28,7 +28,7 @@ interface Props {
 }
 
 export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, editData }: Props) {
-  const { checkTokenValidity } = useAuth()
+  const { executeProtectedAsync } = useAuth()
   const { authenticatedCall, loading, error, clearError } = useApi()
   const { publicCall } = usePublicApi()
   const [plants, setPlants] = useState<Plant[]>([])
@@ -78,47 +78,44 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
     e.preventDefault()
     clearError()
 
-    // JWT有効性を事前チェック
-    if (!checkTokenValidity()) {
-      return // 自動ログアウトが実行されるため処理中断
-    }
-
-    try {
-      const isEditMode = !!editData
-      const endpoint = isEditMode 
-        ? `/api/v1/growth_records/${editData.id}`
-        : '/api/v1/growth_records'
-      
-      const method = isEditMode ? 'PUT' : 'POST'
-
-      const data = await authenticatedCall(endpoint, {
-        method: method,
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          growth_record: formData
-        })
-      })
-
-      if (data) {
-        // 成功時
-        onSuccess()
-        onClose()
+    await executeProtectedAsync(async () => {
+      try {
+        const isEditMode = !!editData
+        const endpoint = isEditMode 
+          ? `/api/v1/growth_records/${editData.id}`
+          : '/api/v1/growth_records'
         
-        // フォームリセット
-        setFormData({
-          plant_id: '',
-          record_name: '',
-          location: '',
-          started_on: '',
-          ended_on: '',
-          status: 'planning'
+        const method = isEditMode ? 'PUT' : 'POST'
+
+        const data = await authenticatedCall(endpoint, {
+          method: method,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            growth_record: formData
+          })
         })
+
+        if (data) {
+          // 成功時
+          onSuccess()
+          onClose()
+          
+          // フォームリセット
+          setFormData({
+            plant_id: '',
+            record_name: '',
+            location: '',
+            started_on: '',
+            ended_on: '',
+            status: 'planning'
+          })
+        }
+      } catch (err) {
+        console.error(`Error ${editData ? 'updating' : 'creating'} growth record:`, err)
       }
-    } catch (err) {
-      console.error(`Error ${editData ? 'updating' : 'creating'} growth record:`, err)
-    }
+    })
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {

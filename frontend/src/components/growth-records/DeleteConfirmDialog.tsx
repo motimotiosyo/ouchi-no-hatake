@@ -16,33 +16,30 @@ interface Props {
 }
 
 export default function DeleteConfirmDialog({ isOpen, onClose, onSuccess, growthRecord }: Props) {
-  const { checkTokenValidity } = useAuth()
+  const { executeProtectedAsync } = useAuth()
   const { authenticatedCall, loading, error, clearError } = useApi()
 
   const handleDelete = async () => {
     clearError()
 
-    // JWT有効性を事前チェック
-    if (!checkTokenValidity()) {
-      return // 自動ログアウトが実行されるため処理中断
-    }
+    await executeProtectedAsync(async () => {
+      try {
+        const data = await authenticatedCall(`/api/v1/growth_records/${growthRecord.id}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
 
-    try {
-      const data = await authenticatedCall(`/api/v1/growth_records/${growthRecord.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json'
+        if (data !== null) {
+          // 成功時
+          onSuccess()
+          onClose()
         }
-      })
-
-      if (data !== null) {
-        // 成功時
-        onSuccess()
-        onClose()
+      } catch (err) {
+        console.error('Error deleting growth record:', err)
       }
-    } catch (err) {
-      console.error('Error deleting growth record:', err)
-    }
+    })
   }
 
   const handleClose = () => {

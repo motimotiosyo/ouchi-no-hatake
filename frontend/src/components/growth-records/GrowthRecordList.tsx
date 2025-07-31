@@ -31,7 +31,7 @@ interface PaginationInfo {
 }
 
 export default function GrowthRecordList() {
-  const { user, checkTokenValidity } = useAuth()
+  const { user, executeProtected } = useAuth()
   const { authenticatedCall, loading, error } = useApi()
   const [growthRecords, setGrowthRecords] = useState<GrowthRecord[]>([])
   const [loadingMore, setLoadingMore] = useState(false)
@@ -87,11 +87,9 @@ export default function GrowthRecordList() {
   }
 
   const handleCreateButtonClick = () => {
-    // JWT有効性を事前チェック
-    if (!checkTokenValidity()) {
-      return // 自動ログアウトが実行されるため処理中断
-    }
-    setIsModalOpen(true)
+    executeProtected(() => {
+      setIsModalOpen(true)
+    })
   }
 
   if (loading) {

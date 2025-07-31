@@ -24,6 +24,10 @@ interface AuthContextType {
   clearAutoLogoutMessage: () => void
   checkTokenValidity: () => boolean
   updateLastActivity: () => void
+  executeProtected: (action: () => void) => void
+  executeProtectedAsync: (action: () => Promise<void>) => Promise<void>
+  showAutoLogoutModal: boolean
+  confirmAutoLogout: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -76,6 +80,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [autoLogoutMessage, setAutoLogoutMessage] = useState<string | null>(null)
+  const [showAutoLogoutModal, setShowAutoLogoutModal] = useState(false)
 
   // ページ読み込み時にlocalStorageからトークンを復元
   useEffect(() => {
@@ -192,22 +197,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('last_activity')
       deleteCookie('auth_token')
       
-      // ユーザーへのメッセージ設定
+      // ユーザーへのメッセージ設定とモーダル表示
       setAutoLogoutMessage('セッションの有効期限が切れました。再度ログインしてください。')
+      setShowAutoLogoutModal(true)
       
-      // ログイン画面へリダイレクト
-      router.push('/login')
-      
-      console.log('自動ログアウト完了')
+      console.log('自動ログアウト処理完了（モーダル表示中）')
     } catch (error) {
       console.error('Auto logout error:', error)
     }
-  }, [router])
+  }, [])
 
   // メッセージクリア関数
   const clearAutoLogoutMessage = () => {
     setAutoLogoutMessage(null)
   }
+
+  // 自動ログアウト確認関数
+  const confirmAutoLogout = useCallback(() => {
+    setShowAutoLogoutModal(false)
+    setAutoLogoutMessage(null)
+    // ログイン画面へリダイレクト
+    router.push('/login')
+  }, [router])
 
   // 最終活動日時を更新する関数
   const updateLastActivity = useCallback(() => {
@@ -240,12 +251,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const currentToken = localStorage.getItem('auth_token')
     
     if (!currentToken) {
-      console.log('トークンなし - ユーザー情報をクリア')
-      // トークンがない場合は即座にユーザー情報もクリア
-      setUser(null)
-      setToken(null)
-      localStorage.removeItem('auth_user')
-      localStorage.removeItem('last_activity')
+      console.log('トークンなし - 自動ログアウトを実行')
+      // トークンがない場合は自動ログアウト処理を実行
+      autoLogout()
       return false
     }
 
@@ -278,7 +286,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       autoLogout()
       return false
     }
-  }, [token, autoLogout, checkInactivity, updateLastActivity])
+  }, [autoLogout, checkInactivity, updateLastActivity])
+
+  // 認証チェック付きで操作を実行
+  const executeProtected = useCallback((action: () => void) => {
+    if (!checkTokenValidity()) {
+      return // 自動ログアウトが実行されるため処理中断
+    }
+    action()
+  }, [checkTokenValidity])
+
+  // 認証チェック付きで非同期操作を実行
+  const executeProtectedAsync = useCallback(async (action: () => Promise<void>) => {
+    if (!checkTokenValidity()) {
+      return // 自動ログアウトが実行されるため処理中断
+    }
+    await action()
+  }, [checkTokenValidity])
 
   // 初期化時にAPI.tsにコールバックを設定
   useEffect(() => {
@@ -296,7 +320,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     autoLogoutMessage,
     clearAutoLogoutMessage,
     checkTokenValidity,
-    updateLastActivity
+    updateLastActivity,
+    executeProtected,
+    executeProtectedAsync,
+    showAutoLogoutModal,
+    confirmAutoLogout
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

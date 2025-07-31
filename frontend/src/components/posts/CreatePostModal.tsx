@@ -50,7 +50,7 @@ export default function CreatePostModal({
   editData, 
   preselectedGrowthRecordId 
 }: Props) {
-  const { checkTokenValidity } = useAuth()
+  const { executeProtectedAsync } = useAuth()
   const { authenticatedCall, loading, error, clearError } = useApi()
   const [growthRecords, setGrowthRecords] = useState<GrowthRecord[]>([])
 
@@ -105,43 +105,40 @@ export default function CreatePostModal({
     e.preventDefault()
     clearError()
 
-    // JWT有効性を事前チェック
-    if (!checkTokenValidity()) {
-      return // 自動ログアウトが実行されるため処理中断
-    }
+    await executeProtectedAsync(async () => {
+      try {
+        const isEditMode = !!editData
+        const endpoint = isEditMode 
+          ? `/api/v1/posts/${editData.id}`
+          : '/api/v1/posts'
+        
+        const method = isEditMode ? 'PUT' : 'POST'
 
-    try {
-      const isEditMode = !!editData
-      const endpoint = isEditMode 
-        ? `/api/v1/posts/${editData.id}`
-        : '/api/v1/posts'
-      
-      const method = isEditMode ? 'PUT' : 'POST'
-
-      const data = await authenticatedCall(endpoint, {
-        method: method,
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          post: {
-            title: formData.title,
-            content: formData.content,
-            growth_record_id: formData.growth_record_id ? parseInt(formData.growth_record_id) : null,
-            category_id: formData.post_type === 'growth_record_post' ? parseInt(formData.category_id) : null,
-            post_type: formData.post_type
-          }
+        const data = await authenticatedCall(endpoint, {
+          method: method,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            post: {
+              title: formData.title,
+              content: formData.content,
+              growth_record_id: formData.growth_record_id ? parseInt(formData.growth_record_id) : null,
+              category_id: formData.post_type === 'growth_record_post' ? parseInt(formData.category_id) : null,
+              post_type: formData.post_type
+            }
+          })
         })
-      })
 
-      if (data) {
-        // 成功時
-        onSuccess()
-        handleClose()
+        if (data) {
+          // 成功時
+          onSuccess()
+          handleClose()
+        }
+      } catch (err) {
+        console.error(`Error ${editData ? 'updating' : 'creating'} post:`, err)
       }
-    } catch (err) {
-      console.error(`Error ${editData ? 'updating' : 'creating'} post:`, err)
-    }
+    })
   }
 
   const handleClose = () => {

@@ -45,7 +45,7 @@ interface Props {
 }
 
 export default function GrowthRecordDetail({ id }: Props) {
-  const { user, checkTokenValidity } = useAuth()
+  const { user, executeProtected } = useAuth()
   const { authenticatedCall, loading, error } = useApi()
   const router = useRouter()
   const [growthRecord, setGrowthRecord] = useState<GrowthRecord | null>(null)
@@ -118,26 +118,22 @@ export default function GrowthRecordDetail({ id }: Props) {
     }
   }
 
-  // JWT有効性チェック付きボタンハンドラー
   const handleEditButtonClick = () => {
-    if (!checkTokenValidity()) {
-      return // 自動ログアウトが実行されるため処理中断
-    }
-    setIsEditModalOpen(true)
+    executeProtected(() => {
+      setIsEditModalOpen(true)
+    })
   }
 
   const handleDeleteButtonClick = () => {
-    if (!checkTokenValidity()) {
-      return // 自動ログアウトが実行されるため処理中断
-    }
-    setIsDeleteDialogOpen(true)
+    executeProtected(() => {
+      setIsDeleteDialogOpen(true)
+    })
   }
 
   const handleCreatePostButtonClick = () => {
-    if (!checkTokenValidity()) {
-      return // 自動ログアウトが実行されるため処理中断
-    }
-    setIsCreatePostModalOpen(true)
+    executeProtected(() => {
+      setIsCreatePostModalOpen(true)
+    })
   }
 
   const formatDate = (dateString: string) => {

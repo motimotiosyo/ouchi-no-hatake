@@ -38,7 +38,7 @@ interface PaginationInfo {
 }
 
 export default function Timeline() {
-  const { user, checkTokenValidity } = useAuth()
+  const { user, executeProtected } = useAuth()
   const { publicCall, loading, error } = usePublicApi()
   const [posts, setPosts] = useState<Post[]>([])
   const [loadingMore, setLoadingMore] = useState(false)
@@ -92,11 +92,9 @@ export default function Timeline() {
   }
 
   const handleCreateButtonClick = () => {
-    // JWT有効性を事前チェック
-    if (!checkTokenValidity()) {
-      return // 自動ログアウトが実行されるため処理中断
-    }
-    setIsCreateModalOpen(true)
+    executeProtected(() => {
+      setIsCreateModalOpen(true)
+    })
   }
 
   if (loading) {
