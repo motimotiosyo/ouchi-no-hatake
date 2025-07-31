@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { API_BASE_URL } from '@/lib/api'
+import { useApi } from '@/hooks/useApi'
 
 interface GrowthRecord {
   id: number
@@ -50,10 +50,9 @@ export default function CreatePostModal({
   editData, 
   preselectedGrowthRecordId 
 }: Props) {
-  const { token } = useAuth()
+  const { executeProtectedAsync } = useAuth()
+  const { authenticatedCall, loading, error, clearError } = useApi()
   const [growthRecords, setGrowthRecords] = useState<GrowthRecord[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   // フォーム状態
   const [formData, setFormData] = useState({
@@ -63,6 +62,18 @@ export default function CreatePostModal({
     category_id: '',
     post_type: 'growth_record_post' as 'growth_record_post' | 'general_post'
   })
+
+  const fetchGrowthRecords = useCallback(async () => {
+    try {
+      const data = await authenticatedCall('/api/v1/growth_records?per_page=100')
+      
+      if (data) {
+        setGrowthRecords(data.growth_records || [])
+      }
+    } catch (err) {
+      console.error('Error fetching growth records:', err)
+    }
+  }, [authenticatedCall])
 
   // データ取得とフォーム初期化
   useEffect(() => {
@@ -87,72 +98,47 @@ export default function CreatePostModal({
         }))
       }
     }
-  }, [isOpen, editData, preselectedGrowthRecordId])
-
-  const fetchGrowthRecords = useCallback(async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/growth_records?per_page=100`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        setGrowthRecords(data.growth_records || [])
-      }
-    } catch (err) {
-      console.error('Error fetching growth records:', err)
-    }
-  }, [token])
+  }, [isOpen, editData, preselectedGrowthRecordId, fetchGrowthRecords])
 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
-    setError(null)
+    clearError()
 
-    try {
-      const isEditMode = !!editData
-      const url = isEditMode 
-        ? `${API_BASE_URL}/api/v1/posts/${editData.id}`
-        : `${API_BASE_URL}/api/v1/posts`
-      
-      const method = isEditMode ? 'PUT' : 'POST'
+    await executeProtectedAsync(async () => {
+      try {
+        const isEditMode = !!editData
+        const endpoint = isEditMode 
+          ? `/api/v1/posts/${editData.id}`
+          : '/api/v1/posts'
+        
+        const method = isEditMode ? 'PUT' : 'POST'
 
-      const response = await fetch(url, {
-        method: method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          post: {
-            title: formData.title,
-            content: formData.content,
-            growth_record_id: formData.growth_record_id ? parseInt(formData.growth_record_id) : null,
-            category_id: formData.post_type === 'growth_record_post' ? parseInt(formData.category_id) : null,
-            post_type: formData.post_type
-          }
+        const data = await authenticatedCall(endpoint, {
+          method: method,
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            post: {
+              title: formData.title,
+              content: formData.content,
+              growth_record_id: formData.growth_record_id ? parseInt(formData.growth_record_id) : null,
+              category_id: formData.post_type === 'growth_record_post' ? parseInt(formData.category_id) : null,
+              post_type: formData.post_type
+            }
+          })
         })
-      })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || `投稿の${isEditMode ? '更新' : '作成'}に失敗しました`)
+        if (data) {
+          // 成功時
+          onSuccess()
+          handleClose()
+        }
+      } catch (err) {
+        console.error(`Error ${editData ? 'updating' : 'creating'} post:`, err)
       }
-
-      // 成功時
-      onSuccess()
-      handleClose()
-    } catch (err) {
-      console.error(`Error ${editData ? 'updating' : 'creating'} post:`, err)
-      setError(err instanceof Error ? err.message : `投稿の${editData ? '更新' : '作成'}に失敗しました`)
-    } finally {
-      setLoading(false)
-    }
+    })
   }
 
   const handleClose = () => {
@@ -163,7 +149,7 @@ export default function CreatePostModal({
       category_id: '',
       post_type: 'growth_record_post'
     })
-    setError(null)
+    clearError()
     onClose()
   }
 

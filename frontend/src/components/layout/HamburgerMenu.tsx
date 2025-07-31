@@ -16,6 +16,7 @@ export default function HamburgerMenu({ isOpen, onClose }: HamburgerMenuProps) {
   
 
   const handleLogout = async () => {
+    // ログアウトはJWT期限切れでも実行するため、直接処理
     try {
       setIsLoggingOut(true)
       console.log('ログアウト開始')

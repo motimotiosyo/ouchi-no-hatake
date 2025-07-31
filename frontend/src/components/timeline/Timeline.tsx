@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import TimelinePost from './TimelinePost'
 import CreatePostModal from '../posts/CreatePostModal'
 import { useAuth } from '@/contexts/AuthContext'
-import { API_BASE_URL } from '@/lib/api'
+import { usePublicApi } from '@/hooks/useApi'
 
 interface Post {
   id: number
@@ -38,40 +38,23 @@ interface PaginationInfo {
 }
 
 export default function Timeline() {
-  const { user } = useAuth()
+  const { user, executeProtected } = useAuth()
+  const { publicCall, loading, error } = usePublicApi()
   const [posts, setPosts] = useState<Post[]>([])
-  const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const [pagination, setPagination] = useState<PaginationInfo | null>(null)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const observer = useRef<IntersectionObserver | null>(null)
 
-  const fetchPosts = async (page: number = 1, append: boolean = false) => {
+  const fetchPosts = useCallback(async (page: number = 1, append: boolean = false) => {
     try {
-      if (page === 1) {
-        setLoading(true)
-      } else {
+      if (page > 1) {
         setLoadingMore(true)
       }
       
-      // 認証なしでもアクセス可能にするため、直接fetchを使用
-      const response = await fetch(`${API_BASE_URL}/api/v1/posts?page=${page}&per_page=10`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      })
+      const data = await publicCall(`/api/v1/posts?page=${page}&per_page=10`)
       
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error('API Error Response:', response.status, errorText)
-        throw new Error(`Failed to fetch posts: ${response.status} ${errorText}`)
-      }
-      
-      const data = await response.json()
-      
-      if (data.posts && data.pagination) {
+      if (data && data.posts && data.pagination) {
         if (append) {
           setPosts(prev => [...prev, ...data.posts])
         } else {
@@ -80,14 +63,11 @@ export default function Timeline() {
         setPagination(data.pagination)
       }
     } catch (err) {
-      setError('投稿を読み込めませんでした')
       console.error('Error fetching posts:', err)
-      console.error('Full error details:', err)
     } finally {
-      setLoading(false)
       setLoadingMore(false)
     }
-  }
+  }, [publicCall])
 
   const lastPostElementRef = useCallback((node: HTMLDivElement | null) => {
     if (loading || loadingMore) return
@@ -100,15 +80,21 @@ export default function Timeline() {
     })
     
     if (node) observer.current.observe(node)
-  }, [loading, loadingMore, pagination])
+  }, [loading, loadingMore, pagination, fetchPosts])
 
   useEffect(() => {
     fetchPosts()
-  }, [])
+  }, [fetchPosts])
 
   const handleCreateSuccess = () => {
     // 投稿作成成功時にタイムラインを再取得
     fetchPosts()
+  }
+
+  const handleCreateButtonClick = () => {
+    executeProtected(() => {
+      setIsCreateModalOpen(true)
+    })
   }
 
   if (loading) {
@@ -172,7 +158,7 @@ export default function Timeline() {
         <div className="fixed bottom-28 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4 pointer-events-none z-40">
           <div className="flex justify-end">
             <button
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={handleCreateButtonClick}
               className="w-14 h-14 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center pointer-events-auto"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

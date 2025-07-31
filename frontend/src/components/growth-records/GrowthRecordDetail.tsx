@@ -3,10 +3,10 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import { useApi } from '@/hooks/useApi'
 import CreateGrowthRecordModal from './CreateGrowthRecordModal'
 import DeleteConfirmDialog from './DeleteConfirmDialog'
 import CreatePostModal from '../posts/CreatePostModal'
-import { API_BASE_URL } from '@/lib/api'
 
 interface GrowthRecord {
   id: number
@@ -45,51 +45,27 @@ interface Props {
 }
 
 export default function GrowthRecordDetail({ id }: Props) {
-  const { token, user } = useAuth()
+  const { user, executeProtected } = useAuth()
+  const { authenticatedCall, loading, error } = useApi()
   const router = useRouter()
   const [growthRecord, setGrowthRecord] = useState<GrowthRecord | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false)
 
   const fetchGrowthRecord = useCallback(async () => {
     try {
-      setLoading(true)
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json'
-      }
+      const data = await authenticatedCall(`/api/v1/growth_records/${id}`)
       
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`
+      if (data) {
+        setGrowthRecord(data.growth_record)
+        setPosts(data.posts || [])
       }
-
-      const response = await fetch(`${API_BASE_URL}/api/v1/growth_records/${id}`, {
-        method: 'GET',
-        headers
-      })
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          setError('成長記録が見つかりません')
-        } else {
-          setError('成長記録の取得に失敗しました')
-        }
-        return
-      }
-
-      const data = await response.json()
-      setGrowthRecord(data.growth_record)
-      setPosts(data.posts || [])
     } catch (err) {
       console.error('Error fetching growth record:', err)
-      setError('成長記録の取得に失敗しました')
-    } finally {
-      setLoading(false)
     }
-  }, [id, token])
+  }, [id, authenticatedCall])
 
   useEffect(() => {
     fetchGrowthRecord()
@@ -140,6 +116,24 @@ export default function GrowthRecordDetail({ id }: Props) {
       default:
         return 'bg-gray-100 text-gray-800'
     }
+  }
+
+  const handleEditButtonClick = () => {
+    executeProtected(() => {
+      setIsEditModalOpen(true)
+    })
+  }
+
+  const handleDeleteButtonClick = () => {
+    executeProtected(() => {
+      setIsDeleteDialogOpen(true)
+    })
+  }
+
+  const handleCreatePostButtonClick = () => {
+    executeProtected(() => {
+      setIsCreatePostModalOpen(true)
+    })
   }
 
   const formatDate = (dateString: string) => {
@@ -223,13 +217,13 @@ export default function GrowthRecordDetail({ id }: Props) {
           {user && user.id === growthRecord.user.id && (
             <div className="flex space-x-2">
               <button
-                onClick={() => setIsEditModalOpen(true)}
+                onClick={handleEditButtonClick}
                 className="px-4 py-2 text-sm text-orange-600 bg-orange-50 rounded hover:bg-orange-100 transition-colors"
               >
                 編集
               </button>
               <button
-                onClick={() => setIsDeleteDialogOpen(true)}
+                onClick={handleDeleteButtonClick}
                 className="px-4 py-2 text-sm text-red-600 bg-red-50 rounded hover:bg-red-100 transition-colors"
               >
                 削除
@@ -270,7 +264,7 @@ export default function GrowthRecordDetail({ id }: Props) {
           </h2>
           {user && user.id === growthRecord.user.id && (
             <button
-              onClick={() => setIsCreatePostModalOpen(true)}
+              onClick={handleCreatePostButtonClick}
               className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-md transition-colors"
             >
               ＋ 成長メモを作成
