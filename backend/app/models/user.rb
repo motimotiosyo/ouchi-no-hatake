@@ -28,6 +28,22 @@ class User < ApplicationRecord
     save!
   end
 
+  # メール認証トークンが期限切れ（24時間）かどうかを確認
+  def verification_expired?
+    email_verification_sent_at && email_verification_sent_at < 24.hours.ago
+  end
+
+  # verification_expired?のエイリアス（issueの達成条件に合わせて）
+  def verification_token_expired?
+    verification_expired?
+  end
+
+  # 削除対象の未認証ユーザーを取得するスコープ（24時間経過）
+  scope :unverified_expired, -> {
+    where(email_verified: false)
+    .where('email_verification_sent_at < ?', 24.hours.ago)
+  }
+
   private
 
   def downcase_email
