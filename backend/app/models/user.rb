@@ -9,6 +9,25 @@ class User < ApplicationRecord
 
   before_save :downcase_email
 
+  # メール認証用のトークンを生成
+  def generate_email_verification_token!
+    self.email_verification_token = SecureRandom.urlsafe_base64(32)
+    self.email_verification_sent_at = Time.current
+    save!
+  end
+
+  # メール認証済みかどうかを確認
+  def email_verified?
+    email_verified
+  end
+
+  # メール認証を完了する
+  def verify_email!
+    self.email_verified = true
+    self.email_verification_token = nil
+    save!
+  end
+
   private
 
   def downcase_email
