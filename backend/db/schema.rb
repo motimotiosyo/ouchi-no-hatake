@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_07_20_120600) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_01_192831) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -125,6 +125,10 @@ ActiveRecord::Schema[7.2].define(version: 2025_07_20_120600) do
     t.text "bio"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.boolean "email_verified", default: false, null: false
+    t.string "email_verification_token"
+    t.datetime "email_verification_sent_at"
+    t.index ["email_verification_token"], name: "index_users_on_email_verification_token", unique: true
   end
 
   add_foreign_key "choice_scores", "choices"
