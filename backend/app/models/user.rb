@@ -41,7 +41,7 @@ class User < ApplicationRecord
   # 削除対象の未認証ユーザーを取得するスコープ（24時間経過）
   scope :unverified_expired, -> {
     where(email_verified: false)
-    .where('email_verification_sent_at < ?', 24.hours.ago)
+    .where("email_verification_sent_at < ?", 24.hours.ago)
   }
 
   private
