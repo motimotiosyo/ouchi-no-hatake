@@ -6,6 +6,8 @@ Rails.application.routes.draw do
       post "auth/login", to: "auth#login"
       get "auth/verify", to: "auth#verify"
       delete "auth/logout", to: "auth#logout"
+      post "auth/verify-email", to: "auth#verify_email"
+      post "auth/resend-verification", to: "auth#resend_verification"
 
       # タイムライン関連API
       resources :posts, only: [ :index, :create, :update, :destroy ]
