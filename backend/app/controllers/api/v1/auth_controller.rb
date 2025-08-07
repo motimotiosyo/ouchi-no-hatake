@@ -9,11 +9,11 @@ class Api::V1::AuthController < ApplicationController
     if user.save
       # メール認証トークンを生成
       user.generate_email_verification_token!
-      
+
       # 認証メール送信
       verification_url = "#{ENV.fetch('FRONTEND_URL', 'http://localhost:3001')}/verify-email?token=#{user.email_verification_token}"
       UserMailer.email_verification(user, verification_url).deliver_now
-      
+
       render json: {
         message: "ユーザー登録が完了しました。認証メールをご確認ください",
         requires_verification: true,
@@ -40,7 +40,7 @@ class Api::V1::AuthController < ApplicationController
     if user&.authenticate(params[:password])
       # メール認証チェック
       unless user.email_verified?
-        render json: { 
+        render json: {
           error: "メールアドレスの認証が完了していません。認証メールをご確認ください",
           requires_verification: true,
           email: user.email
@@ -123,7 +123,7 @@ class Api::V1::AuthController < ApplicationController
   # POST /api/v1/auth/verify-email
   def verify_email
     token = params[:token]
-    
+
     if token.blank?
       render json: { error: "認証トークンが提供されていません" }, status: :bad_request
       return
@@ -131,7 +131,7 @@ class Api::V1::AuthController < ApplicationController
 
     # トークンでユーザーを検索
     user = User.find_by(email_verification_token: token)
-    
+
     if user.nil?
       render json: { error: "無効な認証トークンです" }, status: :unprocessable_entity
       return
@@ -139,7 +139,7 @@ class Api::V1::AuthController < ApplicationController
 
     # 期限切れチェック（24時間）
     if user.verification_token_expired?
-      render json: { 
+      render json: {
         error: "認証トークンの有効期限が切れています。再度登録をお試しください",
         expired: true
       }, status: :unprocessable_entity
@@ -148,10 +148,10 @@ class Api::V1::AuthController < ApplicationController
 
     # メール認証を完了
     user.verify_email!
-    
+
     # JWTトークン発行
     jwt_token = JsonWebToken.encode(user_id: user.id)
-    
+
     render json: {
       message: "メールアドレスの認証が完了しました",
       token: jwt_token,
@@ -166,7 +166,7 @@ class Api::V1::AuthController < ApplicationController
   # POST /api/v1/auth/resend-verification
   def resend_verification
     email = params[:email]
-    
+
     if email.blank?
       render json: { error: "メールアドレスが提供されていません" }, status: :bad_request
       return
@@ -174,7 +174,7 @@ class Api::V1::AuthController < ApplicationController
 
     # メールアドレスでユーザーを検索
     user = User.find_by(email: email.downcase)
-    
+
     if user.nil?
       render json: { error: "指定されたメールアドレスのユーザーが見つかりません" }, status: :not_found
       return
@@ -188,11 +188,11 @@ class Api::V1::AuthController < ApplicationController
 
     # 新しい認証トークンを生成
     user.generate_email_verification_token!
-    
+
     # 認証メール再送信
     verification_url = "#{ENV.fetch('FRONTEND_URL', 'http://localhost:3001')}/verify-email?token=#{user.email_verification_token}"
     UserMailer.email_verification(user, verification_url).deliver_now
-    
+
     render json: {
       message: "認証メールを再送信しました。メールをご確認ください"
     }, status: :ok
