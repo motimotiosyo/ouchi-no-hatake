@@ -6,10 +6,12 @@ import { registerSchema, type RegisterFormData } from '@/lib/validation'
 import { apiCall } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [apiError, setApiError] = useState<string | null>(null)
+  const router = useRouter()
 
   const { login } = useAuth()
 
@@ -35,11 +37,15 @@ export default function SignupPage() {
         const result = await response.json()
         console.log('📝 新規登録成功:', result)
 
-        // useAuthのlogin関数を使ってJWT保存
-        login(result.token, result.user)
-        
-        // 新規登録成功時の遷移（フラッシュメッセージ付き）
-        window.location.href = '/?flash_message=' + encodeURIComponent('新規登録が完了しました') + '&flash_type=success'
+        // バックエンドがrequires_verification: trueを返す場合
+        if (result.requires_verification) {
+          // メール認証が必要な場合は案内画面へ遷移
+          router.push(`/signup-success?email=${encodeURIComponent(result.user.email)}`)
+        } else {
+          // 古いフロー（念のため残す）- 即座にログイン
+          login(result.token, result.user)
+          window.location.href = '/?flash_message=' + encodeURIComponent('新規登録が完了しました') + '&flash_type=success'
+        }
       } else {
         const error = await response.json()
         setApiError(error.message || '新規登録に失敗しました')
