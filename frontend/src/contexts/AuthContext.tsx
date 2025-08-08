@@ -9,6 +9,7 @@ interface User {
   id: number
   email: string
   name: string
+  email_verified?: boolean
 }
 
 // 認証コンテキストの型定義
@@ -28,6 +29,8 @@ interface AuthContextType {
   executeProtectedAsync: (action: () => Promise<void>) => Promise<void>
   showAutoLogoutModal: boolean
   confirmAutoLogout: () => void
+  verifyEmail: (token: string) => Promise<{ success: boolean; error?: string; expired?: boolean }>
+  resendVerification: (email: string) => Promise<{ success: boolean; error?: string }>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -304,6 +307,73 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await action()
   }, [checkTokenValidity])
 
+  // メール認証確認関数
+  const verifyEmail = useCallback(async (token: string): Promise<{ success: boolean; error?: string; expired?: boolean }> => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/verify-email`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        // 認証成功時はログイン状態にする
+        setToken(data.token)
+        setUser({ ...data.user, email_verified: true })
+        localStorage.setItem('auth_token', data.token)
+        localStorage.setItem('auth_user', JSON.stringify({ ...data.user, email_verified: true }))
+        setCookie('auth_token', data.token, 7)
+        return { success: true }
+      } else {
+        return { 
+          success: false, 
+          error: data.error || 'メール認証に失敗しました',
+          expired: data.expired || false
+        }
+      }
+    } catch (error) {
+      console.error('Email verification error:', error)
+      return { 
+        success: false, 
+        error: 'ネットワークエラーが発生しました' 
+      }
+    }
+  }, [])
+
+  // 認証メール再送信関数
+  const resendVerification = useCallback(async (email: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/resend-verification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        return { success: true }
+      } else {
+        return { 
+          success: false, 
+          error: data.error || '認証メールの再送信に失敗しました'
+        }
+      }
+    } catch (error) {
+      console.error('Resend verification error:', error)
+      return { 
+        success: false, 
+        error: 'ネットワークエラーが発生しました' 
+      }
+    }
+  }, [])
+
   // 初期化時にAPI.tsにコールバックを設定
   useEffect(() => {
     setAutoLogoutCallback(autoLogout)
@@ -324,7 +394,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     executeProtected,
     executeProtectedAsync,
     showAutoLogoutModal,
-    confirmAutoLogout
+    confirmAutoLogout,
+    verifyEmail,
+    resendVerification
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
