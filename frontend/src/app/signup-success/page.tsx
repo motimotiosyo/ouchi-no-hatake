@@ -37,7 +37,7 @@ export default function SignupSuccessPage() {
       } else {
         setResendMessage(result.error || '再送信に失敗しました')
       }
-    } catch (error) {
+    } catch {
       setResendMessage('予期しないエラーが発生しました')
     } finally {
       setIsResending(false)

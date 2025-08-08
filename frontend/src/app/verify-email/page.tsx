@@ -42,7 +42,7 @@ export default function VerifyEmailPage() {
           }
           setErrorMessage(result.error || '認証に失敗しました')
         }
-      } catch (error) {
+      } catch {
         setStatus('error')
         setErrorMessage('予期しないエラーが発生しました')
       }
@@ -65,7 +65,7 @@ export default function VerifyEmailPage() {
       } else {
         alert(result.error || '再送信に失敗しました')
       }
-    } catch (error) {
+    } catch {
       alert('予期しないエラーが発生しました')
     } finally {
       setIsResending(false)
