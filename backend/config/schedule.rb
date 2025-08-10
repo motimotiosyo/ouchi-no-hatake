@@ -2,7 +2,7 @@
 # Learn more: http://github.com/javan/whenever
 
 # Set environment variables
-env :PATH, ENV['PATH']
+env :PATH, ENV["PATH"]
 set :output, "/app/log/cron.log"
 
 # Define the job
