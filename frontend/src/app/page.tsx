@@ -2,9 +2,10 @@
 
 import { useAuth } from '@/contexts/AuthContext'
 import Timeline from '@/components/timeline/Timeline'
+import EmailVerificationBanner from '@/components/auth/EmailVerificationBanner'
 
 export default function HomePage() {
-  const { isLoading } = useAuth()
+  const { isLoading, user, isAuthenticated } = useAuth()
 
   if (isLoading) {
     return (
@@ -14,5 +15,13 @@ export default function HomePage() {
     )
   }
 
-  return <Timeline />
+  return (
+    <>
+      {/* メール未認証の場合の警告バナー */}
+      {isAuthenticated && user && !user.email_verified && (
+        <EmailVerificationBanner email={user.email} />
+      )}
+      <Timeline />
+    </>
+  )
 }

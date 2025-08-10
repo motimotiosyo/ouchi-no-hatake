@@ -14,6 +14,13 @@ class UserMailerTest < ActionMailer::TestCase
     assert_equal "【おうちの畑】メールアドレス認証のお願い", mail.subject
     assert_equal [ "test@example.com" ], mail.to
     assert_equal [ "ouchi.no.hatake@gmail.com" ], mail.from
-    assert_match "認証", mail.body.encoded
+
+    # マルチパートメールの場合、テキストパートを確認
+    if mail.multipart?
+      text_part = mail.text_part.body.to_s
+      assert_match /認証/, text_part
+    else
+      assert_match /認証/, mail.body.to_s
+    end
   end
 end
