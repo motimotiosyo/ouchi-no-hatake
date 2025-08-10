@@ -2,6 +2,7 @@ class ApplicationController < ActionController::API
   include ExceptionHandler
 
   before_action :authenticate_request
+  before_action :check_email_verification
 
   private
 
@@ -33,5 +34,17 @@ class ApplicationController < ActionController::API
   def current_token
     header = request.headers["Authorization"]
     header.split(" ").last if header
+  end
+
+  def check_email_verification
+    return unless @current_user
+
+    unless @current_user.email_verified?
+      render json: {
+        error: "メールアドレスの認証が完了していません。認証メールをご確認ください",
+        requires_verification: true,
+        email: @current_user.email
+      }, status: :forbidden
+    end
   end
 end

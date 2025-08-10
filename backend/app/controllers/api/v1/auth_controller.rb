@@ -1,6 +1,7 @@
 class Api::V1::AuthController < ApplicationController
   include ActionController::Cookies
   skip_before_action :authenticate_request, only: [ :register, :login, :verify, :logout, :verify_email, :resend_verification ]
+  skip_before_action :check_email_verification, only: [ :register, :login, :verify, :logout, :verify_email, :resend_verification ]
 
   # POST /api/v1/auth/register
   def register
