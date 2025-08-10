@@ -1,5 +1,6 @@
 class Api::V1::PostsController < ApplicationController
   skip_before_action :authenticate_request, only: [ :index ]
+  skip_before_action :check_email_verification, only: [ :index ]
   before_action :set_post, only: [ :update, :destroy ]
 
   def index
