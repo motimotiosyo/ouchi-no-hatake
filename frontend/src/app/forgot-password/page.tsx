@@ -38,7 +38,7 @@ export default function ForgotPasswordPage() {
         const errorData = await response.json()
         setApiError(errorData.error || 'パスワードリセットの申請に失敗しました')
       }
-    } catch (error) {
+    } catch {
       setApiError('ネットワークエラーが発生しました')
     } finally {
       setIsLoading(false)
