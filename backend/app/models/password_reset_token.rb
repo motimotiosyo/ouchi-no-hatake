@@ -10,11 +10,11 @@ class PasswordResetToken < ApplicationRecord
   def self.generate_for_email(email)
     # 既存の同一メールアドレスのトークンを削除
     where(email: email.downcase).destroy_all
-    
+
     # 新しいトークンを生成
     token = SecureRandom.urlsafe_base64(32)
     expires_at = TOKEN_EXPIRY_HOURS.hours.from_now
-    
+
     create!(
       email: email.downcase,
       token: token,
@@ -40,7 +40,7 @@ class PasswordResetToken < ApplicationRecord
   end
 
   # 期限切れトークンを削除するスコープ
-  scope :expired, -> { where('expires_at < ?', Time.current) }
+  scope :expired, -> { where("expires_at < ?", Time.current) }
 
   # 期限切れトークンをクリーンアップ
   def self.cleanup_expired
