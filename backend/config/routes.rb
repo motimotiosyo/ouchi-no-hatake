@@ -8,6 +8,8 @@ Rails.application.routes.draw do
       delete "auth/logout", to: "auth#logout"
       post "auth/verify-email", to: "auth#verify_email"
       post "auth/resend-verification", to: "auth#resend_verification"
+      post "auth/forgot_password", to: "auth#forgot_password"
+      put "auth/reset_password", to: "auth#reset_password"
 
       # タイムライン関連API
       resources :posts, only: [ :index, :create, :update, :destroy ]

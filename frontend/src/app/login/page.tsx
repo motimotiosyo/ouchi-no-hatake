@@ -7,6 +7,7 @@ import { apiCall } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -130,6 +131,16 @@ export default function LoginPage() {
             >
               {isLoading ? 'ログイン中...' : 'ログイン'}
             </button>
+          </div>
+
+          {/* パスワードリセットリンク */}
+          <div className="text-center mt-4">
+            <Link 
+              href="/forgot-password"
+              className="text-green-600 hover:text-green-500 text-sm"
+            >
+              パスワードを忘れた方はこちら
+            </Link>
           </div>
         </form>
       </div>
