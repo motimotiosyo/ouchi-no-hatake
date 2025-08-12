@@ -5,6 +5,7 @@ import { FlashProvider } from '@/contexts/FlashContext'
 import LayoutWrapper from '@/components/layout/LayoutWrapper'
 import FlashMessages from '@/components/ui/FlashMessages'
 import AutoLogoutModalContainer from '@/components/ui/AutoLogoutModalContainer'
+import RedirectMessageHandler from '@/components/ui/RedirectMessageHandler'
 
 export const metadata = {
   title: 'おうちの畑',
@@ -16,6 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen flex flex-col" style={{ minWidth: '360px' }}>
         <FlashProvider>
           <AuthProvider>
+            <RedirectMessageHandler />
             <LayoutWrapper>
               {children}
             </LayoutWrapper>
