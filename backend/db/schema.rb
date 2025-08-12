@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_01_192831) do
+ActiveRecord::Schema[7.2].define(version: 2025_08_12_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -89,6 +89,17 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_01_192831) do
     t.datetime "updated_at", null: false
     t.index ["expires_at"], name: "index_jwt_blacklists_on_expires_at"
     t.index ["jti"], name: "index_jwt_blacklists_on_jti", unique: true
+  end
+
+  create_table "password_reset_tokens", force: :cascade do |t|
+    t.string "email", null: false
+    t.string "token", null: false
+    t.datetime "expires_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["email"], name: "index_password_reset_tokens_on_email"
+    t.index ["expires_at"], name: "index_password_reset_tokens_on_expires_at"
+    t.index ["token"], name: "index_password_reset_tokens_on_token", unique: true
   end
 
   create_table "plants", force: :cascade do |t|

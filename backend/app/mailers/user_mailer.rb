@@ -9,4 +9,15 @@ class UserMailer < ApplicationMailer
       from: "ouchi.no.hatake@gmail.com"
     )
   end
+
+  def password_reset(user, reset_url)
+    @user = user
+    @reset_url = reset_url
+
+    mail(
+      to: @user.email,
+      subject: "【おうちの畑】パスワードリセットのご案内",
+      from: "ouchi.no.hatake@gmail.com"
+    )
+  end
 end
