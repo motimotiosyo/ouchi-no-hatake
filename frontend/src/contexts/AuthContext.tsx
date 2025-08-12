@@ -31,6 +31,10 @@ interface AuthContextType {
   confirmAutoLogout: () => void
   verifyEmail: (token: string) => Promise<{ success: boolean; error?: string; expired?: boolean }>
   resendVerification: (email: string) => Promise<{ success: boolean; error?: string }>
+  // 新規追加: リダイレクトメッセージ管理
+  redirectMessage: string | null
+  setRedirectMessage: (message: string | null) => void
+  clearRedirectMessage: () => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -84,6 +88,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true)
   const [autoLogoutMessage, setAutoLogoutMessage] = useState<string | null>(null)
   const [showAutoLogoutModal, setShowAutoLogoutModal] = useState(false)
+  // 新規追加: リダイレクトメッセージ状態
+  const [redirectMessage, setRedirectMessageState] = useState<string | null>(null)
 
   // ページ読み込み時にlocalStorageからトークンを復元
   useEffect(() => {
@@ -184,6 +190,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       deleteCookie('auth_token')
       
       console.log('ログアウト完了 - Cookie削除後:', document.cookie)
+      
+      // 新規追加: ログアウト後のリダイレクトとメッセージ設定
+      router.push('/')
+      // ページ遷移後にメッセージを設定（遷移先でメッセージが確実に表示されるように遅延）
+      setTimeout(() => {
+        setRedirectMessage('ログアウトしました')
+      }, 100)
     }
   }
 
@@ -214,6 +227,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const clearAutoLogoutMessage = () => {
     setAutoLogoutMessage(null)
   }
+
+  // 新規追加: リダイレクトメッセージ管理関数
+  const setRedirectMessage = useCallback((message: string | null) => {
+    setRedirectMessageState(message)
+  }, [])
+
+  const clearRedirectMessage = useCallback(() => {
+    setRedirectMessageState(null)
+  }, [])
 
   // 自動ログアウト確認関数
   const confirmAutoLogout = useCallback(() => {
@@ -396,7 +418,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     showAutoLogoutModal,
     confirmAutoLogout,
     verifyEmail,
-    resendVerification
+    resendVerification,
+    // 新規追加: リダイレクトメッセージ管理
+    redirectMessage,
+    setRedirectMessage,
+    clearRedirectMessage
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
