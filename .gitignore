@@ -59,5 +59,6 @@ build-iPhoneSimulator/
 /config/master.key
 .env
 .env.development
+.env.production
 .env.local
 .env*.local
