@@ -46,6 +46,13 @@ class Api::V1::PostsController < ApplicationController
         }
       end
 
+      # 画像URLを追加
+      if post.images.attached?
+        post_data[:images] = post.images.map { |image| Rails.application.routes.url_helpers.url_for(image) }
+      else
+        post_data[:images] = []
+      end
+
       post_data
     end
 
@@ -111,6 +118,13 @@ class Api::V1::PostsController < ApplicationController
           }
         end
 
+        # 画像URLを追加
+        if @post.images.attached?
+          post_response[:images] = @post.images.map { |image| Rails.application.routes.url_helpers.url_for(image) }
+        else
+          post_response[:images] = []
+        end
+
         render json: { post: post_response }, status: :created
       else
         render json: {
@@ -167,6 +181,13 @@ class Api::V1::PostsController < ApplicationController
           }
         end
 
+        # 画像URLを追加
+        if @post.images.attached?
+          post_response[:images] = @post.images.map { |image| Rails.application.routes.url_helpers.url_for(image) }
+        else
+          post_response[:images] = []
+        end
+
         render json: { post: post_response }
       else
         render json: {
@@ -211,6 +232,6 @@ class Api::V1::PostsController < ApplicationController
   end
 
   def post_params
-    params.require(:post).permit(:title, :content, :growth_record_id, :category_id, :post_type)
+    params.require(:post).permit(:title, :content, :growth_record_id, :category_id, :post_type, images: [])
   end
 end

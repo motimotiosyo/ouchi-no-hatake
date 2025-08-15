@@ -3,6 +3,8 @@ class Post < ApplicationRecord
   belongs_to :growth_record, optional: true
   belongs_to :category, optional: true
 
+  has_many_attached :images
+
   validates :content, presence: true
   validates :post_type, presence: true
 
