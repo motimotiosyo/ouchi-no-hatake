@@ -62,6 +62,10 @@ export default function CreatePostModal({
     category_id: '',
     post_type: 'growth_record_post' as 'growth_record_post' | 'general_post'
   })
+  
+  // 画像選択状態
+  const [selectedImages, setSelectedImages] = useState<File[]>([])
+  const [imagePreviews, setImagePreviews] = useState<string[]>([])
 
   const fetchGrowthRecords = useCallback(async () => {
     try {
@@ -114,20 +118,26 @@ export default function CreatePostModal({
         
         const method = isEditMode ? 'PUT' : 'POST'
 
+        // FormDataを使用して送信
+        const formDataToSend = new FormData()
+        formDataToSend.append('post[title]', formData.title)
+        formDataToSend.append('post[content]', formData.content)
+        if (formData.growth_record_id) {
+          formDataToSend.append('post[growth_record_id]', formData.growth_record_id)
+        }
+        if (formData.post_type === 'growth_record_post' && formData.category_id) {
+          formDataToSend.append('post[category_id]', formData.category_id)
+        }
+        formDataToSend.append('post[post_type]', formData.post_type)
+        
+        // 画像ファイルを追加
+        selectedImages.forEach((image) => {
+          formDataToSend.append('post[images][]', image)
+        })
+
         const data = await authenticatedCall(endpoint, {
           method: method,
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            post: {
-              title: formData.title,
-              content: formData.content,
-              growth_record_id: formData.growth_record_id ? parseInt(formData.growth_record_id) : null,
-              category_id: formData.post_type === 'growth_record_post' ? parseInt(formData.category_id) : null,
-              post_type: formData.post_type
-            }
-          })
+          body: formDataToSend
         })
 
         if (data) {
@@ -149,6 +159,8 @@ export default function CreatePostModal({
       category_id: '',
       post_type: 'growth_record_post'
     })
+    setSelectedImages([])
+    setImagePreviews([])
     clearError()
     onClose()
   }
@@ -169,6 +181,29 @@ export default function CreatePostModal({
         ...prev,
         [name]: value
       }))
+    }
+  }
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (files) {
+      const fileArray = Array.from(files)
+      setSelectedImages(fileArray)
+      
+      // プレビュー画像を生成
+      const previews: string[] = []
+      fileArray.forEach((file) => {
+        const reader = new FileReader()
+        reader.onload = (e) => {
+          if (e.target?.result) {
+            previews.push(e.target.result as string)
+            if (previews.length === fileArray.length) {
+              setImagePreviews(previews)
+            }
+          }
+        }
+        reader.readAsDataURL(file)
+      })
     }
   }
 
@@ -310,6 +345,42 @@ export default function CreatePostModal({
               <div className="text-right text-sm text-gray-500 mt-1">
                 {formData.content.length}/1000
               </div>
+            </div>
+
+            {/* 画像アップロード */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                画像を追加
+              </label>
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleImageChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
+              {selectedImages.length > 0 && (
+                <div className="text-sm text-gray-500 mt-1">
+                  {selectedImages.length}枚の画像が選択されています
+                </div>
+              )}
+              
+              {/* 画像プレビュー */}
+              {imagePreviews.length > 0 && (
+                <div className="mt-3">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {imagePreviews.map((preview, index) => (
+                      <div key={index} className="relative">
+                        <img
+                          src={preview}
+                          alt={`プレビュー ${index + 1}`}
+                          className="w-full h-24 object-cover rounded-md border border-gray-300"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
 
