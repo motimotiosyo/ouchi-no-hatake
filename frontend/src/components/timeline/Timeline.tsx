@@ -12,6 +12,7 @@ interface Post {
   content: string
   post_type: 'growth_record_post' | 'general_post'
   created_at: string
+  images?: string[]
   user: {
     id: number
     name: string

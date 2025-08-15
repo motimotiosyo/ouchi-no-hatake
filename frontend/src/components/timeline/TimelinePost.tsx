@@ -9,6 +9,7 @@ interface TimelinePostProps {
     content: string
     post_type: 'growth_record_post' | 'general_post'
     created_at: string
+    images?: string[]
     user: {
       id: number
       name: string
@@ -107,6 +108,27 @@ export default function TimelinePost({ post }: TimelinePostProps) {
           {post.content}
         </p>
       </div>
+
+      {/* 投稿画像 */}
+      {post.images && post.images.length > 0 && (
+        <div className="mb-4">
+          <div className={`grid gap-2 ${
+            post.images.length === 1 ? 'grid-cols-1' :
+            post.images.length === 2 ? 'grid-cols-2' :
+            'grid-cols-2 md:grid-cols-3'
+          }`}>
+            {post.images.map((imageUrl, index) => (
+              <div key={index} className="relative">
+                <img
+                  src={imageUrl}
+                  alt={`投稿画像 ${index + 1}`}
+                  className="w-full h-48 object-cover rounded-md border border-gray-200"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
 
       {/* アクションボタン */}
