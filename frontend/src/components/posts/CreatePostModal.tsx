@@ -213,6 +213,15 @@ export default function CreatePostModal({
         return
       }
       
+      // JPEG/PNG形式をチェック
+      const invalidTypeFiles = fileArray.filter(file => 
+        !['image/jpeg', 'image/png'].includes(file.type)
+      )
+      if (invalidTypeFiles.length > 0) {
+        setImageError('JPEG（.jpg）またはPNG（.png）形式の画像のみアップロードできます')
+        return
+      }
+      
       // 既存の画像に新しい画像を追加
       const newSelectedImages = [...selectedImages, ...fileArray]
       setSelectedImages(newSelectedImages)
