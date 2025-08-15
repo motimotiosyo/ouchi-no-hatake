@@ -222,6 +222,28 @@ export default function CreatePostModal({
         return
       }
       
+      // ファイル拡張子とMIMEタイプの整合性をチェック
+      const mismatchFiles = fileArray.filter(file => {
+        const fileName = file.name.toLowerCase()
+        const fileType = file.type
+        
+        // JPEG拡張子の場合
+        if (fileName.endsWith('.jpg') || fileName.endsWith('.jpeg')) {
+          return fileType !== 'image/jpeg'
+        }
+        // PNG拡張子の場合
+        if (fileName.endsWith('.png')) {
+          return fileType !== 'image/png'
+        }
+        
+        return true // その他の拡張子は不正
+      })
+      
+      if (mismatchFiles.length > 0) {
+        setImageError('ファイルの拡張子とファイル形式が一致しません。悪意のあるファイルの可能性があります')
+        return
+      }
+      
       // 既存の画像に新しい画像を追加
       const newSelectedImages = [...selectedImages, ...fileArray]
       setSelectedImages(newSelectedImages)
