@@ -26,6 +26,12 @@ const CATEGORIES = [
   { id: 9, name: "その他" }
 ]
 
+// 画像アップロード制限
+const IMAGE_UPLOAD_LIMITS = {
+  MAX_FILE_SIZE: 10 * 1024 * 1024, // 10MB
+  MAX_FILE_COUNT: 6
+}
+
 interface PostData {
   id: number
   title: string
@@ -66,6 +72,7 @@ export default function CreatePostModal({
   // 画像選択状態
   const [selectedImages, setSelectedImages] = useState<File[]>([])
   const [imagePreviews, setImagePreviews] = useState<string[]>([])
+  const [imageError, setImageError] = useState<string>('')
 
   const fetchGrowthRecords = useCallback(async () => {
     try {
@@ -161,6 +168,7 @@ export default function CreatePostModal({
     })
     setSelectedImages([])
     setImagePreviews([])
+    setImageError('')
     clearError()
     onClose()
   }
@@ -186,25 +194,52 @@ export default function CreatePostModal({
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
+    setImageError('') // エラーをクリア
+    
     if (files) {
       const fileArray = Array.from(files)
-      setSelectedImages(fileArray)
+      
+      // 既存の画像と新しい画像の合計枚数をチェック
+      const totalCount = selectedImages.length + fileArray.length
+      if (totalCount > IMAGE_UPLOAD_LIMITS.MAX_FILE_COUNT) {
+        setImageError(`画像は最大${IMAGE_UPLOAD_LIMITS.MAX_FILE_COUNT}枚まで選択できます`)
+        return
+      }
+      
+      // ファイルサイズをチェック
+      const oversizedFiles = fileArray.filter(file => file.size > IMAGE_UPLOAD_LIMITS.MAX_FILE_SIZE)
+      if (oversizedFiles.length > 0) {
+        setImageError(`ファイルサイズは${IMAGE_UPLOAD_LIMITS.MAX_FILE_SIZE / (1024 * 1024)}MB以下にしてください`)
+        return
+      }
+      
+      // 既存の画像に新しい画像を追加
+      const newSelectedImages = [...selectedImages, ...fileArray]
+      setSelectedImages(newSelectedImages)
       
       // プレビュー画像を生成
-      const previews: string[] = []
+      const newPreviews: string[] = []
       fileArray.forEach((file) => {
         const reader = new FileReader()
         reader.onload = (e) => {
           if (e.target?.result) {
-            previews.push(e.target.result as string)
-            if (previews.length === fileArray.length) {
-              setImagePreviews(previews)
+            newPreviews.push(e.target.result as string)
+            if (newPreviews.length === fileArray.length) {
+              setImagePreviews([...imagePreviews, ...newPreviews])
             }
           }
         }
         reader.readAsDataURL(file)
       })
     }
+  }
+
+  const handleRemoveImage = (index: number) => {
+    const newSelectedImages = selectedImages.filter((_, i) => i !== index)
+    const newImagePreviews = imagePreviews.filter((_, i) => i !== index)
+    setSelectedImages(newSelectedImages)
+    setImagePreviews(newImagePreviews)
+    setImageError('') // エラーをクリア
   }
 
   if (!isOpen) return null
@@ -351,6 +386,9 @@ export default function CreatePostModal({
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 画像を追加
+                <span className="text-sm font-normal text-gray-500 ml-2">
+                  (最大{IMAGE_UPLOAD_LIMITS.MAX_FILE_COUNT}枚、{IMAGE_UPLOAD_LIMITS.MAX_FILE_SIZE / (1024 * 1024)}MB以下)
+                </span>
               </label>
               <input
                 type="file"
@@ -359,6 +397,14 @@ export default function CreatePostModal({
                 onChange={handleImageChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
               />
+              
+              {/* 画像エラーメッセージ */}
+              {imageError && (
+                <div className="mt-2 p-2 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+                  {imageError}
+                </div>
+              )}
+              
               {selectedImages.length > 0 && (
                 <div className="text-sm text-gray-500 mt-1">
                   {selectedImages.length}枚の画像が選択されています
@@ -376,6 +422,13 @@ export default function CreatePostModal({
                           alt={`プレビュー ${index + 1}`}
                           className="w-full h-24 object-cover rounded-md border border-gray-300"
                         />
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveImage(index)}
+                          className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 transition-colors"
+                        >
+                          ×
+                        </button>
                       </div>
                     ))}
                   </div>
