@@ -27,7 +27,7 @@ class Post < ApplicationRecord
 
     # 枚数制限
     if images.count > 6
-      errors.add(:images, '画像は最大6枚まで添付できます')
+      errors.add(:images, "画像は最大6枚まで添付できます")
     end
 
     images.each_with_index do |image, index|
@@ -37,7 +37,7 @@ class Post < ApplicationRecord
       end
 
       # Content-Type検証
-      unless ['image/jpeg', 'image/png'].include?(image.blob.content_type)
+      unless [ "image/jpeg", "image/png" ].include?(image.blob.content_type)
         errors.add(:images, "画像#{index + 1}: JPEG（.jpg）またはPNG（.png）形式のみ対応しています")
       end
 
@@ -45,8 +45,8 @@ class Post < ApplicationRecord
       filename = image.blob.filename.to_s.downcase
       content_type = image.blob.content_type
 
-      if (filename.end_with?('.jpg', '.jpeg') && content_type != 'image/jpeg') ||
-         (filename.end_with?('.png') && content_type != 'image/png')
+      if (filename.end_with?(".jpg", ".jpeg") && content_type != "image/jpeg") ||
+         (filename.end_with?(".png") && content_type != "image/png")
         errors.add(:images, "画像#{index + 1}: ファイル名とファイル形式が一致しません")
       end
     end
