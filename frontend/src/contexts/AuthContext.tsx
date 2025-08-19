@@ -80,6 +80,32 @@ const deleteCookie = (name: string) => {
   console.log('Cookie削除後の状態:', document.cookie)
 }
 
+// サーバーから現在のユーザー情報を取得する関数
+const fetchCurrentUser = async (token: string): Promise<User | null> => {
+  try {
+    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001'
+    const response = await fetch(`${apiBaseUrl}/api/v1/auth/me`, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      return data.user
+    } else {
+      console.log('ユーザー情報取得失敗:', response.status)
+      return null
+    }
+  } catch (error) {
+    console.error('ユーザー情報取得エラー:', error)
+    return null
+  }
+}
+
 // AuthProvider コンポーネント
 export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter()
@@ -94,7 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ページ読み込み時にlocalStorageからトークンを復元
   useEffect(() => {
     console.log('AuthContext useEffect triggered')
-    const initializeAuth = () => {
+    const initializeAuth = async () => {
       // まずCookieから確認（ミドルウェアと同じソース）
       const cookieToken = getCookie('auth_token')
       const savedToken = localStorage.getItem('auth_token')
@@ -113,10 +139,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const parsedUser = JSON.parse(savedUser)
           
-          console.log('認証情報復元成功:', parsedUser.name)
+          // ユーザー情報が古い可能性をチェック（email_verifiedフィールドがない場合）
+          const shouldRefreshUser = !parsedUser.hasOwnProperty('email_verified')
           
-          setToken(finalToken)
-          setUser(parsedUser)
+          if (shouldRefreshUser) {
+            console.log('ユーザー情報が古い可能性があるため、サーバーから最新情報を取得')
+            const currentUser = await fetchCurrentUser(finalToken)
+            
+            if (currentUser) {
+              console.log('サーバーから最新ユーザー情報を取得成功:', currentUser.name)
+              setToken(finalToken)
+              setUser(currentUser)
+              localStorage.setItem('auth_user', JSON.stringify(currentUser))
+            } else {
+              console.log('ユーザー情報取得失敗 - 既存の情報を使用')
+              setToken(finalToken)
+              setUser(parsedUser)
+            }
+          } else {
+            console.log('認証情報復元成功:', parsedUser.name)
+            setToken(finalToken)
+            setUser(parsedUser)
+          }
           
           // localStorage と Cookie の同期
           if (finalToken !== savedToken) {
@@ -132,11 +176,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           localStorage.removeItem('auth_user')
           deleteCookie('auth_token')
         }
-      } else if (cookieToken && !savedUser) {
-        // Cookieはあるが localStorage にユーザー情報がない場合
-        console.log('Cookie認証はあるがユーザー情報なし - 状態維持')
-        setToken(cookieToken)
-        localStorage.setItem('auth_token', cookieToken)
+      } else if (finalToken && !savedUser) {
+        // トークンはあるが localStorage にユーザー情報がない場合
+        console.log('トークンあり、ユーザー情報なし - サーバーから取得')
+        const currentUser = await fetchCurrentUser(finalToken)
+        
+        if (currentUser) {
+          console.log('サーバーからユーザー情報取得成功:', currentUser.name)
+          setToken(finalToken)
+          setUser(currentUser)
+          localStorage.setItem('auth_token', finalToken)
+          localStorage.setItem('auth_user', JSON.stringify(currentUser))
+          
+          if (!cookieToken) {
+            setCookie('auth_token', finalToken)
+          }
+        } else {
+          console.log('ユーザー情報取得失敗 - 認証状態をクリア')
+          localStorage.removeItem('auth_token')
+          localStorage.removeItem('auth_user')
+          deleteCookie('auth_token')
+          setUser(null)
+          setToken(null)
+        }
       } else {
         console.log('認証情報なし - ユーザー情報もクリア')
         // トークンがない場合はユーザー情報もクリア
@@ -332,7 +394,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // メール認証確認関数
   const verifyEmail = useCallback(async (token: string): Promise<{ success: boolean; error?: string; expired?: boolean }> => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/verify-email`, {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001'
+      const response = await fetch(`${apiBaseUrl}/api/v1/auth/verify-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -369,7 +432,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // 認証メール再送信関数
   const resendVerification = useCallback(async (email: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/resend-verification`, {
+      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001'
+      const response = await fetch(`${apiBaseUrl}/api/v1/auth/resend-verification`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
