@@ -295,6 +295,18 @@ class Api::V1::AuthController < ApplicationController
     render json: { error: "パスワードのリセットに失敗しました" }, status: :internal_server_error
   end
 
+  # GET /api/v1/auth/me
+  def me
+    render json: {
+      user: {
+        id: current_user.id,
+        email: current_user.email,
+        name: current_user.name,
+        email_verified: current_user.email_verified?
+      }
+    }, status: :ok
+  end
+
   private
 
   def user_params
