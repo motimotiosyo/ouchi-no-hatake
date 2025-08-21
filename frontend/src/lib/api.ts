@@ -1,7 +1,5 @@
 // API設定
-export const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://ouchi-no-hatake.onrender.com'
-  : 'http://localhost:3001'
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001'
 
 // API呼び出し用のヘルパー関数
 export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
