@@ -54,7 +54,7 @@ class Api::V1::AuthController < ApplicationController
       # サーバーサイドでCookieをセット
       cookies[:auth_token] = {
         value: token,
-        expires: 7.days.from_now,
+        expires: 6.months.from_now,
         path: "/",
         same_site: :none,   # ← クロスオリジンの場合は :none
         secure: true,       # ← https環境なら true、ローカルhttpなら false
