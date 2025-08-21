@@ -2,7 +2,7 @@ class JsonWebToken
   SECRET_KEY = Rails.application.credentials.secret_key_base.to_s
 
   # トークン発行
-  def self.encode(payload, exp = 24.hours.from_now)
+  def self.encode(payload, exp = 6.months.from_now)
     payload[:exp] = exp.to_i
     payload[:jti] = SecureRandom.uuid
     JWT.encode(payload, SECRET_KEY)
