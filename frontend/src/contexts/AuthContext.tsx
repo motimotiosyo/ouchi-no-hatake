@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
-import { authenticatedApiCall, setAutoLogoutCallback } from '@/lib/api'
+import { authenticatedApiCall, setAutoLogoutCallback, API_BASE_URL } from '@/lib/api'
 
 // ユーザー情報の型定義
 interface User {
@@ -83,8 +83,7 @@ const deleteCookie = (name: string) => {
 // サーバーから現在のユーザー情報を取得する関数
 const fetchCurrentUser = async (token: string): Promise<User | null> => {
   try {
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001'
-    const response = await fetch(`${apiBaseUrl}/api/v1/auth/me`, {
+    const response = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -394,8 +393,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // メール認証確認関数
   const verifyEmail = useCallback(async (token: string): Promise<{ success: boolean; error?: string; expired?: boolean }> => {
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001'
-      const response = await fetch(`${apiBaseUrl}/api/v1/auth/verify-email`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/verify-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -432,8 +430,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // 認証メール再送信関数
   const resendVerification = useCallback(async (email: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001'
-      const response = await fetch(`${apiBaseUrl}/api/v1/auth/resend-verification`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/resend-verification`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
