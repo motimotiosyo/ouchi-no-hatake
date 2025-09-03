@@ -5,8 +5,11 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://loca
 export const apiCall = async (endpoint: string, options: RequestInit = {}) => {
   const url = `${API_BASE_URL}${endpoint}`
 
-  const defaultHeaders = {
-    'Content-Type': 'application/json',
+  const defaultHeaders: Record<string, string> = {}
+
+  // FormDataの場合はContent-Typeを設定しない（ブラウザに自動設定させる）
+  if (!(options.body instanceof FormData)) {
+    defaultHeaders['Content-Type'] = 'application/json'
   }
 
   return fetch(url, {
@@ -31,9 +34,13 @@ export const setAutoLogoutCallback = (callback: () => void) => {
 export const authenticatedApiCall = async (endpoint: string, token: string, options: RequestInit = {}) => {
   const url = `${API_BASE_URL}${endpoint}`
 
-  const defaultHeaders = {
-    'Content-Type': 'application/json',
+  const defaultHeaders: Record<string, string> = {
     'Authorization': `Bearer ${token}`,
+  }
+
+  // FormDataの場合はContent-Typeを設定しない（ブラウザに自動設定させる）
+  if (!(options.body instanceof FormData)) {
+    defaultHeaders['Content-Type'] = 'application/json'
   }
 
   const response = await fetch(url, {

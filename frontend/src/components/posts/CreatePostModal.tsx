@@ -29,7 +29,7 @@ const CATEGORIES = [
 // 画像アップロード制限
 const IMAGE_UPLOAD_LIMITS = {
   MAX_FILE_SIZE: 10 * 1024 * 1024, // 10MB
-  MAX_FILE_COUNT: 6
+  MAX_FILE_COUNT: 4
 }
 
 interface PostData {

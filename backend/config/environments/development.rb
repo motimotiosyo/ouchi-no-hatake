@@ -39,6 +39,9 @@ Rails.application.configure do
 
   config.action_mailer.default_url_options = { host: "localhost", port: 3000 }
 
+  # Active Storage URL生成用の設定
+  Rails.application.routes.default_url_options = { host: "localhost", port: 3001 }
+
   config.action_mailer.smtp_settings = {
     user_name: "apikey",
     password: ENV["SENDGRID_API_KEY"],
@@ -86,4 +89,12 @@ Rails.application.configure do
   config.hosts << "backend"
   config.hosts << "backend:3000"
   config.hosts << "localhost"
+  
+  # ログでバイナリデータの出力を抑制
+  config.log_level = :debug
+  
+  # カスタムログフィルター - バイナリデータをログから除外
+  Rails.application.config.filter_parameters += [
+    :password, :password_confirmation, :images, :image, :avatar, :file, :attachment
+  ]
 end
