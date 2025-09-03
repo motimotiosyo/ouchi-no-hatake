@@ -1,6 +1,7 @@
 import { useAuth } from '@/contexts/AuthContext'
 import { useState } from 'react'
 import Link from 'next/link'
+import { API_BASE_URL } from '@/lib/api'
 
 interface TimelinePostProps {
   post: {
@@ -112,17 +113,20 @@ export default function TimelinePost({ post }: TimelinePostProps) {
       {/* 投稿画像 */}
       {post.images && post.images.length > 0 && (
         <div className="mb-4">
-          <div className={`grid gap-2 ${
+          <div className={`grid gap-2 max-h-80 overflow-hidden ${
             post.images.length === 1 ? 'grid-cols-1' :
-            post.images.length === 2 ? 'grid-cols-2' :
-            'grid-cols-2 md:grid-cols-3'
+            'grid-cols-2'
           }`}>
             {post.images.map((imageUrl, index) => (
               <div key={index} className="relative">
                 <img
-                  src={imageUrl}
+                  src={`${API_BASE_URL}${imageUrl}`}
                   alt={`投稿画像 ${index + 1}`}
-                  className="w-full h-48 object-cover rounded-md border border-gray-200"
+                  className={`w-full rounded-md border border-gray-200 ${
+                    post.images?.length === 1 
+                      ? 'max-h-80 object-contain' 
+                      : 'h-36 object-cover'
+                  }`}
                 />
               </div>
             ))}

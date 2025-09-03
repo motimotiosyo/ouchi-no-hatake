@@ -26,8 +26,8 @@ class Post < ApplicationRecord
     return unless images.attached?
 
     # 枚数制限
-    if images.count > 6
-      errors.add(:images, "画像は最大6枚まで添付できます")
+    if images.count > 4
+      errors.add(:images, "画像は最大4枚まで添付できます")
     end
 
     images.each_with_index do |image, index|
