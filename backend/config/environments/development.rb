@@ -89,10 +89,10 @@ Rails.application.configure do
   config.hosts << "backend"
   config.hosts << "backend:3000"
   config.hosts << "localhost"
-  
+
   # ログでバイナリデータの出力を抑制
   config.log_level = :debug
-  
+
   # カスタムログフィルター - バイナリデータをログから除外
   Rails.application.config.filter_parameters += [
     :password, :password_confirmation, :images, :image, :avatar, :file, :attachment

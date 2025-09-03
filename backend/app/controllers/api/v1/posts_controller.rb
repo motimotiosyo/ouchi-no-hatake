@@ -83,15 +83,15 @@ class Api::V1::PostsController < ApplicationController
   def create
     begin
       Rails.logger.debug "Content-Type: #{request.content_type}"
-      Rails.logger.debug "Request format: #{request.format}"  
+      Rails.logger.debug "Request format: #{request.format}"
       Rails.logger.debug "Raw Content-Type header: #{request.headers['Content-Type']}"
       Rails.logger.debug "Request body size: #{request.raw_post.bytesize} bytes"
-      
+
       # Content-Typeのミスマッチを検出
-      if request.headers['Content-Type']&.start_with?('multipart/form-data') && request.content_type == 'application/json'
+      if request.headers["Content-Type"]&.start_with?("multipart/form-data") && request.content_type == "application/json"
         Rails.logger.warn "Content-Type mismatch detected: header=#{request.headers['Content-Type']}, parsed=#{request.content_type}"
       end
-      
+
       # 通常のRailsパラメータ処理を使用
       @post = current_user.posts.build(post_params)
 
@@ -252,7 +252,7 @@ class Api::V1::PostsController < ApplicationController
     if params[:post]&.[](:images).present?
       Rails.logger.debug "Images count: #{params[:post][:images].size}"
     end
-    
+
     permitted_params = params.require(:post).permit(:title, :content, :growth_record_id, :category_id, :post_type, images: [])
     permitted_params_safe = permitted_params.except(:images)
     Rails.logger.debug "Permitted params (without images): #{permitted_params_safe.inspect}"
