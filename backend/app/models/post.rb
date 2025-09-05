@@ -2,6 +2,7 @@ class Post < ApplicationRecord
   belongs_to :user
   belongs_to :growth_record, optional: true
   belongs_to :category, optional: true
+  has_many :likes, dependent: :destroy
 
   has_many_attached :images
 
@@ -19,6 +20,17 @@ class Post < ApplicationRecord
   scope :timeline, -> { includes(:user, :category, growth_record: [ :plant ]).order(created_at: :desc) }
   scope :growth_record_posts, -> { where(post_type: :growth_record_post) }
   scope :general_posts, -> { where(post_type: :general_post) }
+
+  # いいね数を取得
+  def likes_count
+    likes.count
+  end
+
+  # 指定ユーザーがいいね済みかチェック
+  def liked_by?(user)
+    return false unless user
+    likes.exists?(user: user)
+  end
 
   private
 
