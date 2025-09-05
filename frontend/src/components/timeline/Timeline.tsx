@@ -13,6 +13,8 @@ interface Post {
   post_type: 'growth_record_post' | 'general_post'
   created_at: string
   images?: string[]
+  likes_count: number
+  liked_by_current_user: boolean
   user: {
     id: number
     name: string

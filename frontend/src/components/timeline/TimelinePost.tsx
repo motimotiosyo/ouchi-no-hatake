@@ -65,7 +65,7 @@ export default function TimelinePost({ post }: TimelinePostProps) {
     setIsLikeLoading(true)
     
     try {
-      const token = localStorage.getItem('token')
+      const token = localStorage.getItem('auth_token')
       const method = isLiked ? 'DELETE' : 'POST'
       
       const response = await fetch(`${API_BASE_URL}/api/v1/posts/${post.id}/likes`, {

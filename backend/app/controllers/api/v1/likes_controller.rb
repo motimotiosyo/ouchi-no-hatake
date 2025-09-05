@@ -17,8 +17,7 @@ class Api::V1::LikesController < ApplicationController
     else
       Rails.logger.error "Like creation failed: #{like.errors.full_messages.join(', ')}"
       render json: {
-        error: like.errors.full_messages.first || "いいねに失敗しました",
-        details: like.errors.full_messages
+        error: like.errors.full_messages.first || "いいねに失敗しました"
       }, status: :unprocessable_entity
     end
   rescue ActiveRecord::RecordNotUnique => e
