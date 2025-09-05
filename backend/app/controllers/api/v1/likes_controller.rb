@@ -1,5 +1,4 @@
 class Api::V1::LikesController < ApplicationController
-  before_action :authenticate_user!
   before_action :find_post
 
   # POST /api/v1/posts/:post_id/likes
@@ -14,13 +13,13 @@ class Api::V1::LikesController < ApplicationController
       }, status: :created
     else
       render json: {
-        message: like.errors.full_messages.first || 'いいねに失敗しました'
+        error: like.errors.full_messages.first || 'いいねに失敗しました'
       }, status: :unprocessable_entity
     end
   rescue ActiveRecord::RecordNotUnique
     # データベースレベルでの重複エラーをキャッチ
     render json: {
-      message: '既にいいね済みです'
+      error: '既にいいね済みです'
     }, status: :unprocessable_entity
   end
 
@@ -37,7 +36,7 @@ class Api::V1::LikesController < ApplicationController
       }, status: :ok
     else
       render json: {
-        message: 'いいねが見つかりません'
+        error: 'いいねが見つかりません'
       }, status: :not_found
     end
   end
@@ -47,6 +46,6 @@ class Api::V1::LikesController < ApplicationController
   def find_post
     @post = Post.find(params[:post_id])
   rescue ActiveRecord::RecordNotFound
-    render json: { message: '投稿が見つかりません' }, status: :not_found
+    render json: { error: '投稿が見つかりません' }, status: :not_found
   end
 end
