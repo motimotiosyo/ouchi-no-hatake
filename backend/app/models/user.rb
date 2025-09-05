@@ -10,9 +10,9 @@ class User < ApplicationRecord
   validates :name, presence: true
 
   before_save :downcase_email
-  
+
   # 期限切れ未認証ユーザーを取得
-  scope :unverified_expired, -> { where(email_verified: false).where('email_verification_sent_at < ?', 24.hours.ago) }
+  scope :unverified_expired, -> { where(email_verified: false).where("email_verification_sent_at < ?", 24.hours.ago) }
 
   # メール認証用のトークンを生成
   def generate_email_verification_token!
