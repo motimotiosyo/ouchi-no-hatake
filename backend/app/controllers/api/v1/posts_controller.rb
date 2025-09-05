@@ -1,6 +1,9 @@
 class Api::V1::PostsController < ApplicationController
   skip_before_action :authenticate_request, only: [ :index ]
   skip_before_action :check_email_verification, only: [ :index ]
+
+  # indexアクションで認証情報があれば取得する
+  before_action :authenticate_request_optional, only: [ :index ]
   before_action :set_post, only: [ :update, :destroy ]
 
   def index
@@ -52,6 +55,10 @@ class Api::V1::PostsController < ApplicationController
       else
         post_data[:images] = []
       end
+
+      # いいね情報を追加
+      post_data[:likes_count] = post.likes_count
+      post_data[:liked_by_current_user] = current_user ? post.liked_by?(current_user) : false
 
       post_data
     end
@@ -136,6 +143,10 @@ class Api::V1::PostsController < ApplicationController
           post_response[:images] = []
         end
 
+        # いいね情報を追加
+        post_response[:likes_count] = @post.likes_count
+        post_response[:liked_by_current_user] = @post.liked_by?(current_user)
+
         render json: { post: post_response }, status: :created
       else
         Rails.logger.error "Post validation failed: #{@post.errors.full_messages.join(', ')}"
@@ -201,6 +212,10 @@ class Api::V1::PostsController < ApplicationController
           post_response[:images] = []
         end
 
+        # いいね情報を追加
+        post_response[:likes_count] = @post.likes_count
+        post_response[:liked_by_current_user] = @post.liked_by?(current_user)
+
         render json: { post: post_response }
       else
         render json: {
@@ -235,6 +250,24 @@ class Api::V1::PostsController < ApplicationController
   end
 
   private
+
+  def authenticate_request_optional
+    header = request.headers["Authorization"]
+    return if header.blank?
+
+    header = header.split(" ").last if header
+    return if header.blank?
+
+    begin
+      @decoded = JsonWebToken.decode(header)
+      return if @decoded[:jti] && JwtBlacklist.blacklisted?(@decoded[:jti])
+
+      @current_user = User.find(@decoded[:user_id])
+    rescue => e
+      Rails.logger.debug "Optional authentication failed: #{e.message}"
+      @current_user = nil
+    end
+  end
 
   def set_post
     @post = current_user.posts.find(params[:id])

@@ -2,12 +2,17 @@ class User < ApplicationRecord
   has_secure_password
   has_many :posts, dependent: :destroy
   has_many :growth_records, dependent: :destroy
+  has_many :likes, dependent: :destroy
+  has_many :liked_posts, through: :likes, source: :post
 
   validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :password, length: { minimum: 6 }, if: -> { new_record? || !password.nil? }
   validates :name, presence: true
 
   before_save :downcase_email
+
+  # 期限切れ未認証ユーザーを取得
+  scope :unverified_expired, -> { where(email_verified: false).where("email_verification_sent_at < ?", 24.hours.ago) }
 
   # メール認証用のトークンを生成
   def generate_email_verification_token!

@@ -12,6 +12,8 @@ interface TimelinePostProps {
     post_type: 'growth_record_post' | 'general_post'
     created_at: string
     images?: string[]
+    likes_count: number
+    liked_by_current_user: boolean
     user: {
       id: number
       name: string
@@ -35,6 +37,9 @@ export default function TimelinePost({ post }: TimelinePostProps) {
   const { isAuthenticated } = useAuth()
   const { openModal } = useImageModal()
   const [showLoginModal, setShowLoginModal] = useState(false)
+  const [likesCount, setLikesCount] = useState(post.likes_count)
+  const [isLiked, setIsLiked] = useState(post.liked_by_current_user)
+  const [isLikeLoading, setIsLikeLoading] = useState(false)
 
   const handleInteractionClick = () => {
     if (!isAuthenticated) {
@@ -46,6 +51,51 @@ export default function TimelinePost({ post }: TimelinePostProps) {
     if (post.images && post.images.length > 0) {
       const fullImageUrls = post.images.map(imageUrl => `${API_BASE_URL}${imageUrl}`)
       openModal(fullImageUrls, imageIndex, post.title || `${post.user.name}の投稿`)
+    }
+  }
+
+  const handleLikeClick = async () => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true)
+      return
+    }
+
+    if (isLikeLoading) return
+
+    setIsLikeLoading(true)
+    
+    try {
+      const token = localStorage.getItem('auth_token')
+      
+      if (!token) {
+        console.error('トークンが見つかりません')
+        setShowLoginModal(true)
+        return
+      }
+      
+      const method = isLiked ? 'DELETE' : 'POST'
+      
+      const response = await fetch(`${API_BASE_URL}/api/v1/posts/${post.id}/likes`, {
+        method,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setLikesCount(data.likes_count)
+        setIsLiked(data.liked)
+      } else {
+        const errorData = await response.json()
+        console.error('いいね処理に失敗しました:', errorData)
+        console.error('ステータス:', response.status)
+      }
+    } catch (error) {
+      console.error('いいね処理でエラーが発生しました:', error)
+    } finally {
+      setIsLikeLoading(false)
     }
   }
 
@@ -146,42 +196,65 @@ export default function TimelinePost({ post }: TimelinePostProps) {
 
 
       {/* アクションボタン */}
-      <div className="flex items-center justify-around py-2">
-        <button 
-          onClick={handleInteractionClick}
-          className={`flex items-center space-x-1 ${
-            isAuthenticated ? 'text-gray-500 hover:text-gray-700' : 'text-gray-300 cursor-not-allowed'
-          }`}
-          disabled={!isAuthenticated}
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.965 8.965 0 01-4.126-1.004L5 21l1.996-3.874A8.965 8.965 0 013 12c0-4.418 3.582-8 8-8s8 3.582 8 8z" />
-          </svg>
-        </button>
+      <div className="flex items-center py-2 h-10">
+        <div className="flex-1 flex justify-center">
+          <button 
+            onClick={handleInteractionClick}
+            className={`flex items-center justify-center w-8 h-8 ${
+              isAuthenticated ? 'text-gray-500 hover:text-gray-700' : 'text-gray-300 cursor-not-allowed'
+            }`}
+            disabled={!isAuthenticated}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.965 8.965 0 01-4.126-1.004L5 21l1.996-3.874A8.965 8.965 0 013 12c0-4.418 3.582-8 8-8s8 3.582 8 8z" />
+            </svg>
+          </button>
+        </div>
         
-        <button 
-          onClick={handleInteractionClick}
-          className={`flex items-center space-x-1 ${
-            isAuthenticated ? 'text-gray-500 hover:text-red-500' : 'text-gray-300 cursor-not-allowed'
-          }`}
-          disabled={!isAuthenticated}
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-          </svg>
-        </button>
+        <div className="flex-1 flex justify-center">
+          <button 
+            onClick={handleLikeClick}
+            className={`flex items-center justify-center transition-colors w-12 h-8 ${
+              isLiked 
+                ? 'text-red-500' 
+                : isAuthenticated 
+                  ? 'text-gray-500 hover:text-red-500' 
+                  : 'text-gray-300 cursor-not-allowed'
+            }`}
+            disabled={!isAuthenticated || isLikeLoading}
+          >
+            <svg 
+              className="w-5 h-5 flex-shrink-0" 
+              fill={isLiked ? "currentColor" : "none"} 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
+              <path 
+                strokeLinecap="round" 
+                strokeLinejoin="round" 
+                strokeWidth={2} 
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" 
+              />
+            </svg>
+            <span className="text-sm ml-1 w-4 text-left">
+              {likesCount > 0 ? likesCount : ''}
+            </span>
+          </button>
+        </div>
         
-        <button 
-          onClick={handleInteractionClick}
-          className={`flex items-center space-x-1 ${
-            isAuthenticated ? 'text-gray-500 hover:text-gray-700' : 'text-gray-300 cursor-not-allowed'
-          }`}
-          disabled={!isAuthenticated}
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-          </svg>
-        </button>
+        <div className="flex-1 flex justify-center">
+          <button 
+            onClick={handleInteractionClick}
+            className={`flex items-center justify-center w-8 h-8 ${
+              isAuthenticated ? 'text-gray-500 hover:text-gray-700' : 'text-gray-300 cursor-not-allowed'
+            }`}
+            disabled={!isAuthenticated}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* ログインモーダル */}

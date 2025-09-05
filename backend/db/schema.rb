@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_08_12_184804) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_05_193530) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -119,6 +119,16 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_12_184804) do
     t.index ["jti"], name: "index_jwt_blacklists_on_jti", unique: true
   end
 
+  create_table "likes", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "post_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["post_id"], name: "index_likes_on_post_id"
+    t.index ["user_id", "post_id"], name: "index_likes_on_user_id_and_post_id", unique: true
+    t.index ["user_id"], name: "index_likes_on_user_id"
+  end
+
   create_table "password_reset_tokens", force: :cascade do |t|
     t.string "email", null: false
     t.string "token", null: false
@@ -181,6 +191,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_08_12_184804) do
   add_foreign_key "growth_records", "users"
   add_foreign_key "guide_steps", "guides"
   add_foreign_key "guides", "plants"
+  add_foreign_key "likes", "posts"
+  add_foreign_key "likes", "users"
   add_foreign_key "posts", "categories"
   add_foreign_key "posts", "growth_records"
   add_foreign_key "posts", "users"
