@@ -13,7 +13,9 @@ Rails.application.routes.draw do
       get "auth/me", to: "auth#me"
 
       # タイムライン関連API
-      resources :posts, only: [ :index, :create, :update, :destroy ]
+      resources :posts, only: [ :index, :create, :update, :destroy ] do
+        resource :likes, only: [ :create, :destroy ]
+      end
 
       # 成長記録関連API
       resources :growth_records, only: [ :index, :show, :create, :update, :destroy ]
