@@ -66,6 +66,13 @@ export default function TimelinePost({ post }: TimelinePostProps) {
     
     try {
       const token = localStorage.getItem('auth_token')
+      
+      if (!token) {
+        console.error('トークンが見つかりません')
+        setShowLoginModal(true)
+        return
+      }
+      
       const method = isLiked ? 'DELETE' : 'POST'
       
       const response = await fetch(`${API_BASE_URL}/api/v1/posts/${post.id}/likes`, {
