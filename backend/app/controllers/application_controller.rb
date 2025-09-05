@@ -8,23 +8,40 @@ class ApplicationController < ActionController::API
 
   def authenticate_request
     header = request.headers["Authorization"]
+    Rails.logger.info "Authorization header: #{header.inspect}"
+    
     header = header.split(" ").last if header
+    Rails.logger.info "Extracted token: #{header.inspect}"
 
     # トークン無い場合
     if header.blank?
+      Rails.logger.error "Token is blank"
       raise ExceptionHandler::MissingToken, "トークンが提供されていません"
     end
 
     # JWTデコード
-    @decoded = JsonWebToken.decode(header)
+    begin
+      @decoded = JsonWebToken.decode(header)
+      Rails.logger.info "Decoded JWT: #{@decoded.inspect}"
+    rescue => e
+      Rails.logger.error "JWT decode error: #{e.class.name} - #{e.message}"
+      raise ExceptionHandler::InvalidToken, "トークンが無効です: #{e.message}"
+    end
 
     # ブラックリストチェック
     if @decoded[:jti] && JwtBlacklist.blacklisted?(@decoded[:jti])
+      Rails.logger.error "Token is blacklisted: #{@decoded[:jti]}"
       raise ExceptionHandler::InvalidToken, "トークンは無効化されています"
     end
 
     # ユーザー検索
-    @current_user = User.find(@decoded[:user_id])
+    begin
+      @current_user = User.find(@decoded[:user_id])
+      Rails.logger.info "User found: #{@current_user.id} - #{@current_user.name}"
+    rescue ActiveRecord::RecordNotFound => e
+      Rails.logger.error "User not found: #{@decoded[:user_id]}"
+      raise ExceptionHandler::InvalidToken, "ユーザーが見つかりません"
+    end
   end
 
   def current_user
