@@ -12,6 +12,8 @@ interface TimelinePostProps {
     post_type: 'growth_record_post' | 'general_post'
     created_at: string
     images?: string[]
+    likes_count: number
+    liked_by_current_user: boolean
     user: {
       id: number
       name: string
@@ -35,6 +37,9 @@ export default function TimelinePost({ post }: TimelinePostProps) {
   const { isAuthenticated } = useAuth()
   const { openModal } = useImageModal()
   const [showLoginModal, setShowLoginModal] = useState(false)
+  const [likesCount, setLikesCount] = useState(post.likes_count)
+  const [isLiked, setIsLiked] = useState(post.liked_by_current_user)
+  const [isLikeLoading, setIsLikeLoading] = useState(false)
 
   const handleInteractionClick = () => {
     if (!isAuthenticated) {
@@ -46,6 +51,42 @@ export default function TimelinePost({ post }: TimelinePostProps) {
     if (post.images && post.images.length > 0) {
       const fullImageUrls = post.images.map(imageUrl => `${API_BASE_URL}${imageUrl}`)
       openModal(fullImageUrls, imageIndex, post.title || `${post.user.name}の投稿`)
+    }
+  }
+
+  const handleLikeClick = async () => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true)
+      return
+    }
+
+    if (isLikeLoading) return
+
+    setIsLikeLoading(true)
+    
+    try {
+      const token = localStorage.getItem('token')
+      const method = isLiked ? 'DELETE' : 'POST'
+      
+      const response = await fetch(`${API_BASE_URL}/api/v1/posts/${post.id}/likes`, {
+        method,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setLikesCount(data.likes_count)
+        setIsLiked(data.liked)
+      } else {
+        console.error('いいね処理に失敗しました')
+      }
+    } catch (error) {
+      console.error('いいね処理でエラーが発生しました:', error)
+    } finally {
+      setIsLikeLoading(false)
     }
   }
 
@@ -160,15 +201,32 @@ export default function TimelinePost({ post }: TimelinePostProps) {
         </button>
         
         <button 
-          onClick={handleInteractionClick}
-          className={`flex items-center space-x-1 ${
-            isAuthenticated ? 'text-gray-500 hover:text-red-500' : 'text-gray-300 cursor-not-allowed'
+          onClick={handleLikeClick}
+          className={`flex items-center space-x-1 transition-colors ${
+            isLiked 
+              ? 'text-red-500' 
+              : isAuthenticated 
+                ? 'text-gray-500 hover:text-red-500' 
+                : 'text-gray-300 cursor-not-allowed'
           }`}
-          disabled={!isAuthenticated}
+          disabled={!isAuthenticated || isLikeLoading}
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+          <svg 
+            className="w-5 h-5" 
+            fill={isLiked ? "currentColor" : "none"} 
+            stroke="currentColor" 
+            viewBox="0 0 24 24"
+          >
+            <path 
+              strokeLinecap="round" 
+              strokeLinejoin="round" 
+              strokeWidth={2} 
+              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" 
+            />
           </svg>
+          {likesCount > 0 && (
+            <span className="text-sm">{likesCount}</span>
+          )}
         </button>
         
         <button 
