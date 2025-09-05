@@ -81,7 +81,9 @@ export default function TimelinePost({ post }: TimelinePostProps) {
         setLikesCount(data.likes_count)
         setIsLiked(data.liked)
       } else {
-        console.error('いいね処理に失敗しました')
+        const errorData = await response.json()
+        console.error('いいね処理に失敗しました:', errorData)
+        console.error('ステータス:', response.status)
       }
     } catch (error) {
       console.error('いいね処理でエラーが発生しました:', error)
