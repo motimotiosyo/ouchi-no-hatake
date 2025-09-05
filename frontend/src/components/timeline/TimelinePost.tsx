@@ -1,4 +1,5 @@
 import { useAuth } from '@/contexts/AuthContext'
+import { useImageModal } from '@/contexts/ImageModalContext'
 import { useState } from 'react'
 import Link from 'next/link'
 import { API_BASE_URL } from '@/lib/api'
@@ -32,11 +33,19 @@ interface TimelinePostProps {
 
 export default function TimelinePost({ post }: TimelinePostProps) {
   const { isAuthenticated } = useAuth()
+  const { openModal } = useImageModal()
   const [showLoginModal, setShowLoginModal] = useState(false)
 
   const handleInteractionClick = () => {
     if (!isAuthenticated) {
       setShowLoginModal(true)
+    }
+  }
+
+  const handleImageClick = (imageIndex: number) => {
+    if (post.images && post.images.length > 0) {
+      const fullImageUrls = post.images.map(imageUrl => `${API_BASE_URL}${imageUrl}`)
+      openModal(fullImageUrls, imageIndex, post.title || `${post.user.name}の投稿`)
     }
   }
 
@@ -118,15 +127,16 @@ export default function TimelinePost({ post }: TimelinePostProps) {
             'grid-cols-2'
           }`}>
             {post.images.map((imageUrl, index) => (
-              <div key={index} className="relative">
+              <div key={index} className="relative cursor-pointer">
                 <img
                   src={`${API_BASE_URL}${imageUrl}`}
                   alt={`投稿画像 ${index + 1}`}
-                  className={`w-full rounded-md border border-gray-200 ${
+                  className={`w-full rounded-md border border-gray-200 transition-opacity hover:opacity-90 ${
                     post.images?.length === 1 
                       ? 'max-h-80 object-contain' 
                       : 'h-36 object-cover'
                   }`}
+                  onClick={() => handleImageClick(index)}
                 />
               </div>
             ))}
