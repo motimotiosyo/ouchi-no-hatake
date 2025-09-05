@@ -2,17 +2,20 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
+import { ImageModalProvider, useImageModal } from '@/contexts/ImageModalContext'
 import PublicHeader from './PublicHeader'
 import PublicFooter from './PublicFooter'
 import AuthenticatedHeader from './AuthenticatedHeader'
 import AuthenticatedFooter from './AuthenticatedFooter'
+import ImageModal from '@/components/ui/ImageModal'
 
 interface LayoutWrapperProps {
   children: React.ReactNode
 }
 
-export default function LayoutWrapper({ children }: LayoutWrapperProps) {
+function LayoutWrapperContent({ children }: LayoutWrapperProps) {
   const { user, isLoading, isAuthenticated } = useAuth()
+  const { modalState, closeModal, navigateImage } = useImageModal()
   
   console.log('LayoutWrapper - user:', user, 'isLoading:', isLoading, 'isAuthenticated:', isAuthenticated)
   
@@ -50,6 +53,14 @@ export default function LayoutWrapper({ children }: LayoutWrapperProps) {
           {children}
         </main>
         <AuthenticatedFooter />
+        <ImageModal
+          images={modalState.images}
+          currentIndex={modalState.currentIndex}
+          isOpen={modalState.isOpen}
+          onClose={closeModal}
+          onNavigate={navigateImage}
+          title={modalState.title}
+        />
       </>
     )
   }
@@ -63,6 +74,22 @@ export default function LayoutWrapper({ children }: LayoutWrapperProps) {
         {children}
       </main>
       <PublicFooter />
+      <ImageModal
+        images={modalState.images}
+        currentIndex={modalState.currentIndex}
+        isOpen={modalState.isOpen}
+        onClose={closeModal}
+        onNavigate={navigateImage}
+        title={modalState.title}
+      />
     </>
+  )
+}
+
+export default function LayoutWrapper({ children }: LayoutWrapperProps) {
+  return (
+    <ImageModalProvider>
+      <LayoutWrapperContent>{children}</LayoutWrapperContent>
+    </ImageModalProvider>
   )
 }
