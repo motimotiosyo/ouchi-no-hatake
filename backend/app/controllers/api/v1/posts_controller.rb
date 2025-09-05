@@ -1,6 +1,9 @@
 class Api::V1::PostsController < ApplicationController
   skip_before_action :authenticate_request, only: [ :index ]
   skip_before_action :check_email_verification, only: [ :index ]
+  
+  # indexアクションで認証情報があれば取得する
+  before_action :authenticate_request_optional, only: [ :index ]
   before_action :set_post, only: [ :update, :destroy ]
 
   def index
@@ -247,6 +250,24 @@ class Api::V1::PostsController < ApplicationController
   end
 
   private
+  
+  def authenticate_request_optional
+    header = request.headers["Authorization"]
+    return if header.blank?
+    
+    header = header.split(" ").last if header
+    return if header.blank?
+
+    begin
+      @decoded = JsonWebToken.decode(header)
+      return if @decoded[:jti] && JwtBlacklist.blacklisted?(@decoded[:jti])
+      
+      @current_user = User.find(@decoded[:user_id])
+    rescue => e
+      Rails.logger.debug "Optional authentication failed: #{e.message}"
+      @current_user = nil
+    end
+  end
 
   def set_post
     @post = current_user.posts.find(params[:id])
