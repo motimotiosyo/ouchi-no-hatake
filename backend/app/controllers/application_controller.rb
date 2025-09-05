@@ -9,7 +9,7 @@ class ApplicationController < ActionController::API
   def authenticate_request
     header = request.headers["Authorization"]
     Rails.logger.info "Authorization header: #{header.inspect}"
-    
+
     header = header.split(" ").last if header
     Rails.logger.info "Extracted token: #{header.inspect}"
 

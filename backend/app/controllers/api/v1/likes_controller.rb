@@ -4,7 +4,7 @@ class Api::V1::LikesController < ApplicationController
   # POST /api/v1/posts/:post_id/likes
   def create
     Rails.logger.info "Like create - User: #{current_user.id}, Post: #{@post.id}"
-    
+
     like = @post.likes.build(user: current_user)
 
     if like.save
@@ -29,7 +29,7 @@ class Api::V1::LikesController < ApplicationController
     Rails.logger.error "Unexpected error in likes#create: #{e.message}"
     Rails.logger.error e.backtrace.join("\n")
     render json: {
-      error: '予期しないエラーが発生しました'
+      error: "予期しないエラーが発生しました"
     }, status: :internal_server_error
   end
 
