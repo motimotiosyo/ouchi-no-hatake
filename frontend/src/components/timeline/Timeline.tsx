@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import TimelinePost from './TimelinePost'
 import CreatePostModal from '../posts/CreatePostModal'
 import { useAuth } from '@/contexts/AuthContext'
-import { usePublicApi } from '@/hooks/useApi'
+import { API_BASE_URL } from '@/lib/api'
 
 interface Post {
   id: number
@@ -42,20 +42,42 @@ interface PaginationInfo {
 
 export default function Timeline() {
   const { user, executeProtected } = useAuth()
-  const { publicCall, loading, error } = usePublicApi()
   const [posts, setPosts] = useState<Post[]>([])
   const [loadingMore, setLoadingMore] = useState(false)
   const [pagination, setPagination] = useState<PaginationInfo | null>(null)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const observer = useRef<IntersectionObserver | null>(null)
 
   const fetchPosts = useCallback(async (page: number = 1, append: boolean = false) => {
     try {
       if (page > 1) {
         setLoadingMore(true)
+      } else {
+        setLoading(true)
       }
       
-      const data = await publicCall(`/api/v1/posts?page=${page}&per_page=10`)
+      // 認証ヘッダーを条件付きで追加
+      const headers: HeadersInit = {
+        'Content-Type': 'application/json'
+      }
+      
+      const token = localStorage.getItem('auth_token')
+      if (token) {
+        headers.Authorization = `Bearer ${token}`
+      }
+      
+      const response = await fetch(`${API_BASE_URL}/api/v1/posts?page=${page}&per_page=10`, {
+        method: 'GET',
+        headers
+      })
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      
+      const data = await response.json()
       
       if (data && data.posts && data.pagination) {
         if (append) {
@@ -67,10 +89,12 @@ export default function Timeline() {
       }
     } catch (err) {
       console.error('Error fetching posts:', err)
+      setError(err instanceof Error ? err.message : 'エラーが発生しました')
     } finally {
       setLoadingMore(false)
+      setLoading(false)
     }
-  }, [publicCall])
+  }, [])
 
   const lastPostElementRef = useCallback((node: HTMLDivElement | null) => {
     if (loading || loadingMore) return
