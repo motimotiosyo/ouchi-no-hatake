@@ -3,6 +3,7 @@ class Post < ApplicationRecord
   belongs_to :growth_record, optional: true
   belongs_to :category, optional: true
   has_many :likes, dependent: :destroy
+  has_many :comments, dependent: :destroy
 
   has_many_attached :images
 
@@ -30,6 +31,11 @@ class Post < ApplicationRecord
   def liked_by?(user)
     return false unless user
     likes.exists?(user: user)
+  end
+
+  # コメント数を取得
+  def comments_count
+    comments.count
   end
 
   private
