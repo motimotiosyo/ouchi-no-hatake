@@ -15,6 +15,7 @@ Rails.application.routes.draw do
       # タイムライン関連API
       resources :posts, only: [ :index, :create, :update, :destroy ] do
         resource :likes, only: [ :create, :destroy ]
+        resources :comments, only: [ :index, :create, :destroy ]
       end
 
       # 成長記録関連API

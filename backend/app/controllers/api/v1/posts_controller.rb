@@ -60,6 +60,9 @@ class Api::V1::PostsController < ApplicationController
       post_data[:likes_count] = post.likes_count
       post_data[:liked_by_current_user] = current_user ? post.liked_by?(current_user) : false
 
+      # コメント情報を追加
+      post_data[:comments_count] = post.comments_count
+
       post_data
     end
 
@@ -147,6 +150,9 @@ class Api::V1::PostsController < ApplicationController
         post_response[:likes_count] = @post.likes_count
         post_response[:liked_by_current_user] = @post.liked_by?(current_user)
 
+        # コメント情報を追加
+        post_response[:comments_count] = @post.comments_count
+
         render json: { post: post_response }, status: :created
       else
         Rails.logger.error "Post validation failed: #{@post.errors.full_messages.join(', ')}"
@@ -215,6 +221,9 @@ class Api::V1::PostsController < ApplicationController
         # いいね情報を追加
         post_response[:likes_count] = @post.likes_count
         post_response[:liked_by_current_user] = @post.liked_by?(current_user)
+
+        # コメント情報を追加
+        post_response[:comments_count] = @post.comments_count
 
         render json: { post: post_response }
       else
