@@ -1,10 +1,10 @@
 class Api::V1::PostsController < ApplicationController
-  skip_before_action :authenticate_request, only: [ :index ]
-  skip_before_action :check_email_verification, only: [ :index ]
+  skip_before_action :authenticate_request, only: [ :index, :show ]
+  skip_before_action :check_email_verification, only: [ :index, :show ]
 
   # indexアクションで認証情報があれば取得する
-  before_action :authenticate_request_optional, only: [ :index ]
-  before_action :set_post, only: [ :update, :destroy ]
+  before_action :authenticate_request_optional, only: [ :index, :show ]
+  before_action :set_post, only: [ :show, :update, :destroy ]
 
   def index
     begin
@@ -60,6 +60,9 @@ class Api::V1::PostsController < ApplicationController
       post_data[:likes_count] = post.likes_count
       post_data[:liked_by_current_user] = current_user ? post.liked_by?(current_user) : false
 
+      # コメント情報を追加
+      post_data[:comments_count] = post.comments_count
+
       post_data
     end
 
@@ -84,6 +87,60 @@ class Api::V1::PostsController < ApplicationController
           has_more: false
         }
       }
+    end
+  end
+
+  def show
+    begin
+      post_data = {
+        id: @post.id,
+        title: @post.title,
+        content: @post.content,
+        post_type: @post.post_type,
+        created_at: @post.created_at,
+        user: {
+          id: @post.user.id,
+          name: @post.user.name
+        }
+      }
+
+      # カテゴリ情報を追加
+      if @post.post_type == "general_post" && @post.category
+        post_data[:category] = {
+          id: @post.category.id,
+          name: @post.category.name
+        }
+      end
+
+      # 成長記録情報を追加
+      if @post.post_type == "growth_record_post" && @post.growth_record
+        post_data[:growth_record] = {
+          id: @post.growth_record.id,
+          record_name: @post.growth_record.record_name,
+          plant: {
+            id: @post.growth_record.plant.id,
+            name: @post.growth_record.plant.name
+          }
+        }
+      end
+
+      # 画像情報を追加
+      if @post.images.present?
+        post_data[:images] = @post.images.map { |img| Rails.application.routes.url_helpers.rails_blob_path(img, only_path: true) }
+      end
+
+      # いいね情報を追加
+      post_data[:likes_count] = @post.likes_count
+      post_data[:liked_by_current_user] = current_user ? @post.liked_by?(current_user) : false
+
+      # コメント数を追加
+      post_data[:comments_count] = @post.comments_count
+
+      render json: post_data
+    rescue => e
+      Rails.logger.error "Error in PostsController#show: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+      render json: { error: "Internal server error" }, status: :internal_server_error
     end
   end
 
@@ -146,6 +203,9 @@ class Api::V1::PostsController < ApplicationController
         # いいね情報を追加
         post_response[:likes_count] = @post.likes_count
         post_response[:liked_by_current_user] = @post.liked_by?(current_user)
+
+        # コメント情報を追加
+        post_response[:comments_count] = @post.comments_count
 
         render json: { post: post_response }, status: :created
       else
@@ -216,6 +276,9 @@ class Api::V1::PostsController < ApplicationController
         post_response[:likes_count] = @post.likes_count
         post_response[:liked_by_current_user] = @post.liked_by?(current_user)
 
+        # コメント情報を追加
+        post_response[:comments_count] = @post.comments_count
+
         render json: { post: post_response }
       else
         render json: {
@@ -270,7 +333,11 @@ class Api::V1::PostsController < ApplicationController
   end
 
   def set_post
-    @post = current_user.posts.find(params[:id])
+    if action_name == "show"
+      @post = Post.find(params[:id])
+    else
+      @post = current_user.posts.find(params[:id])
+    end
   rescue ActiveRecord::RecordNotFound
     render json: {
       error: "投稿が見つかりません"

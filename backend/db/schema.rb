@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_05_193530) do
+ActiveRecord::Schema[7.2].define(version: 2025_09_08_000000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -64,6 +64,19 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_05_193530) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["question_id"], name: "index_choices_on_question_id"
+  end
+
+  create_table "comments", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "post_id", null: false
+    t.string "content", limit: 255, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "parent_comment_id"
+    t.index ["parent_comment_id"], name: "index_comments_on_parent_comment_id"
+    t.index ["post_id", "created_at"], name: "index_comments_on_post_id_and_created_at"
+    t.index ["post_id"], name: "index_comments_on_post_id"
+    t.index ["user_id"], name: "index_comments_on_user_id"
   end
 
   create_table "growth_record_steps", force: :cascade do |t|
@@ -185,6 +198,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_05_193530) do
   add_foreign_key "choice_scores", "choices"
   add_foreign_key "choice_scores", "plants"
   add_foreign_key "choices", "questions"
+  add_foreign_key "comments", "comments", column: "parent_comment_id"
+  add_foreign_key "comments", "posts"
+  add_foreign_key "comments", "users"
   add_foreign_key "growth_record_steps", "growth_records"
   add_foreign_key "growth_record_steps", "guide_steps"
   add_foreign_key "growth_records", "plants"
