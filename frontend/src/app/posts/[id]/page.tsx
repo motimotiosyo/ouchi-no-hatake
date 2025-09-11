@@ -310,52 +310,58 @@ export default function PostDetailPage() {
   // 再帰的にコメントを表示するコンポーネント
   const renderComment = (comment: Comment, depth: number = 0) => (
     <div key={comment.id}>
-      
-      <div className="flex justify-between mb-2">
-        <div className="flex items-center space-x-3">
-          <div className={`${depth === 0 ? 'w-8 h-8' : 'w-6 h-6'} ${depth === 0 ? 'bg-gray-400' : 'bg-gray-300'} rounded-full flex items-center justify-center flex-shrink-0`}>
-            <span className={`text-white font-medium ${depth === 0 ? 'text-sm' : 'text-xs'}`}>
-              {comment.user.name.charAt(0)}
-            </span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <span className="font-medium text-sm text-gray-900">{comment.user.name}</span>
-            <span className="text-xs text-gray-500">
-              {formatDateTime(comment.created_at)}
-            </span>
-          </div>
+      <div className="flex space-x-3">
+        {/* アイコン */}
+        <div className={`${depth === 0 ? 'w-8 h-8' : 'w-6 h-6'} ${depth === 0 ? 'bg-gray-400' : 'bg-gray-300'} rounded-full flex items-center justify-center flex-shrink-0`}>
+          <span className={`text-white font-medium ${depth === 0 ? 'text-sm' : 'text-xs'}`}>
+            {comment.user.name.charAt(0)}
+          </span>
         </div>
         
-        <div className="flex items-center space-x-2">
-          {isAuthenticated && (
-            <button
-              onClick={() => setReplyingTo(comment.id)}
-              className={`text-gray-400 hover:text-blue-500 ${depth === 0 ? 'text-sm px-2 py-1' : 'text-xs px-1 py-1'} rounded hover:bg-blue-50 transition-colors`}
-              title="返信"
-            >
-              <svg className={`${depth === 0 ? 'w-4 h-4' : 'w-3 h-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-              </svg>
-            </button>
-          )}
-          {isAuthenticated && user && user.id === comment.user.id && (
-            <button
-              onClick={() => handleDeleteClick(comment.id)}
-              className={`text-gray-400 hover:text-red-500 ${depth === 0 ? 'text-sm px-2 py-1' : 'text-xs px-1 py-1'} rounded hover:bg-red-50 transition-colors`}
-              title="削除"
-            >
-              <svg className={`${depth === 0 ? 'w-4 h-4' : 'w-3 h-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </button>
-          )}
+        {/* コンテンツエリア */}
+        <div className="flex-1 min-w-0">
+          {/* ユーザー名と日時、アクションボタン */}
+          <div className="flex justify-between items-center mb-2">
+            <div className="flex items-center space-x-2">
+              <span className="font-medium text-sm text-gray-900">{comment.user.name}</span>
+              <span className="text-xs text-gray-500">
+                {formatDateTime(comment.created_at)}
+              </span>
+            </div>
+            
+            <div className="flex items-center space-x-2">
+              {isAuthenticated && (
+                <button
+                  onClick={() => setReplyingTo(comment.id)}
+                  className={`text-gray-400 hover:text-blue-500 ${depth === 0 ? 'text-sm px-2 py-1' : 'text-xs px-1 py-1'} rounded hover:bg-blue-50 transition-colors`}
+                  title="返信"
+                >
+                  <svg className={`${depth === 0 ? 'w-4 h-4' : 'w-3 h-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                  </svg>
+                </button>
+              )}
+              {isAuthenticated && user && user.id === comment.user.id && (
+                <button
+                  onClick={() => handleDeleteClick(comment.id)}
+                  className={`text-gray-400 hover:text-red-500 ${depth === 0 ? 'text-sm px-2 py-1' : 'text-xs px-1 py-1'} rounded hover:bg-red-50 transition-colors`}
+                  title="削除"
+                >
+                  <svg className={`${depth === 0 ? 'w-4 h-4' : 'w-3 h-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+          
+          {/* コメント本文（ユーザー名と同じレベル） */}
+          <div className="mb-2">
+            <p className={`text-gray-900 leading-relaxed break-words ${depth === 0 ? '' : 'text-sm'}`}>
+              {comment.content}
+            </p>
+          </div>
         </div>
-      </div>
-      
-      <div className="mb-2">
-        <p className={`text-gray-900 leading-relaxed break-words ${depth === 0 ? '' : 'text-sm'}`}>
-          {comment.content}
-        </p>
       </div>
       
       {/* リプライ入力フォーム */}
