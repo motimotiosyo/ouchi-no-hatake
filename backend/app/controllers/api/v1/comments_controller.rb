@@ -6,11 +6,11 @@ class Api::V1::CommentsController < ApplicationController
   def index
     if params[:flat] == 'true'
       # フラットな時系列表示（X仕様）
-      all_comments = @post.comments.includes(:user, :parent_comment).order(created_at: :asc)
+      all_comments = @post.comments.includes(:user, :parent_comment).order(created_at: :desc)
       render json: { comments: flat_comments_data(all_comments) }
     else
       # ネスト構造（従来の表示）
-      top_level_comments = @post.comments.top_level.includes(:user, replies: [:user]).order(created_at: :asc)
+      top_level_comments = @post.comments.top_level.includes(:user, replies: [:user]).order(created_at: :desc)
       render json: { comments: nested_comments_data(top_level_comments) }
     end
   end
@@ -68,8 +68,8 @@ class Api::V1::CommentsController < ApplicationController
   def nested_comments_data(comments)
     comments.map do |comment|
       comment_hash = comment_data(comment)
-      # リプライも含める
-      comment_hash[:replies] = comment.replies.order(created_at: :asc).map { |reply| comment_data(reply) }
+      # リプライも再帰的に含める
+      comment_hash[:replies] = nested_comments_data(comment.replies.includes(:user, replies: [:user]).order(created_at: :desc))
       comment_hash
     end
   end

@@ -13,7 +13,7 @@ Rails.application.routes.draw do
       get "auth/me", to: "auth#me"
 
       # タイムライン関連API
-      resources :posts, only: [ :index, :create, :update, :destroy ] do
+      resources :posts, only: [ :index, :show, :create, :update, :destroy ] do
         resource :likes, only: [ :create, :destroy ]
         resources :comments, only: [ :index, :create, :destroy ]
       end

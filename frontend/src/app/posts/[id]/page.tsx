@@ -20,6 +20,7 @@ interface Comment {
     id: number
     user_name: string
   }
+  replies?: Comment[]
 }
 
 interface Post {
@@ -68,6 +69,7 @@ export default function PostDetailPage() {
   const [replyingTo, setReplyingTo] = useState<number | null>(null)
   const [deleteCommentId, setDeleteCommentId] = useState<number | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [expandedComments, setExpandedComments] = useState<Set<number>>(new Set())
 
   // 投稿詳細とコメント取得
   useEffect(() => {
@@ -123,8 +125,8 @@ export default function PostDetailPage() {
           }
         }
 
-        // コメント取得（フラット表示）
-        const commentsResponse = await fetch(`${API_BASE_URL}/api/v1/posts/${params.id}/comments?flat=true`, {
+        // コメント取得（ネスト表示）
+        const commentsResponse = await fetch(`${API_BASE_URL}/api/v1/posts/${params.id}/comments`, {
           headers
         })
 
@@ -285,6 +287,137 @@ export default function PostDetailPage() {
     setDeleteCommentId(null)
   }
 
+  // リプライ表示切り替え
+  const toggleCommentExpansion = (commentId: number) => {
+    setExpandedComments(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(commentId)) {
+        newSet.delete(commentId)
+      } else {
+        newSet.add(commentId)
+      }
+      return newSet
+    })
+  }
+
+  // コメント総数をカウント（再帰的）
+  const getTotalCommentCount = (comments: Comment[]): number => {
+    return comments.reduce((total, comment) => {
+      return total + 1 + (comment.replies ? getTotalCommentCount(comment.replies) : 0)
+    }, 0)
+  }
+
+  // 再帰的にコメントを表示するコンポーネント
+  const renderComment = (comment: Comment, depth: number = 0) => (
+    <div key={comment.id}>
+      
+      <div className="flex justify-between mb-2">
+        <div className="flex items-center space-x-3">
+          <div className={`${depth === 0 ? 'w-8 h-8' : 'w-6 h-6'} ${depth === 0 ? 'bg-gray-400' : 'bg-gray-300'} rounded-full flex items-center justify-center flex-shrink-0`}>
+            <span className={`text-white font-medium ${depth === 0 ? 'text-sm' : 'text-xs'}`}>
+              {comment.user.name.charAt(0)}
+            </span>
+          </div>
+          <div className="flex items-center space-x-2">
+            <span className="font-medium text-sm text-gray-900">{comment.user.name}</span>
+            <span className="text-xs text-gray-500">
+              {formatDateTime(comment.created_at)}
+            </span>
+          </div>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          {isAuthenticated && (
+            <button
+              onClick={() => setReplyingTo(comment.id)}
+              className={`text-gray-400 hover:text-blue-500 ${depth === 0 ? 'text-sm px-2 py-1' : 'text-xs px-1 py-1'} rounded hover:bg-blue-50 transition-colors`}
+              title="返信"
+            >
+              <svg className={`${depth === 0 ? 'w-4 h-4' : 'w-3 h-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+              </svg>
+            </button>
+          )}
+          {isAuthenticated && user && user.id === comment.user.id && (
+            <button
+              onClick={() => handleDeleteClick(comment.id)}
+              className={`text-gray-400 hover:text-red-500 ${depth === 0 ? 'text-sm px-2 py-1' : 'text-xs px-1 py-1'} rounded hover:bg-red-50 transition-colors`}
+              title="削除"
+            >
+              <svg className={`${depth === 0 ? 'w-4 h-4' : 'w-3 h-3'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </div>
+      
+      <div className="mb-2">
+        <p className={`text-gray-900 leading-relaxed break-words ${depth === 0 ? '' : 'text-sm'}`}>
+          {comment.content}
+        </p>
+      </div>
+      
+      {/* リプライ入力フォーム */}
+      {replyingTo === comment.id && isAuthenticated && (
+        <div className={`mb-4 bg-gray-50 rounded-lg border border-blue-200 p-${depth === 0 ? '4' : '3'}`}>
+          <form onSubmit={handleSubmitComment} className="space-y-3">
+            <div className="flex space-x-3">
+              <div className="w-6 h-6 bg-gray-400 rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-white font-medium text-xs">
+                  {user?.name?.charAt(0)}
+                </span>
+              </div>
+              <div className="flex-1">
+                <textarea
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  placeholder="返信を入力..."
+                  className="w-full p-3 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows={3}
+                  maxLength={255}
+                  disabled={submitting}
+                />
+                <div className="flex justify-between items-center mt-2">
+                  <span className="text-sm text-gray-500">
+                    {newComment.length}/255文字
+                  </span>
+                  <div className="flex space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => setReplyingTo(null)}
+                      className="px-4 py-2 text-gray-500 hover:text-gray-700 transition-colors"
+                    >
+                      キャンセル
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={!newComment.trim() || submitting}
+                      className="px-4 py-2 bg-blue-500 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors"
+                    >
+                      {submitting ? '投稿中...' : 'リプライ'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      )}
+      
+    </div>
+  )
+
+  // 全ての子孫コメントを再帰的に表示する関数
+  const renderAllReplies = (replies: Comment[]) => {
+    return replies.map((reply) => (
+      <div key={reply.id} className="space-y-3">
+        {renderComment(reply, 1)}
+        {reply.replies && reply.replies.length > 0 && renderAllReplies(reply.replies)}
+      </div>
+    ))
+  }
+
   // 日時フォーマット
   const formatDateTime = (dateString: string) => {
     const date = new Date(dateString)
@@ -414,7 +547,7 @@ export default function PostDetailPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.965 8.965 0 01-4.126-1.004L5 21l1.996-3.874A8.965 8.965 0 013 12c0-4.418 3.582-8 8-8s8 3.582 8 8z" />
               </svg>
               <span className="text-sm">
-                {comments.length}
+                {getTotalCommentCount(comments)}
               </span>
             </div>
           </div>
@@ -520,254 +653,51 @@ export default function PostDetailPage() {
 
       {/* コメント一覧 */}
       <div className="mt-6">
-        <h3 className="text-lg font-semibold mb-4">コメント ({comments.length})</h3>
+        <h3 className="text-lg font-semibold mb-4">コメント ({getTotalCommentCount(comments)})</h3>
         
         {comments.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             コメントがありません
           </div>
         ) : (
-          <div className="space-y-4">
-            {(() => {
-              // コメントをグループ化: トップレベルコメントとその全ての子コメントをまとめる
-              const commentGroups: { [key: number]: Comment[] } = {}
-              const topLevelComments: Comment[] = []
-              
-              // 最初にトップレベルコメントを特定
-              comments.forEach(comment => {
-                if (!comment.parent_comment_id) {
-                  topLevelComments.push(comment)
-                  commentGroups[comment.id] = []
-                }
-              })
-              
-              // 全てのリプライ（どのレベルでも）をトップレベルコメントのグループに追加
-              comments.forEach(comment => {
-                if (comment.parent_comment_id) {
-                  // このコメントがどのトップレベルコメントに属するか検索
-                  const findTopLevelParent = (commentId: number): number => {
-                    const parentComment = comments.find(c => c.id === commentId)
-                    if (!parentComment || !parentComment.parent_comment_id) {
-                      return commentId
-                    }
-                    return findTopLevelParent(parentComment.parent_comment_id)
-                  }
-                  
-                  const topLevelId = findTopLevelParent(comment.parent_comment_id)
-                  if (commentGroups[topLevelId]) {
-                    commentGroups[topLevelId].push(comment)
-                  }
-                }
-              })
-              
-              return topLevelComments.map((topComment) => (
-                <div key={topComment.id}>
-                  {/* トップレベルコメント */}
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-4">
-                    <div className="flex justify-between mb-2">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center flex-shrink-0">
-                          <span className="text-white font-medium text-sm">
-                            {topComment.user.name.charAt(0)}
-                          </span>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <span className="font-medium text-sm text-gray-900">{topComment.user.name}</span>
-                          <span className="text-xs text-gray-500">
-                            {formatDateTime(topComment.created_at)}
-                          </span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center space-x-2">
-                        {isAuthenticated && (
-                          <button
-                            onClick={() => setReplyingTo(topComment.id)}
-                            className="text-gray-400 hover:text-blue-500 text-sm px-2 py-1 rounded hover:bg-blue-50 transition-colors"
-                            title="返信"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                            </svg>
-                          </button>
-                        )}
-                        {isAuthenticated && user && user.id === topComment.user.id && (
-                          <button
-                            onClick={() => handleDeleteClick(topComment.id)}
-                            className="text-gray-400 hover:text-red-500 text-sm px-2 py-1 rounded hover:bg-red-50 transition-colors"
-                            title="削除"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* 本文をアイコンの下の階層に */}
-                    <div>
-                      <p className="text-gray-900 leading-relaxed break-words">
-                        {topComment.content}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  {/* リプライ入力フォーム（このコメントへの返信時のみ表示） */}
-                  {replyingTo === topComment.id && isAuthenticated && (
-                    <div className="ml-6 mb-3 bg-white rounded-lg shadow-sm border border-blue-200 p-4">
-                      <form onSubmit={handleSubmitComment} className="space-y-3">
-                        <div className="flex space-x-3">
-                          <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center flex-shrink-0">
-                            <span className="text-white font-medium text-sm">
-                              {user?.name?.charAt(0)}
-                            </span>
-                          </div>
-                          <div className="flex-1">
-                            <textarea
-                              value={newComment}
-                              onChange={(e) => setNewComment(e.target.value)}
-                              placeholder="返信を入力..."
-                              className="w-full p-3 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              rows={3}
-                              maxLength={255}
-                              disabled={submitting}
-                            />
-                            <div className="flex justify-between items-center mt-2">
-                              <span className="text-sm text-gray-500">
-                                {newComment.length}/255文字
-                              </span>
-                              <div className="flex space-x-2">
-                                <button
-                                  type="button"
-                                  onClick={() => setReplyingTo(null)}
-                                  className="px-4 py-2 text-gray-500 hover:text-gray-700 transition-colors"
-                                >
-                                  キャンセル
-                                </button>
-                                <button
-                                  type="submit"
-                                  disabled={!newComment.trim() || submitting}
-                                  className="px-4 py-2 bg-blue-500 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors"
-                                >
-                                  {submitting ? '投稿中...' : 'リプライ'}
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </form>
-                    </div>
+          <div className="space-y-6">
+            {comments.map((topComment) => (
+              <div key={topComment.id} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+                {/* トップレベルコメント */}
+                <div className="relative">
+                  {/* リプライ開閉ボタン */}
+                  {topComment.replies && topComment.replies.length > 0 && (
+                    <button
+                      onClick={() => toggleCommentExpansion(topComment.id)}
+                      className="flex items-center text-gray-500 hover:text-gray-700 text-sm mb-3 transition-colors"
+                    >
+                      <svg 
+                        className={`w-4 h-4 mr-1 transform transition-transform ${
+                          expandedComments.has(topComment.id) ? 'rotate-90' : ''
+                        }`}
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                      {getTotalCommentCount([topComment]) - 1}件の返信
+                      {expandedComments.has(topComment.id) ? 'を隠す' : 'を表示'}
+                    </button>
                   )}
+
+                  {/* トップレベルコメントを表示 */}
+                  {renderComment(topComment, 0)}
                   
-                  {/* リプライコメント一覧（フラット表示） */}
-                  {commentGroups[topComment.id] && commentGroups[topComment.id].length > 0 && (
-                    <div className="ml-6 space-y-3 pl-2">
-                      {commentGroups[topComment.id].map((reply, index) => (
-                        <div key={reply.id}>
-                          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 border-l-4 border-blue-300">
-                            <div className="flex justify-between mb-2">
-                              <div className="flex items-center space-x-3">
-                                <div className="w-6 h-6 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
-                                  <span className="text-white font-medium text-xs">
-                                    {reply.user.name.charAt(0)}
-                                  </span>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <span className="font-medium text-sm text-gray-900">{reply.user.name}</span>
-                                  <span className="text-xs text-gray-500">
-                                    {formatDateTime(reply.created_at)}
-                                  </span>
-                                </div>
-                              </div>
-                              
-                              <div className="flex items-center space-x-2">
-                                {isAuthenticated && (
-                                  <button
-                                    onClick={() => setReplyingTo(reply.id)}
-                                    className="text-gray-400 hover:text-blue-500 text-xs px-1 py-1 rounded hover:bg-blue-50 transition-colors"
-                                    title="返信"
-                                  >
-                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                                    </svg>
-                                  </button>
-                                )}
-                                {isAuthenticated && user && user.id === reply.user.id && (
-                                  <button
-                                    onClick={() => handleDeleteClick(reply.id)}
-                                    className="text-gray-400 hover:text-red-500 text-xs px-1 py-1 rounded hover:bg-red-50 transition-colors"
-                                    title="削除"
-                                  >
-                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                    </svg>
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-                            
-                            {/* 本文をアイコンの下の階層に */}
-                            <div>
-                              <p className="text-gray-900 leading-relaxed break-words text-sm">
-                                {reply.content}
-                              </p>
-                            </div>
-                          </div>
-                          
-                          {/* リプライ入力フォーム（このリプライに対する返信時のみ表示） */}
-                          {replyingTo === reply.id && isAuthenticated && (
-                            <div className="mt-2 bg-white rounded-lg shadow-sm border border-blue-200 p-4">
-                              <form onSubmit={handleSubmitComment} className="space-y-3">
-                                <div className="flex space-x-3">
-                                  <div className="w-6 h-6 bg-gray-400 rounded-full flex items-center justify-center flex-shrink-0">
-                                    <span className="text-white font-medium text-xs">
-                                      {user?.name?.charAt(0)}
-                                    </span>
-                                  </div>
-                                  <div className="flex-1">
-                                    <textarea
-                                      value={newComment}
-                                      onChange={(e) => setNewComment(e.target.value)}
-                                      placeholder="返信を入力..."
-                                      className="w-full p-3 border rounded-md resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                      rows={3}
-                                      maxLength={255}
-                                      disabled={submitting}
-                                    />
-                                    <div className="flex justify-between items-center mt-2">
-                                      <span className="text-sm text-gray-500">
-                                        {newComment.length}/255文字
-                                      </span>
-                                      <div className="flex space-x-2">
-                                        <button
-                                          type="button"
-                                          onClick={() => setReplyingTo(null)}
-                                          className="px-4 py-2 text-gray-500 hover:text-gray-700 transition-colors"
-                                        >
-                                          キャンセル
-                                        </button>
-                                        <button
-                                          type="submit"
-                                          disabled={!newComment.trim() || submitting}
-                                          className="px-4 py-2 bg-blue-500 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors"
-                                        >
-                                          {submitting ? '投稿中...' : 'リプライ'}
-                                        </button>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </form>
-                            </div>
-                          )}
-                        </div>
-                      ))}
+                  {/* 返信を展開表示（全ての子孫コメントを再帰的に表示） */}
+                  {topComment.replies && topComment.replies.length > 0 && expandedComments.has(topComment.id) && (
+                    <div className="mt-3">
+                      {renderAllReplies(topComment.replies)}
                     </div>
                   )}
                 </div>
-              ))
-            })()}
+              </div>
+            ))}
           </div>
         )}
       </div>
