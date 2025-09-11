@@ -140,7 +140,7 @@ class Api::V1::PostsController < ApplicationController
     rescue => e
       Rails.logger.error "Error in PostsController#show: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
-      render json: { error: 'Internal server error' }, status: :internal_server_error
+      render json: { error: "Internal server error" }, status: :internal_server_error
     end
   end
 
@@ -333,7 +333,7 @@ class Api::V1::PostsController < ApplicationController
   end
 
   def set_post
-    if action_name == 'show'
+    if action_name == "show"
       @post = Post.find(params[:id])
     else
       @post = current_user.posts.find(params[:id])

@@ -1,25 +1,25 @@
 class Api::V1::CommentsController < ApplicationController
   before_action :find_post
-  before_action :find_comment, only: [:destroy]
+  before_action :find_comment, only: [ :destroy ]
 
   # GET /api/v1/posts/:post_id/comments
   def index
-    if params[:flat] == 'true'
+    if params[:flat] == "true"
       # フラットな時系列表示（X仕様）
       all_comments = @post.comments.includes(:user, :parent_comment).order(created_at: :desc)
       render json: { comments: flat_comments_data(all_comments) }
     else
       # ネスト構造（従来の表示）
-      top_level_comments = @post.comments.top_level.includes(:user, replies: [:user]).order(created_at: :desc)
+      top_level_comments = @post.comments.top_level.includes(:user, replies: [ :user ]).order(created_at: :desc)
       render json: { comments: nested_comments_data(top_level_comments) }
     end
   end
 
-  # POST /api/v1/posts/:post_id/comments  
+  # POST /api/v1/posts/:post_id/comments
   def create
     comment = @post.comments.build(comment_params)
     comment.user = current_user
-    
+
     if comment.save
       render json: { comment: comment_data(comment) }, status: :created
     else
@@ -31,9 +31,9 @@ class Api::V1::CommentsController < ApplicationController
   def destroy
     if @comment.user == current_user
       @comment.destroy
-      render json: { message: 'コメントを削除しました' }
+      render json: { message: "コメントを削除しました" }
     else
-      render json: { error: '権限がありません' }, status: :forbidden
+      render json: { error: "権限がありません" }, status: :forbidden
     end
   end
 
@@ -69,7 +69,7 @@ class Api::V1::CommentsController < ApplicationController
     comments.map do |comment|
       comment_hash = comment_data(comment)
       # リプライも再帰的に含める
-      comment_hash[:replies] = nested_comments_data(comment.replies.includes(:user, replies: [:user]).order(created_at: :desc))
+      comment_hash[:replies] = nested_comments_data(comment.replies.includes(:user, replies: [ :user ]).order(created_at: :desc))
       comment_hash
     end
   end
