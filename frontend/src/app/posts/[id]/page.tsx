@@ -309,13 +309,16 @@ export default function PostDetailPage() {
 
   // 再帰的にコメントを表示するコンポーネント
   const renderComment = (comment: Comment, depth: number = 0) => (
-    <div key={comment.id}>
+    <div key={comment.id} className="relative">
       <div className="flex space-x-3">
-        {/* アイコン */}
-        <div className={`${depth === 0 ? 'w-8 h-8' : 'w-6 h-6'} ${depth === 0 ? 'bg-gray-400' : 'bg-gray-300'} rounded-full flex items-center justify-center flex-shrink-0`}>
-          <span className={`text-white font-medium ${depth === 0 ? 'text-sm' : 'text-xs'}`}>
-            {comment.user.name.charAt(0)}
-          </span>
+        {/* アイコンエリア */}
+        <div className="relative">
+          {/* アイコン */}
+          <div className={`w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center flex-shrink-0`}>
+            <span className={`text-white font-medium text-sm`}>
+              {comment.user.name.charAt(0)}
+            </span>
+          </div>
         </div>
         
         {/* コンテンツエリア */}
@@ -414,12 +417,12 @@ export default function PostDetailPage() {
     </div>
   )
 
-  // 全ての子孫コメントを再帰的に表示する関数
-  const renderAllReplies = (replies: Comment[]) => {
+  // 全ての子孫コメントを再帰的に表示する関数（フラット表示）
+  const renderAllReplies = (replies: Comment[], parentDepth: number = 0) => {
     return replies.map((reply) => (
       <div key={reply.id} className="space-y-3">
-        {renderComment(reply, 1)}
-        {reply.replies && reply.replies.length > 0 && renderAllReplies(reply.replies)}
+        {renderComment(reply, parentDepth + 1)}
+        {reply.replies && reply.replies.length > 0 && renderAllReplies(reply.replies, parentDepth + 1)}
       </div>
     ))
   }
@@ -695,7 +698,7 @@ export default function PostDetailPage() {
                   {/* トップレベルコメントを表示 */}
                   {renderComment(topComment, 0)}
                   
-                  {/* 返信を展開表示（全ての子孫コメントを再帰的に表示） */}
+                  {/* 返信を展開表示（全ての子孫コメントを再帰的にフラット表示） */}
                   {topComment.replies && topComment.replies.length > 0 && expandedComments.has(topComment.id) && (
                     <div className="mt-3">
                       {renderAllReplies(topComment.replies)}
@@ -733,14 +736,20 @@ export default function PostDetailPage() {
                     disabled={submitting}
                     onFocus={(e) => {
                       e.target.rows = 3;
-                      e.target.parentElement.parentElement.parentElement.parentElement.style.bottom = '64px';
-                      e.target.parentElement.parentElement.parentElement.parentElement.style.boxShadow = '0 -4px 16px rgba(0,0,0,0.1)';
+                      const container = e.target.parentElement?.parentElement?.parentElement?.parentElement;
+                      if (container) {
+                        (container as HTMLElement).style.bottom = '64px';
+                        (container as HTMLElement).style.boxShadow = '0 -4px 16px rgba(0,0,0,0.1)';
+                      }
                     }}
                     onBlur={(e) => {
                       if (!newComment.trim()) {
                         e.target.rows = 1;
-                        e.target.parentElement.parentElement.parentElement.parentElement.style.bottom = '64px';
-                        e.target.parentElement.parentElement.parentElement.parentElement.style.boxShadow = 'none';
+                        const container = e.target.parentElement?.parentElement?.parentElement?.parentElement;
+                        if (container) {
+                          (container as HTMLElement).style.bottom = '64px';
+                          (container as HTMLElement).style.boxShadow = 'none';
+                        }
                       }
                     }}
                   />
