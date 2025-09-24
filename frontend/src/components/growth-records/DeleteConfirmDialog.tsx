@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuthContext as useAuth } from '@/contexts/auth'
 import { useApi } from '@/hooks/useApi'
 
 interface Props {

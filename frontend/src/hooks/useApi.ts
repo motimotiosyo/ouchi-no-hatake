@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuthContext as useAuth } from '@/contexts/auth'
 import { authenticatedApiCall, apiCall } from '@/lib/api'
 
 // 認証付きAPI呼び出し用のカスタムフック（強化版）

@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { registerSchema, type RegisterFormData } from '@/lib/validation'
 import { apiCall } from '@/lib/api'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuthContext as useAuth } from '@/contexts/auth'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 

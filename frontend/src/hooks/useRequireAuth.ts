@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuthContext as useAuth } from '@/contexts/auth'
 
 /**
  * 認証が必要なページで使用するカスタムフック

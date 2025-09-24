@@ -1,6 +1,6 @@
 'use client'
 
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuthContext as useAuth } from '@/contexts/auth'
 import Timeline from '@/components/timeline/Timeline'
 import EmailVerificationBanner from '@/components/auth/EmailVerificationBanner'
 
