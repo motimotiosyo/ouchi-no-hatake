@@ -7,6 +7,7 @@ class CleanupRakeTest < ActiveSupport::TestCase
     Rails.application.load_tasks
     # テスト前に関連データをクリア（外部キー制約を考慮した順序）
     Like.delete_all
+    Post.delete_all
     User.delete_all
   end
 
