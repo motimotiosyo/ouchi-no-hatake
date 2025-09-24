@@ -171,7 +171,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setCookie('auth_token', finalToken)
           }
         } else {
-          console.log('ユーザー情報取得失敗 - 認証状態をクリア')
           localStorage.removeItem('auth_token')
           localStorage.removeItem('auth_user')
           deleteCookie('auth_token')
@@ -179,14 +178,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setToken(null)
         }
       } else {
-        console.log('認証情報なし - ユーザー情報もクリア')
         // トークンがない場合はユーザー情報もクリア
         localStorage.removeItem('auth_user')
         setUser(null)
         setToken(null)
       }
       
-      console.log('認証初期化完了 - isLoadingをfalseに設定')
       setIsLoading(false)
     }
 
@@ -194,7 +191,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     // フォールバック: 一定時間後に強制的にローディングを終了
     const fallbackTimeout = setTimeout(() => {
-      console.log('Fallback: 強制的にisLoadingをfalseに設定')
       setIsLoading(false)
     }, 3000) // 3秒後
     
@@ -203,7 +199,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ログイン関数
   const login = (newToken: string, newUser: User) => {
-    console.log('ログイン実行:', newUser.name)
     setToken(newToken)
     setUser(newUser)
     localStorage.setItem('auth_token', newToken)
@@ -214,14 +209,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // 通常のログアウト関数
   const logout = async () => {
-    console.log('ログアウト開始 - Cookie削除前:', document.cookie)
-    
     try {
       if (token) {
         await authenticatedApiCall('/api/v1/auth/logout', token, { method: 'DELETE' });
       }
-    } catch (error) {
-      console.error('Logout API error:', error)
+    } catch {
+      // ログアウトAPIエラーは無視（クライアント側クリーンアップは継続）
     } finally {
       setToken(null)
       setUser(null)
@@ -229,8 +222,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('auth_user')
       localStorage.removeItem('last_activity')
       deleteCookie('auth_token')
-      
-      console.log('ログアウト完了 - Cookie削除後:', document.cookie)
       
       // 新規追加: ログアウト後のリダイレクトとメッセージ設定
       router.push('/')
@@ -243,8 +234,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // JWT期限切れ時の自動ログアウト関数（useCallbackでメモ化）
   const autoLogout = useCallback(async () => {
-    console.log('JWT期限切れによる自動ログアウト開始')
-    
     try {
       // API呼び出しは行わない（既にトークンが無効なため）
       setToken(null)
@@ -257,10 +246,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // ユーザーへのメッセージ設定とモーダル表示
       setAutoLogoutMessage('セッションの有効期限が切れました。再度ログインしてください。')
       setShowAutoLogoutModal(true)
-      
-      console.log('自動ログアウト処理完了（モーダル表示中）')
-    } catch (error) {
-      console.error('Auto logout error:', error)
+    } catch {
+      // エラー処理（ログ出力なし）
     }
   }, [])
 
@@ -304,7 +291,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const inactiveTime = Date.now() - parseInt(lastActivity)
     
     if (inactiveTime > sixMonthsInMs) {
-      console.log('6ヶ月間非アクティブのため自動ログアウト')
       return false
     }
     
@@ -317,7 +303,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const currentToken = localStorage.getItem('auth_token')
     
     if (!currentToken) {
-      console.log('トークンなし - 自動ログアウトを実行')
       // トークンがない場合は自動ログアウト処理を実行
       autoLogout()
       return false
@@ -325,7 +310,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // アクティビティチェック（6ヶ月間非アクティブ）
     if (!checkInactivity()) {
-      console.log('長期間非アクティブのため自動ログアウト')
       autoLogout()
       return false
     }
@@ -337,7 +321,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // 有効期限をチェック
       if (payload.exp && payload.exp < currentTime) {
-        console.log('JWT期限切れを事前検知 - 自動ログアウトを実行')
         autoLogout()
         return false
       }
@@ -346,8 +329,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       updateLastActivity()
       
       return true
-    } catch (error) {
-      console.error('JWT解析エラー:', error)
+    } catch {
       // 解析に失敗した場合は無効とみなす
       autoLogout()
       return false
@@ -398,8 +380,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           expired: data.expired || false
         }
       }
-    } catch (error) {
-      console.error('Email verification error:', error)
+    } catch {
       return { 
         success: false, 
         error: 'ネットワークエラーが発生しました' 
@@ -428,8 +409,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           error: data.error || '認証メールの再送信に失敗しました'
         }
       }
-    } catch (error) {
-      console.error('Resend verification error:', error)
+    } catch {
       return { 
         success: false, 
         error: 'ネットワークエラーが発生しました' 

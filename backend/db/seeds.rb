@@ -62,7 +62,7 @@ plants_data.each do |plant_data|
   end
 end
 
-puts "植物データの登録が完了しました。"
+
 
 # カテゴリデータ
 categories_data = [
@@ -81,4 +81,4 @@ categories_data.each do |category_data|
   Category.find_or_create_by!(name: category_data[:name])
 end
 
-puts "カテゴリデータの登録が完了しました。"
+

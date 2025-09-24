@@ -8,10 +8,10 @@ class ApplicationController < ActionController::API
 
   def authenticate_request
     header = request.headers["Authorization"]
-    Rails.logger.debug "Authorization request received"
+
 
     header = header.split(" ").last if header
-    Rails.logger.debug "Token extraction completed"
+
 
     # トークン無い場合
     if header.blank?
@@ -22,7 +22,7 @@ class ApplicationController < ActionController::API
     # JWTデコード
     begin
       @decoded = JsonWebToken.decode(header)
-      Rails.logger.debug "JWT decode successful"
+
     rescue => e
       Rails.logger.error "JWT decode error: #{e.class.name} - #{e.message}"
       raise ExceptionHandler::InvalidToken, "トークンが無効です: #{e.message}"
@@ -37,7 +37,7 @@ class ApplicationController < ActionController::API
     # ユーザー検索
     begin
       @current_user = User.find(@decoded[:user_id])
-      Rails.logger.debug "User authentication successful"
+
     rescue ActiveRecord::RecordNotFound => e
       Rails.logger.error "User not found for provided token"
       raise ExceptionHandler::InvalidToken, "ユーザーが見つかりません"

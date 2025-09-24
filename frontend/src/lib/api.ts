@@ -57,8 +57,6 @@ export const authenticatedApiCall = async (endpoint: string, token: string, opti
     try {
       const errorData = await response.clone().json()
       if (errorData.message === 'Signature has expired') {
-        console.log('JWT期限切れを検知 - 自動ログアウトを実行')
-        
         // 自動ログアウトを実行
         if (autoLogoutCallback) {
           autoLogoutCallback()
