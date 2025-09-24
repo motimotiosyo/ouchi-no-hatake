@@ -1,5 +1,6 @@
 class ApplicationController < ActionController::API
   include ExceptionHandler
+  include Loggable
 
   before_action :authenticate_request
   before_action :check_email_verification
@@ -15,7 +16,7 @@ class ApplicationController < ActionController::API
 
     # トークン無い場合
     if header.blank?
-      Rails.logger.error "Token is blank"
+      log_auth_event('Token missing in request', nil, false)
       raise ExceptionHandler::MissingToken, "トークンが提供されていません"
     end
 
@@ -24,13 +25,14 @@ class ApplicationController < ActionController::API
       @decoded = JsonWebToken.decode(header)
 
     rescue => e
-      Rails.logger.error "JWT decode error: #{e.class.name} - #{e.message}"
+      log_auth_event('JWT decode failed', nil, false)
+      log_error("JWT decode error", e)
       raise ExceptionHandler::InvalidToken, "トークンが無効です: #{e.message}"
     end
 
     # ブラックリストチェック
     if @decoded[:jti] && JwtBlacklist.blacklisted?(@decoded[:jti])
-      Rails.logger.error "Token is blacklisted: #{@decoded[:jti]}"
+      log_auth_event('Blacklisted token detected', @decoded[:user_id], false)
       raise ExceptionHandler::InvalidToken, "トークンは無効化されています"
     end
 
@@ -39,9 +41,12 @@ class ApplicationController < ActionController::API
       @current_user = User.find(@decoded[:user_id])
 
     rescue ActiveRecord::RecordNotFound => e
-      Rails.logger.error "User not found for provided token"
+      log_auth_event('User not found for token', @decoded[:user_id], false)
       raise ExceptionHandler::InvalidToken, "ユーザーが見つかりません"
     end
+    
+    # 認証成功をログ記録
+    log_auth_event('Authentication successful', @current_user.id, true)
   end
 
   def current_user
