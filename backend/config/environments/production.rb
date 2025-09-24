@@ -58,10 +58,10 @@ Rails.application.configure do
   # 本番環境では機密情報保護のためinfoレベル以上のみ出力
   # debugレベルの情報は本番環境では完全に無効化
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info").to_sym
-  
+
   # 機密情報をログから除外するフィルター強化
   config.filter_parameters += [
-    :password, :password_confirmation, :token, :auth_token, :jwt, 
+    :password, :password_confirmation, :token, :auth_token, :jwt,
     :api_key, :secret, :private_key, :cookie, :session_id,
     :email, :name, :user_id, :phone, :address
   ]
