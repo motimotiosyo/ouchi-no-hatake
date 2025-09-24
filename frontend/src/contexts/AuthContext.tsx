@@ -3,6 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { authenticatedApiCall, setAutoLogoutCallback, API_BASE_URL } from '@/lib/api'
+import Logger from '@/utils/logger'
 
 // ユーザー情報の型定義
 interface User {
@@ -135,9 +136,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               setToken(finalToken)
               setUser(currentUser)
               localStorage.setItem('auth_user', JSON.stringify(currentUser))
+              Logger.debug('User data refreshed during auth initialization')
             } else {
               setToken(finalToken)
               setUser(parsedUser)
+              Logger.debug('Using cached user data for auth initialization')
             }
           } else {
             setToken(finalToken)
@@ -205,16 +208,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('auth_user', JSON.stringify(newUser))
     localStorage.setItem('last_activity', Date.now().toString()) // 初回アクティビティ記録
     setCookie('auth_token', newToken, 7)
+    Logger.auth('User login successful', newUser.id)
   }
 
   // 通常のログアウト関数
   const logout = async () => {
+    Logger.auth('User logout initiated', user?.id)
+    
     try {
       if (token) {
         await authenticatedApiCall('/api/v1/auth/logout', token, { method: 'DELETE' });
       }
-    } catch {
+    } catch (error) {
       // ログアウトAPIエラーは無視（クライアント側クリーンアップは継続）
+      Logger.warn('Logout API call failed, continuing with client cleanup', { error })
     } finally {
       setToken(null)
       setUser(null)
@@ -222,6 +229,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('auth_user')
       localStorage.removeItem('last_activity')
       deleteCookie('auth_token')
+      
+      Logger.auth('User logout completed', user?.id)
       
       // 新規追加: ログアウト後のリダイレクトとメッセージ設定
       router.push('/')
@@ -234,6 +243,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // JWT期限切れ時の自動ログアウト関数（useCallbackでメモ化）
   const autoLogout = useCallback(async () => {
+    Logger.auth('Auto logout initiated due to token expiration', user?.id)
+    
     try {
       // API呼び出しは行わない（既にトークンが無効なため）
       setToken(null)
@@ -246,10 +257,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // ユーザーへのメッセージ設定とモーダル表示
       setAutoLogoutMessage('セッションの有効期限が切れました。再度ログインしてください。')
       setShowAutoLogoutModal(true)
-    } catch {
-      // エラー処理（ログ出力なし）
+      
+      Logger.auth('Auto logout completed', user?.id)
+    } catch (error) {
+      Logger.error('Error during auto logout process', error instanceof Error ? error : undefined)
     }
-  }, [])
+  }, [user?.id])
 
   // メッセージクリア関数
   const clearAutoLogoutMessage = () => {

@@ -55,10 +55,16 @@ Rails.application.configure do
   # Prepend all log lines with the following tags.
   config.log_tags = [ :request_id ]
 
-  # "info" includes generic and useful information about system operation, but avoids logging too much
-  # information to avoid inadvertent exposure of personally identifiable information (PII). If you
-  # want to log everything, set the level to "debug".
-  config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info")
+  # 本番環境では機密情報保護のためinfoレベル以上のみ出力
+  # debugレベルの情報は本番環境では完全に無効化
+  config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "info").to_sym
+
+  # 機密情報をログから除外するフィルター強化
+  config.filter_parameters += [
+    :password, :password_confirmation, :token, :auth_token, :jwt,
+    :api_key, :secret, :private_key, :cookie, :session_id,
+    :email, :name, :user_id, :phone, :address
+  ]
 
   # Use a different cache store in production.
   # config.cache_store = :mem_cache_store
