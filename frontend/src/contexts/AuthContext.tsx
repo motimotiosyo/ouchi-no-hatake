@@ -129,21 +129,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const shouldRefreshUser = !parsedUser.hasOwnProperty('email_verified')
           
           if (shouldRefreshUser) {
-            console.log('ユーザー情報が古い可能性があるため、サーバーから最新情報を取得')
             const currentUser = await fetchCurrentUser(finalToken)
             
             if (currentUser) {
-              console.log('サーバーから最新ユーザー情報を取得成功:', currentUser.name)
               setToken(finalToken)
               setUser(currentUser)
               localStorage.setItem('auth_user', JSON.stringify(currentUser))
             } else {
-              console.log('ユーザー情報取得失敗 - 既存の情報を使用')
               setToken(finalToken)
               setUser(parsedUser)
             }
           } else {
-            console.log('認証情報復元成功:', parsedUser.name)
             setToken(finalToken)
             setUser(parsedUser)
           }
@@ -156,7 +152,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setCookie('auth_token', finalToken)
           }
         } catch (error) {
-          console.log('認証情報パースエラー:', error)
           // パース失敗時はクリア
           localStorage.removeItem('auth_token')
           localStorage.removeItem('auth_user')
@@ -164,11 +159,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       } else if (finalToken && !savedUser) {
         // トークンはあるが localStorage にユーザー情報がない場合
-        console.log('トークンあり、ユーザー情報なし - サーバーから取得')
         const currentUser = await fetchCurrentUser(finalToken)
         
         if (currentUser) {
-          console.log('サーバーからユーザー情報取得成功:', currentUser.name)
           setToken(finalToken)
           setUser(currentUser)
           localStorage.setItem('auth_token', finalToken)
