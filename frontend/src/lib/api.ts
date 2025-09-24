@@ -1,3 +1,5 @@
+import Logger from '@/utils/logger'
+
 // API設定
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001'
 
@@ -33,6 +35,10 @@ export const setAutoLogoutCallback = (callback: () => void) => {
 // 認証付きAPI呼び出し関数（JWT期限切れ自動検知機能付き）
 export const authenticatedApiCall = async (endpoint: string, token: string, options: RequestInit = {}) => {
   const url = `${API_BASE_URL}${endpoint}`
+  const method = options.method || 'GET'
+  const startTime = Date.now()
+
+  Logger.apiCall(method, endpoint)
 
   const defaultHeaders: Record<string, string> = {
     'Authorization': `Bearer ${token}`,
@@ -52,11 +58,16 @@ export const authenticatedApiCall = async (endpoint: string, token: string, opti
     credentials: 'include',
   })
 
+  const duration = Date.now() - startTime
+  Logger.apiCall(method, endpoint, response.status, duration)
+
   // 422エラー「Signature has expired」を検知
   if (response.status === 422) {
     try {
       const errorData = await response.clone().json()
       if (errorData.message === 'Signature has expired') {
+        Logger.auth('JWT token expired detected via API response')
+        
         // 自動ログアウトを実行
         if (autoLogoutCallback) {
           autoLogoutCallback()
