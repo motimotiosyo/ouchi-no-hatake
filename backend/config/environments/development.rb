@@ -90,11 +90,12 @@ Rails.application.configure do
   config.hosts << "backend:3000"
   config.hosts << "localhost"
 
-  # ログでバイナリデータの出力を抑制
+  # 開発環境では詳細なデバッグ情報を出力
   config.log_level = :debug
-
-  # カスタムログフィルター - バイナリデータをログから除外
-  Rails.application.config.filter_parameters += [
-    :password, :password_confirmation, :images, :image, :avatar, :file, :attachment
+  
+  # 開発環境でも機密情報は保護（デバッグ情報は残すが安全な形で）
+  config.filter_parameters += [
+    :password, :password_confirmation, :token, :auth_token, :jwt,
+    :api_key, :secret, :private_key, :images, :image, :avatar, :file, :attachment
   ]
 end
