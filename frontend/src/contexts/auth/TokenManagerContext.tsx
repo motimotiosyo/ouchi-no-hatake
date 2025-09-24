@@ -13,7 +13,7 @@ const TokenManagerContext = createContext<TokenManager | undefined>(undefined)
 
 // TokenManagerProvider コンポーネント
 export function TokenManagerProvider({ children }: { children: ReactNode }) {
-  const { user, token } = useAuth()
+  const { user } = useAuth()
   const { setAutoLogoutMessage, setShowAutoLogoutModal } = useAuthMessageInternal()
 
   // JWT期限切れ時の自動ログアウト関数（useCallbackでメモ化）
