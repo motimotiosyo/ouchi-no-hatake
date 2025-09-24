@@ -262,7 +262,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       Logger.error('Error during auto logout process', error instanceof Error ? error : undefined)
     }
-  }, [])
+  }, [user?.id])
 
   // メッセージクリア関数
   const clearAutoLogoutMessage = () => {

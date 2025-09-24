@@ -10,7 +10,7 @@ class Logger {
    * デバッグ情報出力（開発環境のみ）
    * 本番環境では出力されません
    */
-  static debug(message: string, ...args: any[]) {
+  static debug(message: string, ...args: unknown[]) {
     if (this.isDevelopment) {
       console.log(`[DEBUG] ${new Date().toISOString()} - ${message}`, ...args)
     }
@@ -20,7 +20,7 @@ class Logger {
    * 一般情報出力（全環境）
    * ユーザー操作や重要な状態変更などに使用
    */
-  static info(message: string, context?: Record<string, any>) {
+  static info(message: string, context?: Record<string, unknown>) {
     const logMessage = `[INFO] ${new Date().toISOString()} - ${message}`
     if (context && this.isDevelopment) {
       console.info(logMessage, context)
@@ -33,7 +33,7 @@ class Logger {
    * 警告出力（全環境）
    * 問題の可能性があるが処理は継続する場合に使用
    */
-  static warn(message: string, context?: Record<string, any>) {
+  static warn(message: string, context?: Record<string, unknown>) {
     const logMessage = `[WARN] ${new Date().toISOString()} - ${message}`
     if (context && this.isDevelopment) {
       console.warn(logMessage, context)
@@ -46,7 +46,7 @@ class Logger {
    * エラー出力（全環境）
    * エラー情報は機密情報をフィルタリングして出力
    */
-  static error(message: string, error?: Error, context?: Record<string, any>) {
+  static error(message: string, error?: Error, context?: Record<string, unknown>) {
     const timestamp = new Date().toISOString()
     const logMessage = `[ERROR] ${timestamp} - ${message}`
     
@@ -67,7 +67,7 @@ class Logger {
    * ユーザー操作ログ（全環境）
    * ユーザーの重要な操作を記録
    */
-  static userAction(action: string, userId?: number, details?: Record<string, any>) {
+  static userAction(action: string, userId?: number, details?: Record<string, unknown>) {
     const timestamp = new Date().toISOString()
     const logMessage = `[USER] ${timestamp} - ${action}`
     
