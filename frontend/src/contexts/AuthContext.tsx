@@ -94,7 +94,7 @@ const fetchCurrentUser = async (token: string): Promise<User | null> => {
     } else {
       return null
     }
-  } catch (error) {
+  } catch {
     return null
   }
 }
@@ -151,7 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (!cookieToken) {
             setCookie('auth_token', finalToken)
           }
-        } catch (error) {
+        } catch {
           // パース失敗時はクリア
           localStorage.removeItem('auth_token')
           localStorage.removeItem('auth_user')
