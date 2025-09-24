@@ -1,0 +1,11 @@
+# Serenaがプロジェクト解析・操作時に除外するファイル・ディレクトリを指定
+# .gitignoreと同様の形式で、Serena専用の除外設定ファイル
+# 自動生成ファイルや外部ライブラリなど、解析対象外にするものを記載
+
+node_modules/
+.next/
+tmp/
+log/
+vendor/
+coverage/
+public/assets/
