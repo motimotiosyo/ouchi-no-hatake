@@ -8,6 +8,9 @@ import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 
+// Dynamic rendering を強制する
+export const dynamic = 'force-dynamic'
+
 export default function ResetPasswordPage() {
   const router = useRouter()
   const searchParams = useSearchParams()

@@ -14,6 +14,9 @@ const resendVerificationSchema = z.object({
 
 type ResendVerificationFormData = z.infer<typeof resendVerificationSchema>
 
+// Dynamic rendering を強制する
+export const dynamic = 'force-dynamic'
+
 export default function ResendVerificationPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
