@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuthContext as useAuth } from '@/contexts/auth'
 import { useImageModal } from '@/contexts/ImageModalContext'
 import Link from 'next/link'
 import { API_BASE_URL } from '@/lib/api'

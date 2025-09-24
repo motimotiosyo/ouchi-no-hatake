@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuthContext as useAuth } from '@/contexts/auth'
 import { ImageModalProvider, useImageModal } from '@/contexts/ImageModalContext'
 import PublicHeader from './PublicHeader'
 import PublicFooter from './PublicFooter'

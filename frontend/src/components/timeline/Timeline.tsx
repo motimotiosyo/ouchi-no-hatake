@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import TimelinePost from './TimelinePost'
 import CreatePostModal from '../posts/CreatePostModal'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuthContext as useAuth } from '@/contexts/auth'
 import { API_BASE_URL } from '@/lib/api'
 
 interface Post {

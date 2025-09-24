@@ -1,6 +1,6 @@
 import './globals.css'
 
-import { AuthProvider } from '@/contexts/AuthContext'
+import { AuthProvider } from '@/contexts/auth'
 import { FlashProvider } from '@/contexts/FlashContext'
 import LayoutWrapper from '@/components/layout/LayoutWrapper'
 import FlashMessages from '@/components/ui/FlashMessages'
