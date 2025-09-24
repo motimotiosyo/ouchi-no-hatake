@@ -80,5 +80,3 @@ categories_data = [
 categories_data.each do |category_data|
   Category.find_or_create_by!(name: category_data[:name])
 end
-
-

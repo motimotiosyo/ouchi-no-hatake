@@ -3,8 +3,6 @@ class Api::V1::LikesController < ApplicationController
 
   # POST /api/v1/posts/:post_id/likes
   def create
-
-
     like = @post.likes.build(user: current_user)
 
     if like.save
@@ -54,7 +52,6 @@ class Api::V1::LikesController < ApplicationController
   private
 
   def find_post
-
     @post = Post.find(params[:post_id])
 
   rescue ActiveRecord::RecordNotFound

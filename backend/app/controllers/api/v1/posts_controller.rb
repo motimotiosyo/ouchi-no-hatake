@@ -343,8 +343,6 @@ class Api::V1::PostsController < ApplicationController
 
 
   def post_params
-
-
     permitted_params = params.require(:post).permit(:title, :content, :growth_record_id, :category_id, :post_type, images: [])
 
     permitted_params
