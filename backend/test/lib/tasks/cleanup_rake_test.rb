@@ -5,7 +5,8 @@ class CleanupRakeTest < ActiveSupport::TestCase
   def setup
     # rakeタスクをロード
     Rails.application.load_tasks
-    # テスト前にユーザーデータをクリア
+    # テスト前に関連データをクリア（外部キー制約を考慮した順序）
+    Like.delete_all
     User.delete_all
   end
 
