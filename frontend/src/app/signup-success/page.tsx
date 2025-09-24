@@ -4,6 +4,9 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 
+// Dynamic rendering を強制する
+export const dynamic = 'force-dynamic'
+
 export default function SignupSuccessPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
