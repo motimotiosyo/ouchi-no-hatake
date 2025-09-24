@@ -92,7 +92,7 @@ Rails.application.configure do
 
   # 開発環境では詳細なデバッグ情報を出力
   config.log_level = :debug
-  
+
   # 開発環境でも機密情報は保護（デバッグ情報は残すが安全な形で）
   config.filter_parameters += [
     :password, :password_confirmation, :token, :auth_token, :jwt,

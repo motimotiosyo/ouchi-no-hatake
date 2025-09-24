@@ -47,7 +47,7 @@ class ApplicationService
   # API操作ログ（開発環境のみ）
   def log_api_call(method, endpoint, status = nil, duration = nil)
     return unless Rails.env.development?
-    
+
     context = { method: method, endpoint: endpoint, status: status, duration: duration }.compact
     log_debug("API call", context)
   end
@@ -61,7 +61,7 @@ class ApplicationService
   # データベース操作ログ（開発環境のみ）
   def log_db_operation(operation, model = nil, record_id = nil)
     return unless Rails.env.development?
-    
+
     context = { operation: operation, model: model, record_id: record_id }.compact
     log_debug("DB operation", context)
   end
@@ -72,15 +72,15 @@ class ApplicationService
   def format_log_message(message, context = {})
     service_name = self.class.name
     timestamp = Time.current.iso8601
-    
+
     log_entry = {
       timestamp: timestamp,
       service: service_name,
       message: message
     }
-    
+
     log_entry.merge!(context) if context.any?
-    
+
     if Rails.env.development?
       # 開発環境では読みやすい形式
       "#{log_entry.to_json}"
@@ -126,7 +126,7 @@ class ApplicationService
     start_time = Time.current
     result = yield
     duration = ((Time.current - start_time) * 1000).round(2)
-    
+
     log_debug("Performance: #{operation_name}", { duration_ms: duration })
     result
   rescue => error
@@ -138,7 +138,7 @@ class ApplicationService
   # 例外の安全なログ出力
   def log_exception(exception, context = {})
     log_error("Exception occurred", exception, context)
-    
+
     # 開発環境では例外の詳細を追加出力
     if Rails.env.development?
       Rails.logger.debug "Full exception details: #{exception.inspect}"

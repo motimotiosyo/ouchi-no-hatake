@@ -36,10 +36,10 @@ module Loggable
   # API操作ログ（開発環境のみ）
   def log_api_request(method = request.method, endpoint = request.fullpath, status = nil)
     return unless Rails.env.development?
-    
-    context = { 
-      method: method, 
-      endpoint: endpoint, 
+
+    context = {
+      method: method,
+      endpoint: endpoint,
       status: status,
       user_agent: request.user_agent&.truncate(100),
       ip: request.remote_ip
@@ -49,8 +49,8 @@ module Loggable
 
   # 認証関連ログ（セキュリティ重要、機密情報は一切出力しない）
   def log_auth_event(event, user_id = nil, success = nil)
-    context = { 
-      user_id: user_id, 
+    context = {
+      user_id: user_id,
       success: success,
       ip: request.remote_ip,
       user_agent: request.user_agent&.truncate(50)
@@ -63,18 +63,18 @@ module Loggable
   # Controllerログメッセージの統一フォーマット
   def format_controller_log(message, context = {})
     controller_name = self.class.name
-    action_name = action_name rescue 'unknown'
+    action_name = action_name rescue "unknown"
     timestamp = Time.current.iso8601
-    
+
     log_entry = {
       timestamp: timestamp,
       controller: controller_name,
       action: action_name,
       message: message
     }
-    
+
     log_entry.merge!(context) if context.any?
-    
+
     if Rails.env.development?
       # 開発環境では読みやすい形式
       log_entry.to_json
