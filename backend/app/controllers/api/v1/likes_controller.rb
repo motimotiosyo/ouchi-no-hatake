@@ -3,12 +3,10 @@ class Api::V1::LikesController < ApplicationController
 
   # POST /api/v1/posts/:post_id/likes
   def create
-    Rails.logger.debug "Like creation requested"
-
     like = @post.likes.build(user: current_user)
 
     if like.save
-      Rails.logger.debug "Like created successfully"
+
       render json: {
         message: "いいねしました",
         likes_count: @post.likes_count,
@@ -54,9 +52,8 @@ class Api::V1::LikesController < ApplicationController
   private
 
   def find_post
-    Rails.logger.debug "Post lookup requested"
     @post = Post.find(params[:post_id])
-    Rails.logger.debug "Post found successfully"
+
   rescue ActiveRecord::RecordNotFound
     Rails.logger.error "Post not found for provided ID"
     render json: { error: "投稿が見つかりません" }, status: :not_found

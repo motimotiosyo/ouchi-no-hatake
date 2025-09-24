@@ -146,7 +146,7 @@ class Api::V1::PostsController < ApplicationController
 
   def create
     begin
-      Rails.logger.debug "Post creation request received" if Rails.env.development?
+
 
       # Content-Typeのミスマッチを検出
       if request.headers["Content-Type"]&.start_with?("multipart/form-data") && request.content_type == "application/json"
@@ -324,7 +324,7 @@ class Api::V1::PostsController < ApplicationController
 
       @current_user = User.find(@decoded[:user_id])
     rescue => e
-      Rails.logger.debug "Optional authentication failed" if Rails.env.development?
+
       @current_user = nil
     end
   end
@@ -343,10 +343,8 @@ class Api::V1::PostsController < ApplicationController
 
 
   def post_params
-    Rails.logger.debug "Post parameters processing" if Rails.env.development?
-
     permitted_params = params.require(:post).permit(:title, :content, :growth_record_id, :category_id, :post_type, images: [])
-    Rails.logger.debug "Post parameters validated" if Rails.env.development?
+
     permitted_params
   rescue ActionController::ParameterMissing => e
     Rails.logger.error "Parameter missing error: #{e.message}"
