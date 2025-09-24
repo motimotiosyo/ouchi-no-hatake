@@ -146,14 +146,11 @@ class Api::V1::PostsController < ApplicationController
 
   def create
     begin
-      Rails.logger.debug "Content-Type: #{request.content_type}"
-      Rails.logger.debug "Request format: #{request.format}"
-      Rails.logger.debug "Raw Content-Type header: #{request.headers['Content-Type']}"
-      Rails.logger.debug "Request body size: #{request.raw_post.bytesize} bytes"
+      Rails.logger.debug "Post creation request received" if Rails.env.development?
 
       # Content-Typeのミスマッチを検出
       if request.headers["Content-Type"]&.start_with?("multipart/form-data") && request.content_type == "application/json"
-        Rails.logger.warn "Content-Type mismatch detected: header=#{request.headers['Content-Type']}, parsed=#{request.content_type}"
+        Rails.logger.warn "Content-Type mismatch detected" if Rails.env.development?
       end
 
       # 通常のRailsパラメータ処理を使用
@@ -327,7 +324,7 @@ class Api::V1::PostsController < ApplicationController
 
       @current_user = User.find(@decoded[:user_id])
     rescue => e
-      Rails.logger.debug "Optional authentication failed: #{e.message}"
+      Rails.logger.debug "Optional authentication failed" if Rails.env.development?
       @current_user = nil
     end
   end
@@ -346,17 +343,10 @@ class Api::V1::PostsController < ApplicationController
 
 
   def post_params
-    Rails.logger.debug "Available params keys: #{params.keys.inspect}"
-    Rails.logger.debug "Post params keys: #{params[:post]&.keys&.inspect}"
-    Rails.logger.debug "Images present: #{params[:post]&.[](:images).present?}"
-    if params[:post]&.[](:images).present?
-      Rails.logger.debug "Images count: #{params[:post][:images].size}"
-    end
+    Rails.logger.debug "Post parameters processing" if Rails.env.development?
 
     permitted_params = params.require(:post).permit(:title, :content, :growth_record_id, :category_id, :post_type, images: [])
-    permitted_params_safe = permitted_params.except(:images)
-    Rails.logger.debug "Permitted params (without images): #{permitted_params_safe.inspect}"
-    Rails.logger.debug "Images permitted: #{permitted_params[:images].present?}"
+    Rails.logger.debug "Post parameters validated" if Rails.env.development?
     permitted_params
   rescue ActionController::ParameterMissing => e
     Rails.logger.error "Parameter missing error: #{e.message}"

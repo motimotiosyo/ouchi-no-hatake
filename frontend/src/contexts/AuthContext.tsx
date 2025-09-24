@@ -60,8 +60,6 @@ const getCookie = (name: string): string | null => {
 
 // 重要：Rails側と同じ属性でCookie削除
 const deleteCookie = (name: string) => {
-  console.log('Cookie削除試行:', name)
-  
   // パターン1: Rails側と完全に同じ属性
   document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; secure=true; samesite=none`
   
@@ -76,8 +74,6 @@ const deleteCookie = (name: string) => {
   
   // パターン5: max-age使用（属性なし）
   document.cookie = `${name}=; max-age=0; path=/`
-  
-  console.log('Cookie削除後の状態:', document.cookie)
 }
 
 // サーバーから現在のユーザー情報を取得する関数
@@ -96,11 +92,9 @@ const fetchCurrentUser = async (token: string): Promise<User | null> => {
       const data = await response.json()
       return data.user
     } else {
-      console.log('ユーザー情報取得失敗:', response.status)
       return null
     }
   } catch (error) {
-    console.error('ユーザー情報取得エラー:', error)
     return null
   }
 }
@@ -118,18 +112,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // ページ読み込み時にlocalStorageからトークンを復元
   useEffect(() => {
-    console.log('AuthContext useEffect triggered')
     const initializeAuth = async () => {
       // まずCookieから確認（ミドルウェアと同じソース）
       const cookieToken = getCookie('auth_token')
       const savedToken = localStorage.getItem('auth_token')
       const savedUser = localStorage.getItem('auth_user')
-
-      console.log('認証初期化:', { 
-        cookieToken: !!cookieToken, 
-        savedToken: !!savedToken, 
-        savedUser: !!savedUser 
-      })
 
       // CookieまたはlocalStorageにトークンがある場合
       const finalToken = cookieToken || savedToken
