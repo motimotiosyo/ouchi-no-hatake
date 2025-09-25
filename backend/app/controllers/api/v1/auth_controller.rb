@@ -5,73 +5,46 @@ class Api::V1::AuthController < ApplicationController
 
   # POST /api/v1/auth/register
   def register
-    user = User.new(user_params)
-
-    if user.save
-      # メール認証トークンを生成
-      user.generate_email_verification_token!
-
-      # 認証メール送信
-      verification_url = "#{ENV.fetch('FRONTEND_URL', 'http://localhost:3001')}/verify-email?token=#{user.email_verification_token}"
-      UserMailer.email_verification(user, verification_url).deliver_now
-
+    begin
+      result = AuthService.register_user(user_params)
+      render json: result.data, status: :created
+    rescue AuthService::ValidationError => e
       render json: {
-        message: "ユーザー登録が完了しました。認証メールをご確認ください",
-        requires_verification: true,
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name
-        }
-      }, status: :created
-    else
-      # セキュリティのため、詳細なエラーは返さず曖昧なメッセージにする
+        error: e.message,
+        details: e.details
+      }, status: :unprocessable_entity
+    rescue => e
+      Rails.logger.error "Error in AuthController#register: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
       render json: {
         error: "登録できませんでした。入力内容をご確認ください"
-      }, status: :unprocessable_entity
+      }, status: :internal_server_error
     end
   end
 
   # POST /api/v1/auth/login
   def login
-    # アドレスでユーザー検索
-    user = User.find_by(email: params[:email]&.downcase)
-
-    # パスワード検証
-    if user&.authenticate(params[:password])
-      # メール認証チェック
-      unless user.email_verified?
-        render json: {
-          error: "メールアドレスの認証が完了していません。認証メールをご確認ください",
-          requires_verification: true,
-          email: user.email
-        }, status: :forbidden
-        return
-      end
-
-      # 認証成功時にJWTトークン発行
-      token = JsonWebToken.encode(user_id: user.id)
+    begin
+      result = AuthService.login_user(params[:email], params[:password])
+      
       # サーバーサイドでCookieをセット
       cookies[:auth_token] = {
-        value: token,
+        value: result.token,
         expires: 6.months.from_now,
         path: "/",
-        same_site: :none,   # ← クロスオリジンの場合は :none
-        secure: true,       # ← https環境なら true、ローカルhttpなら false
+        same_site: :none,
+        secure: true,
         httponly: false
       }
-      # 成功レスポンス返却
-      render json: {
-        message: "ログインに成功しました",
-        token: token,
-        user: {
-          id: user.id,
-          email: user.email,
-          name: user.name
-        }
-      }, status: :ok
-    else
-      # 失敗時に例外処理
+      
+      render json: result.data, status: :ok
+    rescue AuthService::EmailNotVerifiedError => e
+      render json: AuthService.build_email_not_verified_response(params[:email]), status: :forbidden
+    rescue AuthService::AuthenticationError => e
+      raise ExceptionHandler::AuthenticationError, e.message
+    rescue => e
+      Rails.logger.error "Error in AuthController#login: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
       raise ExceptionHandler::AuthenticationError, "メールアドレスまたはパスワードが正しくありません"
     end
   end

@@ -55,7 +55,8 @@ class AuthService < ApplicationService
       success: true,
       user: user,
       token: token,
-      data: build_login_response(user, token)
+      data: build_login_response(user, token),
+      email_not_verified_data: build_email_not_verified_response(user.email)
     )
   end
 
@@ -223,6 +224,14 @@ class AuthService < ApplicationService
       id: user.id,
       email: user.email,
       name: user.name
+    }
+  end
+
+  def self.build_email_not_verified_response(email)
+    {
+      error: "メールアドレスの認証が完了していません。認証メールをご確認ください",
+      requires_verification: true,
+      email: email
     }
   end
 end
