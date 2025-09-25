@@ -133,41 +133,64 @@ class AuthService < ApplicationService
 
   # パスワードリセット要求
   def self.forgot_password(email)
-    user = User.find_by(email: email&.downcase)
-    return OpenStruct.new(success: false, error: "ユーザーが見つかりません") unless user
+    return OpenStruct.new(success: false, error: "メールアドレスが提供されていません") if email.blank?
     
-    # リセットトークン生成
-    user.generate_password_reset_token!
+    user = User.find_by(email: email&.downcase)
+    
+    if user.nil?
+      # セキュリティのため、ユーザーが存在しない場合も成功レスポンスを返す
+      return OpenStruct.new(
+        success: true,
+        data: { message: "パスワードリセットメールを送信しました。メールをご確認ください" }
+      )
+    end
+    
+    # メール未認証ユーザーの場合
+    unless user.email_verified?
+      return OpenStruct.new(success: false, error: "メールアドレスの認証が完了していません")
+    end
+    
+    # パスワードリセットトークンを生成（PasswordResetTokenモデル使用）
+    reset_token = PasswordResetToken.generate_for_email(user.email)
     
     # リセットメール送信
-    send_password_reset_email(user)
+    send_password_reset_email_with_token(user, reset_token.token)
     
     OpenStruct.new(
       success: true,
-      data: { message: "パスワードリセットメールを送信しました" }
+      data: { message: "パスワードリセットメールを送信しました。メールをご確認ください" }
     )
   end
 
   # パスワードリセット実行
   def self.reset_password(token, new_password, password_confirmation)
     return OpenStruct.new(success: false, error: "リセットトークンが提供されていません") if token.blank?
+    return OpenStruct.new(success: false, error: "パスワードが提供されていません") if new_password.blank? || password_confirmation.blank?
     
-    user = User.find_by(password_reset_token: token)
-    return OpenStruct.new(success: false, error: "無効なリセットトークンです") unless user
-    
-    if user.password_reset_expired?
-      raise TokenExpiredError.new("パスワードリセットトークンの有効期限が切れています。再度リセット要求をお試しください")
+    if new_password != password_confirmation
+      return OpenStruct.new(success: false, error: "パスワードが一致しません")
     end
     
-    # パスワード更新
-    if user.reset_password!(new_password, password_confirmation)
+    # トークンの有効性チェック
+    reset_token = PasswordResetToken.find_valid_token(token)
+    return OpenStruct.new(success: false, error: "無効または期限切れのリセットトークンです") if reset_token.nil?
+    
+    # ユーザーを検索
+    user = User.find_by(email: reset_token.email)
+    return OpenStruct.new(success: false, error: "ユーザーが見つかりません") if user.nil?
+    
+    # パスワードを更新
+    if user.update(password: new_password, password_confirmation: password_confirmation)
+      # リセットトークンを削除
+      reset_token.destroy
+      
       OpenStruct.new(
         success: true,
-        data: { message: "パスワードが正常にリセットされました" }
+        data: { message: "パスワードが正常に更新されました" }
       )
     else
       raise ValidationError.new(
-        "パスワードのリセットに失敗しました",
+        "パスワードの更新に失敗しました。パスワードは6文字以上で設定してください",
         user.errors.full_messages
       )
     end
@@ -188,9 +211,9 @@ class AuthService < ApplicationService
   end
 
   # パスワードリセットメール送信  
-  def self.send_password_reset_email(user)
+  def self.send_password_reset_email_with_token(user, token)
     frontend_url = ENV.fetch('FRONTEND_URL', 'http://localhost:3001')
-    reset_url = "#{frontend_url}/reset-password?token=#{user.password_reset_token}"
+    reset_url = "#{frontend_url}/reset-password?token=#{token}"
     UserMailer.password_reset(user, reset_url).deliver_now
   end
 

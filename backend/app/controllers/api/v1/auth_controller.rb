@@ -128,110 +128,53 @@ class Api::V1::AuthController < ApplicationController
 
   # POST /api/v1/auth/forgot_password
   def forgot_password
-    email = params[:email]
-
-    if email.blank?
-      render json: { error: "メールアドレスが提供されていません" }, status: :bad_request
-      return
+    begin
+      result = AuthService.forgot_password(params[:email])
+      
+      if result.success
+        render json: result.data, status: :ok
+      else
+        render json: { error: result.error }, status: :bad_request
+      end
+    rescue => e
+      Rails.logger.error "Error in AuthController#forgot_password: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+      render json: { error: "パスワードリセットの申請に失敗しました" }, status: :internal_server_error
     end
-
-    # メールアドレスでユーザーを検索
-    user = User.find_by(email: email.downcase)
-
-    if user.nil?
-      # セキュリティのため、ユーザーが存在しない場合も成功レスポンスを返す
-      render json: {
-        message: "パスワードリセットメールを送信しました。メールをご確認ください"
-      }, status: :ok
-      return
-    end
-
-    # メール未認証ユーザーの場合
-    unless user.email_verified?
-      render json: { error: "メールアドレスの認証が完了していません" }, status: :unprocessable_entity
-      return
-    end
-
-    # パスワードリセットトークンを生成
-    reset_token = PasswordResetToken.generate_for_email(user.email)
-
-    # パスワードリセットメール送信
-    reset_url = "#{ENV.fetch('FRONTEND_URL', 'http://localhost:3001')}/reset-password?token=#{reset_token.token}"
-    UserMailer.password_reset(user, reset_url).deliver_now
-
-    render json: {
-      message: "パスワードリセットメールを送信しました。メールをご確認ください"
-    }, status: :ok
-  rescue StandardError => e
-    Rails.logger.error "Password reset request error: #{e.message}"
-    render json: { error: "パスワードリセットの申請に失敗しました" }, status: :internal_server_error
   end
 
   # PUT /api/v1/auth/reset_password
   def reset_password
-    token = params[:token]
-    password = params[:password]
-    password_confirmation = params[:password_confirmation]
-
-    if token.blank?
-      render json: { error: "リセットトークンが提供されていません" }, status: :bad_request
-      return
-    end
-
-    if password.blank? || password_confirmation.blank?
-      render json: { error: "パスワードが提供されていません" }, status: :bad_request
-      return
-    end
-
-    if password != password_confirmation
-      render json: { error: "パスワードが一致しません" }, status: :unprocessable_entity
-      return
-    end
-
-    # トークンの有効性チェック
-    reset_token = PasswordResetToken.find_valid_token(token)
-
-    if reset_token.nil?
-      render json: { error: "無効または期限切れのリセットトークンです" }, status: :unprocessable_entity
-      return
-    end
-
-    # ユーザーを検索
-    user = User.find_by(email: reset_token.email)
-
-    if user.nil?
-      render json: { error: "ユーザーが見つかりません" }, status: :not_found
-      return
-    end
-
-    # パスワードを更新
-    if user.update(password: password, password_confirmation: password_confirmation)
-      # リセットトークンを削除
-      reset_token.destroy
-
+    begin
+      result = AuthService.reset_password(
+        params[:token],
+        params[:password], 
+        params[:password_confirmation]
+      )
+      
+      if result.success
+        render json: result.data, status: :ok
+      else
+        render json: { error: result.error }, status: :bad_request
+      end
+    rescue AuthService::TokenExpiredError => e
+      render json: { error: e.message }, status: :unprocessable_entity
+    rescue AuthService::ValidationError => e
       render json: {
-        message: "パスワードが正常に更新されました"
-      }, status: :ok
-    else
-      render json: {
-        error: "パスワードの更新に失敗しました。パスワードは6文字以上で設定してください"
+        error: e.message,
+        details: e.details
       }, status: :unprocessable_entity
+    rescue => e
+      Rails.logger.error "Error in AuthController#reset_password: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+      render json: { error: "パスワードのリセットに失敗しました" }, status: :internal_server_error
     end
-  rescue StandardError => e
-    Rails.logger.error "Password reset error: #{e.message}"
-    render json: { error: "パスワードのリセットに失敗しました" }, status: :internal_server_error
   end
 
   # GET /api/v1/auth/me
   def me
-    render json: {
-      user: {
-        id: current_user.id,
-        email: current_user.email,
-        name: current_user.name,
-        email_verified: current_user.email_verified?
-      }
-    }, status: :ok
+    user_data = AuthService.get_current_user_data(current_user)
+    render json: { user: user_data.merge(email_verified: current_user.email_verified?) }, status: :ok
   end
 
   private
