@@ -8,16 +8,17 @@ import PublicFooter from './PublicFooter'
 import AuthenticatedHeader from './AuthenticatedHeader'
 import AuthenticatedFooter from './AuthenticatedFooter'
 import ImageModal from '@/components/ui/ImageModal'
+import Logger from '@/utils/logger'
 
 interface LayoutWrapperProps {
   children: React.ReactNode
 }
 
 function LayoutWrapperContent({ children }: LayoutWrapperProps) {
-  const { user, isLoading, isAuthenticated } = useAuth()
+  const { user, isLoading } = useAuth()
   const { modalState, closeModal, navigateImage } = useImageModal()
   
-  console.log('LayoutWrapper - user:', user, 'isLoading:', isLoading, 'isAuthenticated:', isAuthenticated)
+  Logger.debug('LayoutWrapper authentication state updated')
   
   // フォールバック: 3秒以上ローディングが続く場合は強制的に判定
   const [forceShowLayout, setForceShowLayout] = useState(false)
@@ -25,7 +26,7 @@ function LayoutWrapperContent({ children }: LayoutWrapperProps) {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (isLoading) {
-        console.log('LayoutWrapper - 強制的にレイアウト表示')
+        Logger.debug('Layout forced to display after timeout')
         setForceShowLayout(true)
       }
     }, 3000)
@@ -35,7 +36,7 @@ function LayoutWrapperContent({ children }: LayoutWrapperProps) {
 
 
   if (isLoading && !forceShowLayout) {
-    console.log('LayoutWrapper - Still loading, showing loading screen')
+    Logger.debug('Layout still loading, showing loading screen')
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-gray-600">読み込み中...</div>
@@ -45,7 +46,7 @@ function LayoutWrapperContent({ children }: LayoutWrapperProps) {
 
   if (user) {
     // ログイン後のレイアウト
-    console.log('Rendering AuthenticatedLayout')
+    Logger.debug('Rendering authenticated layout')
     return (
       <>
         <AuthenticatedHeader />
@@ -66,7 +67,7 @@ function LayoutWrapperContent({ children }: LayoutWrapperProps) {
   }
 
   // ログイン前のレイアウト
-  console.log('Rendering PublicLayout')
+  Logger.debug('Rendering public layout')
   return (
     <>
       <PublicHeader />
