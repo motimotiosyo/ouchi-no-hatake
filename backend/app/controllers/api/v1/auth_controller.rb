@@ -26,7 +26,7 @@ class Api::V1::AuthController < ApplicationController
   def login
     begin
       result = AuthService.login_user(params[:email], params[:password])
-      
+
       # サーバーサイドでCookieをセット
       cookies[:auth_token] = {
         value: result.token,
@@ -36,7 +36,7 @@ class Api::V1::AuthController < ApplicationController
         secure: true,
         httponly: false
       }
-      
+
       render json: result.data, status: :ok
     rescue AuthService::EmailNotVerifiedError => e
       render json: AuthService.build_email_not_verified_response(params[:email]), status: :forbidden
@@ -54,7 +54,7 @@ class Api::V1::AuthController < ApplicationController
     begin
       token = current_token
       result = AuthService.logout_user(token)
-      
+
       if result.success
         # サーバーサイドでCookie削除（複数パターンで確実に削除）
         cookies.delete(:auth_token, {
@@ -64,7 +64,7 @@ class Api::V1::AuthController < ApplicationController
         })
         cookies.delete(:auth_token, { path: "/" })
         cookies.delete(:auth_token)
-        
+
         render json: result.data, status: :ok
       else
         render json: { error: result.error }, status: :bad_request
@@ -79,7 +79,7 @@ class Api::V1::AuthController < ApplicationController
   def verify
     token = cookies[:auth_token] || request.headers["Authorization"]&.split(" ")&.last
     result = AuthService.verify_token(token)
-    
+
     if result[:valid]
       render json: { valid: true }
     else
@@ -91,7 +91,7 @@ class Api::V1::AuthController < ApplicationController
   def verify_email
     begin
       result = AuthService.verify_email(params[:token])
-      
+
       if result.success
         render json: result.data, status: :ok
       else
@@ -113,7 +113,7 @@ class Api::V1::AuthController < ApplicationController
   def resend_verification
     begin
       result = AuthService.resend_verification(params[:email])
-      
+
       if result.success
         render json: result.data, status: :ok
       else
@@ -130,7 +130,7 @@ class Api::V1::AuthController < ApplicationController
   def forgot_password
     begin
       result = AuthService.forgot_password(params[:email])
-      
+
       if result.success
         render json: result.data, status: :ok
       else
@@ -148,10 +148,10 @@ class Api::V1::AuthController < ApplicationController
     begin
       result = AuthService.reset_password(
         params[:token],
-        params[:password], 
+        params[:password],
         params[:password_confirmation]
       )
-      
+
       if result.success
         render json: result.data, status: :ok
       else
