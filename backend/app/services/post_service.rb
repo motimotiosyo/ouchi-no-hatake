@@ -1,7 +1,7 @@
 class PostService < ApplicationService
   class ValidationError < StandardError
     attr_reader :details
-    
+
     def initialize(message, details = nil)
       super(message)
       @details = details
@@ -13,7 +13,7 @@ class PostService < ApplicationService
   # 投稿一覧のレスポンス構築
   def self.build_posts_list(posts, current_user, pagination_info)
     posts_data = posts.map { |post| build_post_response(post, current_user) }
-    
+
     {
       posts: posts_data,
       pagination: pagination_info
@@ -69,7 +69,7 @@ class PostService < ApplicationService
   # 投稿作成
   def self.create_post(user, params)
     post = user.posts.build(params)
-    
+
     if post.save
       OpenStruct.new(
         success: true,

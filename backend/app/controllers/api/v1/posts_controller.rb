@@ -14,15 +14,15 @@ class Api::V1::PostsController < ApplicationController
 
       posts = Post.timeline.limit(per_page).offset(offset)
       total_count = Post.count
-      
+
       pagination_info = PostService.build_pagination_info(page, per_page, total_count)
       response_data = PostService.build_posts_list(posts, current_user, pagination_info)
-      
+
       render json: response_data
     rescue => e
       Rails.logger.error "Error in PostsController#index: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
-      
+
       empty_pagination = PostService.build_pagination_info(1, per_page, 0)
       render json: PostService.build_posts_list([], current_user, empty_pagination)
     end
