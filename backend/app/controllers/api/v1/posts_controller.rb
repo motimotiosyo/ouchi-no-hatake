@@ -14,128 +14,23 @@ class Api::V1::PostsController < ApplicationController
 
       posts = Post.timeline.limit(per_page).offset(offset)
       total_count = Post.count
-      has_more = (offset + per_page) < total_count
-
-    posts_data = posts.map do |post|
-      post_data = {
-        id: post.id,
-        title: post.title,
-        content: post.content,
-        post_type: post.post_type,
-        created_at: post.created_at,
-        user: {
-          id: post.user.id,
-          name: post.user.name
-        }
-      }
-
-      # カテゴリがある場合のみ追加
-      if post.category
-        post_data[:category] = {
-          id: post.category.id,
-          name: post.category.name
-        }
-      end
-
-      # 成長記録がある場合のみ追加
-      if post.growth_record
-        post_data[:growth_record] = {
-          id: post.growth_record.id,
-          record_name: post.growth_record.record_name,
-          plant: {
-            id: post.growth_record.plant.id,
-            name: post.growth_record.plant.name
-          }
-        }
-      end
-
-      # 画像URLを追加
-      if post.images.attached?
-        post_data[:images] = post.images.map { |image| Rails.application.routes.url_helpers.rails_blob_path(image, only_path: true) }
-      else
-        post_data[:images] = []
-      end
-
-      # いいね情報を追加
-      post_data[:likes_count] = post.likes_count
-      post_data[:liked_by_current_user] = current_user ? post.liked_by?(current_user) : false
-
-      # コメント情報を追加
-      post_data[:comments_count] = post.comments_count
-
-      post_data
-    end
-
-      render json: {
-        posts: posts_data,
-        pagination: {
-          current_page: page,
-          per_page: per_page,
-          total_count: total_count,
-          has_more: has_more
-        }
-      }
+      
+      pagination_info = PostService.build_pagination_info(page, per_page, total_count)
+      response_data = PostService.build_posts_list(posts, current_user, pagination_info)
+      
+      render json: response_data
     rescue => e
       Rails.logger.error "Error in PostsController#index: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
-      render json: {
-        posts: [],
-        pagination: {
-          current_page: 1,
-          per_page: per_page,
-          total_count: 0,
-          has_more: false
-        }
-      }
+      
+      empty_pagination = PostService.build_pagination_info(1, per_page, 0)
+      render json: PostService.build_posts_list([], current_user, empty_pagination)
     end
   end
 
   def show
     begin
-      post_data = {
-        id: @post.id,
-        title: @post.title,
-        content: @post.content,
-        post_type: @post.post_type,
-        created_at: @post.created_at,
-        user: {
-          id: @post.user.id,
-          name: @post.user.name
-        }
-      }
-
-      # カテゴリ情報を追加
-      if @post.post_type == "general_post" && @post.category
-        post_data[:category] = {
-          id: @post.category.id,
-          name: @post.category.name
-        }
-      end
-
-      # 成長記録情報を追加
-      if @post.post_type == "growth_record_post" && @post.growth_record
-        post_data[:growth_record] = {
-          id: @post.growth_record.id,
-          record_name: @post.growth_record.record_name,
-          plant: {
-            id: @post.growth_record.plant.id,
-            name: @post.growth_record.plant.name
-          }
-        }
-      end
-
-      # 画像情報を追加
-      if @post.images.present?
-        post_data[:images] = @post.images.map { |img| Rails.application.routes.url_helpers.rails_blob_path(img, only_path: true) }
-      end
-
-      # いいね情報を追加
-      post_data[:likes_count] = @post.likes_count
-      post_data[:liked_by_current_user] = current_user ? @post.liked_by?(current_user) : false
-
-      # コメント数を追加
-      post_data[:comments_count] = @post.comments_count
-
+      post_data = PostService.build_post_response(@post, current_user)
       render json: post_data
     rescue => e
       Rails.logger.error "Error in PostsController#show: #{e.message}"
@@ -153,70 +48,14 @@ class Api::V1::PostsController < ApplicationController
         Rails.logger.warn "Content-Type mismatch detected" if Rails.env.development?
       end
 
-      # 通常のRailsパラメータ処理を使用
-      @post = current_user.posts.build(post_params)
-
-      if @post.save
-        post_response = {
-          id: @post.id,
-          title: @post.title,
-          content: @post.content,
-          post_type: @post.post_type,
-          created_at: @post.created_at,
-          updated_at: @post.updated_at,
-          user: {
-            id: @post.user.id,
-            name: @post.user.name
-          }
-        }
-
-        # カテゴリがある場合のみ追加
-        if @post.category
-          post_response[:category] = {
-            id: @post.category.id,
-            name: @post.category.name
-          }
-        end
-
-        # 成長記録がある場合のみ追加
-        if @post.growth_record
-          post_response[:growth_record] = {
-            id: @post.growth_record.id,
-            record_name: @post.growth_record.record_name,
-            plant: {
-              id: @post.growth_record.plant.id,
-              name: @post.growth_record.plant.name
-            }
-          }
-        end
-
-        # 画像URLを追加
-        if @post.images.attached?
-          post_response[:images] = @post.images.map { |image| Rails.application.routes.url_helpers.rails_blob_path(image, only_path: true) }
-        else
-          post_response[:images] = []
-        end
-
-        # いいね情報を追加
-        post_response[:likes_count] = @post.likes_count
-        post_response[:liked_by_current_user] = @post.liked_by?(current_user)
-
-        # コメント情報を追加
-        post_response[:comments_count] = @post.comments_count
-
-        render json: { post: post_response }, status: :created
-      else
-        Rails.logger.error "Post validation failed: #{@post.errors.full_messages.join(', ')}"
-        Rails.logger.error "Post attributes: #{@post.attributes.inspect}"
-        render json: {
-          error: "投稿の作成に失敗しました",
-          details: @post.errors.full_messages
-        }, status: :unprocessable_entity
-      end
-    rescue ActiveRecord::RecordNotFound => e
+      result = PostService.create_post(current_user, post_params)
+      render json: { post: result.data }, status: :created
+    rescue PostService::ValidationError => e
+      Rails.logger.error "Post validation failed: #{e.details&.join(', ')}" if e.details
       render json: {
-        error: "指定された成長記録またはカテゴリが見つかりません"
-      }, status: :not_found
+        error: e.message,
+        details: e.details
+      }, status: :unprocessable_entity
     rescue => e
       Rails.logger.error "Error in PostsController#create: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
@@ -228,65 +67,13 @@ class Api::V1::PostsController < ApplicationController
 
   def update
     begin
-      if @post.update(post_params)
-        post_response = {
-          id: @post.id,
-          title: @post.title,
-          content: @post.content,
-          post_type: @post.post_type,
-          created_at: @post.created_at,
-          updated_at: @post.updated_at,
-          user: {
-            id: @post.user.id,
-            name: @post.user.name
-          }
-        }
-
-        # カテゴリがある場合のみ追加
-        if @post.category
-          post_response[:category] = {
-            id: @post.category.id,
-            name: @post.category.name
-          }
-        end
-
-        # 成長記録がある場合のみ追加
-        if @post.growth_record
-          post_response[:growth_record] = {
-            id: @post.growth_record.id,
-            record_name: @post.growth_record.record_name,
-            plant: {
-              id: @post.growth_record.plant.id,
-              name: @post.growth_record.plant.name
-            }
-          }
-        end
-
-        # 画像URLを追加
-        if @post.images.attached?
-          post_response[:images] = @post.images.map { |image| Rails.application.routes.url_helpers.rails_blob_path(image, only_path: true) }
-        else
-          post_response[:images] = []
-        end
-
-        # いいね情報を追加
-        post_response[:likes_count] = @post.likes_count
-        post_response[:liked_by_current_user] = @post.liked_by?(current_user)
-
-        # コメント情報を追加
-        post_response[:comments_count] = @post.comments_count
-
-        render json: { post: post_response }
-      else
-        render json: {
-          error: "投稿の更新に失敗しました",
-          details: @post.errors.full_messages
-        }, status: :unprocessable_entity
-      end
-    rescue ActiveRecord::RecordNotFound => e
+      result = PostService.update_post(@post, post_params, current_user)
+      render json: { post: result.data }
+    rescue PostService::ValidationError => e
       render json: {
-        error: "指定された成長記録またはカテゴリが見つかりません"
-      }, status: :not_found
+        error: e.message,
+        details: e.details
+      }, status: :unprocessable_entity
     rescue => e
       Rails.logger.error "Error in PostsController#update: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
