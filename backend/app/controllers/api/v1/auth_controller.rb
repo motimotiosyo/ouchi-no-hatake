@@ -51,43 +51,36 @@ class Api::V1::AuthController < ApplicationController
 
   # DELETE /api/v1/auth/logout
   def logout
-    token = current_token
-
-    if token.blank?
-      render json: { error: "トークンが提供されていません" }, status: :bad_request
-      return
+    begin
+      token = current_token
+      result = AuthService.logout_user(token)
+      
+      if result.success
+        # サーバーサイドでCookie削除（複数パターンで確実に削除）
+        cookies.delete(:auth_token, {
+          path: "/",
+          same_site: :none,
+          secure: true
+        })
+        cookies.delete(:auth_token, { path: "/" })
+        cookies.delete(:auth_token)
+        
+        render json: result.data, status: :ok
+      else
+        render json: { error: result.error }, status: :bad_request
+      end
+    rescue => e
+      Rails.logger.error "Error in AuthController#logout: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+      render json: { error: "ログアウトに失敗しました" }, status: :internal_server_error
     end
-
-    # サーバーサイドでCookie削除（複数パターンで確実に削除）
-    cookies.delete(:auth_token, {
-      path: "/",
-      same_site: :none,
-      secure: true
-    })
-
-    # 念のため、属性なしでも削除
-    cookies.delete(:auth_token, { path: "/" })
-    cookies.delete(:auth_token)
-
-    blacklist_result = JsonWebToken.blacklist_token(token)
-
-    # ブラックリスト処理が成功した場合、または期限切れトークンの場合は成功
-    if blacklist_result
-      render json: { message: "ログアウトに成功しました" }, status: :ok
-    else
-      # 期限切れトークンの場合もログアウト成功として扱う
-      Rails.logger.info "Token already expired or invalid, treating as successful logout"
-      render json: { message: "ログアウトに成功しました" }, status: :ok
-    end
-  rescue StandardError => e
-    Rails.logger.error "Logout error: #{e.message}"
-    render json: { error: "ログアウトに失敗しました" }, status: :internal_server_error
   end
 
   def verify
-    # Cookieからトークンを取得
     token = cookies[:auth_token] || request.headers["Authorization"]&.split(" ")&.last
-    if token && JsonWebToken.valid_token?(token)
+    result = AuthService.verify_token(token)
+    
+    if result[:valid]
       render json: { valid: true }
     else
       render json: { valid: false }, status: :unauthorized
@@ -96,80 +89,41 @@ class Api::V1::AuthController < ApplicationController
 
   # POST /api/v1/auth/verify-email
   def verify_email
-    token = params[:token]
-
-    if token.blank?
-      render json: { error: "認証トークンが提供されていません" }, status: :bad_request
-      return
-    end
-
-    # トークンでユーザーを検索
-    user = User.find_by(email_verification_token: token)
-
-    if user.nil?
-      render json: { error: "無効な認証トークンです" }, status: :unprocessable_entity
-      return
-    end
-
-    # 期限切れチェック（24時間）
-    if user.verification_token_expired?
+    begin
+      result = AuthService.verify_email(params[:token])
+      
+      if result.success
+        render json: result.data, status: :ok
+      else
+        render json: { error: result.error }, status: :bad_request
+      end
+    rescue AuthService::TokenExpiredError => e
       render json: {
-        error: "認証トークンの有効期限が切れています。再度登録をお試しください",
+        error: e.message,
         expired: true
       }, status: :unprocessable_entity
-      return
+    rescue => e
+      Rails.logger.error "Error in AuthController#verify_email: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+      render json: { error: "メール認証に失敗しました" }, status: :internal_server_error
     end
-
-    # メール認証を完了
-    user.verify_email!
-
-    # JWTトークン発行
-    jwt_token = JsonWebToken.encode(user_id: user.id)
-
-    render json: {
-      message: "メールアドレスの認証が完了しました",
-      token: jwt_token,
-      user: {
-        id: user.id,
-        email: user.email,
-        name: user.name
-      }
-    }, status: :ok
   end
 
   # POST /api/v1/auth/resend-verification
   def resend_verification
-    email = params[:email]
-
-    if email.blank?
-      render json: { error: "メールアドレスが提供されていません" }, status: :bad_request
-      return
+    begin
+      result = AuthService.resend_verification(params[:email])
+      
+      if result.success
+        render json: result.data, status: :ok
+      else
+        render json: { error: result.error }, status: :bad_request
+      end
+    rescue => e
+      Rails.logger.error "Error in AuthController#resend_verification: #{e.message}"
+      Rails.logger.error e.backtrace.join("\n")
+      render json: { error: "認証メール再送に失敗しました" }, status: :internal_server_error
     end
-
-    # メールアドレスでユーザーを検索
-    user = User.find_by(email: email.downcase)
-
-    if user.nil?
-      render json: { error: "指定されたメールアドレスのユーザーが見つかりません" }, status: :not_found
-      return
-    end
-
-    # 既に認証済みの場合
-    if user.email_verified?
-      render json: { error: "このメールアドレスは既に認証済みです" }, status: :unprocessable_entity
-      return
-    end
-
-    # 新しい認証トークンを生成
-    user.generate_email_verification_token!
-
-    # 認証メール再送信
-    verification_url = "#{ENV.fetch('FRONTEND_URL', 'http://localhost:3001')}/verify-email?token=#{user.email_verification_token}"
-    UserMailer.email_verification(user, verification_url).deliver_now
-
-    render json: {
-      message: "認証メールを再送信しました。メールをご確認ください"
-    }, status: :ok
   end
 
   # POST /api/v1/auth/forgot_password
