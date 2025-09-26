@@ -13,7 +13,7 @@ class Api::V1::CommentsController < ApplicationController
       top_level_comments = @post.comments.top_level.includes(:user, replies: [ :user ]).order(created_at: :desc)
       comments_data = CommentService.build_nested_comments_data(top_level_comments)
     end
-    
+
     render json: { comments: comments_data }
   end
 
@@ -24,14 +24,14 @@ class Api::V1::CommentsController < ApplicationController
       render json: { comment: result.data }, status: :created
 
     rescue CommentService::ValidationError => e
-      render json: { 
-        errors: e.details || [e.message]
+      render json: {
+        errors: e.details || [ e.message ]
       }, status: :unprocessable_entity
     rescue => e
       Rails.logger.error "Error in CommentsController#create: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
-      render json: { 
-        errors: ["コメントの作成に失敗しました"]
+      render json: {
+        errors: [ "コメントの作成に失敗しました" ]
       }, status: :internal_server_error
     end
   end

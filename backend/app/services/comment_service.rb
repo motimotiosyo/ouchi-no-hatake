@@ -33,7 +33,7 @@ class CommentService < ApplicationService
   def self.build_flat_comments_data(comments)
     comments.map do |comment|
       comment_hash = build_comment_response(comment)
-      
+
       # リプライ元の情報を追加
       if comment.parent_comment
         comment_hash[:replying_to] = {
@@ -41,7 +41,7 @@ class CommentService < ApplicationService
           user_name: comment.parent_comment.user.name
         }
       end
-      
+
       comment_hash
     end
   end

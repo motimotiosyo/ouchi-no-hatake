@@ -17,7 +17,7 @@ class Api::V1::GrowthRecordsController < ApplicationController
 
       total_count = current_user.growth_records.count
       pagination_info = GrowthRecordService.build_pagination_info(page, per_page, total_count)
-      
+
       response_data = GrowthRecordService.build_growth_records_list(growth_records, pagination_info)
       render json: response_data
 
