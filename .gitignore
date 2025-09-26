@@ -64,4 +64,4 @@ build-iPhoneSimulator/
 .env*.local
 
 # Serena configuration and memories
-.serena/
+.serena/tmp/
