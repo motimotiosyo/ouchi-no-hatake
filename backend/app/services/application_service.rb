@@ -1,6 +1,6 @@
 # 全Serviceクラスの基底クラス
 # 統一的なログ出力、エラーハンドリング、共通処理を提供
-require 'ostruct'
+require "ostruct"
 
 class ApplicationService
   # サービス実行の標準メソッド
