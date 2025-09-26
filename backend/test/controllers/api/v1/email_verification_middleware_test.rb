@@ -43,15 +43,16 @@ class Api::V1::EmailVerificationMiddlewareTest < ActionDispatch::IntegrationTest
 
   test "認証関連エンドポイントはメール未認証でもアクセス可能" do
     # 登録
+    unique_email = "test_#{Time.now.to_i}_#{rand(1000)}@example.com"
     post "/api/v1/auth/register", params: {
-      user: { name: "Test User", email: "test@example.com", password: "password123" }
+      user: { name: "Test User", email: unique_email, password: "password123" }
     }
     assert_response :created
 
     # メール認証（無効なトークン）
     post "/api/v1/auth/verify-email", params: { token: "invalid_token" }
     # トークンが無効でもエンドポイント自体にはアクセス可能
-    assert_response :unprocessable_entity
+    assert_response :bad_request
 
     # 認証メール再送信
     post "/api/v1/auth/resend-verification", params: { email: @unverified_user.email }

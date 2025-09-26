@@ -1,0 +1,62 @@
+class LikeService < ApplicationService
+  class ValidationError < StandardError
+    attr_reader :details
+
+    def initialize(message, details = nil)
+      super(message)
+      @details = details
+    end
+  end
+
+  class AuthorizationError < StandardError; end
+  class DuplicateLikeError < StandardError; end
+
+  # いいね作成
+  def self.create_like(post, user)
+    like = post.likes.build(user: user)
+
+    if like.save
+      OpenStruct.new(
+        success: true,
+        like: like,
+        data: build_like_response(post, true)
+      )
+    else
+      raise ValidationError.new(
+        like.errors.full_messages.first || "いいねに失敗しました",
+        like.errors.full_messages
+      )
+    end
+  rescue ActiveRecord::RecordNotUnique => e
+    raise DuplicateLikeError.new("既にいいね済みです")
+  end
+
+  # いいね削除
+  def self.delete_like(post, user)
+    like = post.likes.find_by(user: user)
+
+    if like
+      like.destroy
+      OpenStruct.new(
+        success: true,
+        data: build_like_response(post, false)
+      )
+    else
+      OpenStruct.new(
+        success: false,
+        error: "いいねが見つかりません"
+      )
+    end
+  end
+
+  private
+
+  # いいねレスポンス構築
+  def self.build_like_response(post, liked)
+    {
+      message: liked ? "いいねしました" : "いいねを取り消しました",
+      likes_count: post.likes_count,
+      liked: liked
+    }
+  end
+end
