@@ -31,11 +31,14 @@ export interface VerificationResult extends ApiResponse<{
   user?: User
 }> {
   expired?: boolean
+  error?: { message: string }
 }
 
 export type ResendResult = ApiResponse<{
   message: string
-}>
+}> & {
+  error?: { message: string }
+}
 
 // 認証レスポンス型
 export type AuthResponse = ApiResponse<{

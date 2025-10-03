@@ -36,9 +36,10 @@ class Api::V1::EmailVerificationMiddlewareTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
 
     response_data = JSON.parse(response.body)
-    assert_equal "メールアドレスの認証が完了していません。認証メールをご確認ください", response_data["error"]
-    assert_equal true, response_data["requires_verification"]
-    assert_equal @unverified_user.email, response_data["email"]
+    assert_equal false, response_data["success"]
+    assert_equal "メールアドレスの認証が完了していません。認証メールをご確認ください", response_data["error"]["message"]
+    assert response_data["error"]["details"].include?("requires_verification: true")
+    assert response_data["error"]["details"].include?("email: #{@unverified_user.email}")
   end
 
   test "認証関連エンドポイントはメール未認証でもアクセス可能" do
@@ -66,7 +67,8 @@ class Api::V1::EmailVerificationMiddlewareTest < ActionDispatch::IntegrationTest
     assert_response :unprocessable_entity
 
     response_data = JSON.parse(response.body)
-    assert_equal "トークンが提供されていません", response_data["message"]
+    assert_equal false, response_data["success"]
+    assert_equal "トークンが提供されていません", response_data["error"]["message"]
   end
 
   private
