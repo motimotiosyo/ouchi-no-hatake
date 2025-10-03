@@ -33,20 +33,20 @@ export interface VerificationResult extends ApiResponse<{
   expired?: boolean
 }
 
-export interface ResendResult extends ApiResponse<{
+export type ResendResult = ApiResponse<{
   message: string
-}> {}
+}>
 
 // 認証レスポンス型
-export interface AuthResponse extends ApiResponse<{
+export type AuthResponse = ApiResponse<{
   message: string
   token: string
   user: User
-}> {}
+}>
 
-export interface UserResponse extends ApiResponse<{
+export type UserResponse = ApiResponse<{
   user: User
-}> {}
+}>
 
 // 基本認証状態の型定義
 export interface AuthState {
