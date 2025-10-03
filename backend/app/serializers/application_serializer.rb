@@ -18,7 +18,7 @@ class ApplicationSerializer
     {
       success: true,
       data: data,
-      meta: meta
+      meta: default_meta.merge(meta)
     }
   end
 
@@ -34,7 +34,18 @@ class ApplicationSerializer
         message: message,
         code: code,
         details: details
-      }.compact
+      }.compact,
+      meta: default_meta
+    }
+  end
+
+  private
+
+  # メタデータのデフォルト値
+  # @return [Hash] timestamp を含むデフォルトメタデータ
+  def self.default_meta
+    {
+      timestamp: Time.current.iso8601
     }
   end
 end
