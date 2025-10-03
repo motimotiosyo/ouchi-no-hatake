@@ -13,15 +13,15 @@ class Api::V1::PlantsController < ApplicationController
         }
       end
 
-      render json: {
-        plants: plants_data
-      }
+      render json: ApplicationSerializer.success(data: { plants: plants_data })
     rescue => e
       Rails.logger.error "Error in PlantsController#index: #{e.message}"
-      Rails.logger.error e.backtrace.join("\n")
-      render json: {
-        error: "植物一覧の取得に失敗しました"
-      }, status: :internal_server_error
+      Rails.logger.error e.backtrace.join("
+")
+      render json: ApplicationSerializer.error(
+        message: "植物一覧の取得に失敗しました",
+        code: "INTERNAL_SERVER_ERROR"
+      ), status: :internal_server_error
     end
   end
 end

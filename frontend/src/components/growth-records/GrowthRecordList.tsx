@@ -47,16 +47,16 @@ export default function GrowthRecordList() {
       
       const data = await authenticatedCall(`/api/v1/growth_records?page=${page}&per_page=10`)
       
-      if (data.growth_records && data.pagination) {
+      if (data && data.success && data.data && data.data.growth_records && data.data.pagination) {
         if (append) {
-          setGrowthRecords(prev => [...prev, ...data.growth_records])
+          setGrowthRecords(prev => [...prev, ...data.data.growth_records])
         } else {
-          setGrowthRecords(data.growth_records)
+          setGrowthRecords(data.data.growth_records)
         }
-        setPagination(data.pagination)
+        setPagination(data.data.pagination)
       }
     } catch (err) {
-      console.error('Error fetching growth records:', err)
+      console.error('成長記録の取得でエラーが発生しました:', err)
     } finally {
       setLoadingMore(false)
     }

@@ -55,15 +55,16 @@ export default function ResetPasswordPage() {
         })
       })
 
-      if (response.ok) {
+      const result = await response.json()
+      
+      if (response.ok && result.success) {
         setIsSuccess(true)
         // 3秒後にログインページにリダイレクト
         setTimeout(() => {
           router.push('/login')
         }, 3000)
       } else {
-        const errorData = await response.json()
-        setApiError(errorData.error || 'パスワードのリセットに失敗しました')
+        setApiError(result.error?.message || 'パスワードのリセットに失敗しました')
       }
     } catch {
       setApiError('ネットワークエラーが発生しました')

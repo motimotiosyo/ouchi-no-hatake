@@ -33,22 +33,22 @@ export default function SignupPage() {
         body: JSON.stringify({ user: data })
       })
 
-      if (response.ok) {
-        const result = await response.json()
+      const result = await response.json()
+      
+      if (response.ok && result.success) {
         console.log('📝 新規登録成功:', result)
 
         // バックエンドがrequires_verification: trueを返す場合
-        if (result.requires_verification) {
+        if (result.data.requires_verification) {
           // メール認証が必要な場合は案内画面へ遷移
-          router.push(`/signup-success?email=${encodeURIComponent(result.user.email)}`)
+          router.push(`/signup-success?email=${encodeURIComponent(result.data.user.email)}`)
         } else {
           // 古いフロー（念のため残す）- 即座にログイン
-          login(result.token, result.user)
+          login(result.data.token, result.data.user)
           window.location.href = '/?flash_message=' + encodeURIComponent('新規登録が完了しました') + '&flash_type=success'
         }
       } else {
-        const error = await response.json()
-        setApiError(error.message || '新規登録に失敗しました')
+        setApiError(result.error?.message || '新規登録に失敗しました')
       }
     } catch {
       setApiError('ネットワークエラーが発生しました')

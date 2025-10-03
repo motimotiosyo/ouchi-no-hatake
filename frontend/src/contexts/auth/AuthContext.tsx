@@ -23,7 +23,7 @@ const fetchCurrentUser = async (token: string): Promise<User | null> => {
 
     if (response.ok) {
       const data = await response.json()
-      return data.user
+      return data.success ? data.data.user : null
     } else {
       return null
     }

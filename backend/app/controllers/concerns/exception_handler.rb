@@ -19,16 +19,16 @@ module ExceptionHandler
 
   # 401
   def unauthorized_request(e)
-    render json: { message: e.message }, status: :unauthorized
+    render json: ApplicationSerializer.error(message: e.message, code: "UNAUTHORIZED"), status: :unauthorized
   end
 
   # 422
   def four_twenty_two(e)
-    render json: { message: e.message }, status: :unprocessable_entity
+    render json: ApplicationSerializer.error(message: e.message, code: "UNPROCESSABLE_ENTITY"), status: :unprocessable_entity
   end
 
   # 404
   def not_found(e)
-    render json: { message: e.message }, status: :not_found
+    render json: ApplicationSerializer.error(message: e.message, code: "NOT_FOUND"), status: :not_found
   end
 end

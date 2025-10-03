@@ -62,11 +62,11 @@ class ApplicationController < ActionController::API
     return unless @current_user
 
     unless @current_user.email_verified?
-      render json: {
-        error: "メールアドレスの認証が完了していません。認証メールをご確認ください",
-        requires_verification: true,
-        email: @current_user.email
-      }, status: :forbidden
+      render json: ApplicationSerializer.error(
+        message: "メールアドレスの認証が完了していません。認証メールをご確認ください",
+        code: "EMAIL_NOT_VERIFIED",
+        details: ["requires_verification: true", "email: #{@current_user.email}"]
+      ), status: :forbidden
     end
   end
 end

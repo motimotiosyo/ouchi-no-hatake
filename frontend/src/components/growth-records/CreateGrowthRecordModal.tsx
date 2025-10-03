@@ -47,11 +47,11 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
     try {
       const data = await publicCall('/api/v1/plants')
       
-      if (data) {
-        setPlants(data.plants)
+      if (data && data.success && data.data) {
+        setPlants(data.data.plants || [])
       }
     } catch (err) {
-      console.error('Error fetching plants:', err)
+      console.error('植物データの取得でエラーが発生しました:', err)
     }
   }, [publicCall])
 
@@ -113,7 +113,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
           })
         }
       } catch (err) {
-        console.error(`Error ${editData ? 'updating' : 'creating'} growth record:`, err)
+        console.error(`成長記録の${editData ? '更新' : '作成'}でエラーが発生しました:`, err)
       }
     })
   }

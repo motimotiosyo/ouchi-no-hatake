@@ -78,11 +78,11 @@ export default function CreatePostModal({
     try {
       const data = await authenticatedCall('/api/v1/growth_records?per_page=100')
       
-      if (data) {
-        setGrowthRecords(data.growth_records || [])
+      if (data && data.success && data.data) {
+        setGrowthRecords(data.data.growth_records || [])
       }
     } catch (err) {
-      console.error('Error fetching growth records:', err)
+      console.error('成長記録の取得でエラーが発生しました:', err)
     }
   }, [authenticatedCall])
 
@@ -153,7 +153,7 @@ export default function CreatePostModal({
           handleClose()
         }
       } catch (err) {
-        console.error(`Error ${editData ? 'updating' : 'creating'} post:`, err)
+        console.error(`投稿の${editData ? '更新' : '作成'}でエラーが発生しました:`, err)
       }
     })
   }

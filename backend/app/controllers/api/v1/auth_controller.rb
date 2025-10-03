@@ -7,18 +7,20 @@ class Api::V1::AuthController < ApplicationController
   def register
     begin
       result = AuthService.register_user(user_params)
-      render json: result.data, status: :created
+      render json: result, status: :created
     rescue AuthService::ValidationError => e
-      render json: {
-        error: e.message,
-        details: e.details
-      }, status: :unprocessable_entity
+      render json: ApplicationSerializer.error(
+        message: e.message,
+        code: "VALIDATION_ERROR",
+        details: e.details || []
+      ), status: :unprocessable_entity
     rescue => e
       Rails.logger.error "Error in AuthController#register: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
-      render json: {
-        error: "登録できませんでした。入力内容をご確認ください"
-      }, status: :internal_server_error
+      render json: ApplicationSerializer.error(
+        message: "登録できませんでした。入力内容をご確認ください",
+        code: "INTERNAL_SERVER_ERROR"
+      ), status: :internal_server_error
     end
   end
 
@@ -37,9 +39,13 @@ class Api::V1::AuthController < ApplicationController
         httponly: false
       }
 
-      render json: result.data, status: :ok
+      render json: result, status: :ok
     rescue AuthService::EmailNotVerifiedError => e
-      render json: AuthService.build_email_not_verified_response(params[:email]), status: :forbidden
+      render json: ApplicationSerializer.error(
+        message: "メールアドレスの認証が完了していません。認証メールをご確認ください",
+        code: "EMAIL_NOT_VERIFIED",
+        details: [ "email: #{params[:email]}" ]
+      ), status: :forbidden
     rescue AuthService::AuthenticationError => e
       raise ExceptionHandler::AuthenticationError, e.message
     rescue => e
@@ -65,14 +71,20 @@ class Api::V1::AuthController < ApplicationController
         cookies.delete(:auth_token, { path: "/" })
         cookies.delete(:auth_token)
 
-        render json: result.data, status: :ok
+        render json: result, status: :ok
       else
-        render json: { error: result.error }, status: :bad_request
+        render json: ApplicationSerializer.error(
+          message: result.error,
+          code: "BAD_REQUEST"
+        ), status: :bad_request
       end
     rescue => e
       Rails.logger.error "Error in AuthController#logout: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
-      render json: { error: "ログアウトに失敗しました" }, status: :internal_server_error
+      render json: ApplicationSerializer.error(
+        message: "ログアウトに失敗しました",
+        code: "INTERNAL_SERVER_ERROR"
+      ), status: :internal_server_error
     end
   end
 
@@ -80,10 +92,10 @@ class Api::V1::AuthController < ApplicationController
     token = cookies[:auth_token] || request.headers["Authorization"]&.split(" ")&.last
     result = AuthService.verify_token(token)
 
-    if result[:valid]
-      render json: { valid: true }
+    if result[:success]
+      render json: result
     else
-      render json: { valid: false }, status: :unauthorized
+      render json: ApplicationSerializer.error(message: "トークンが無効です", code: "INVALID_TOKEN"), status: :unauthorized
     end
   end
 
@@ -93,19 +105,25 @@ class Api::V1::AuthController < ApplicationController
       result = AuthService.verify_email(params[:token])
 
       if result.success
-        render json: result.data, status: :ok
+        render json: result, status: :ok
       else
-        render json: { error: result.error }, status: :bad_request
+        render json: ApplicationSerializer.error(
+          message: result.error,
+          code: "BAD_REQUEST"
+        ), status: :bad_request
       end
     rescue AuthService::TokenExpiredError => e
-      render json: {
-        error: e.message,
-        expired: true
-      }, status: :unprocessable_entity
+      render json: ApplicationSerializer.error(
+        message: e.message,
+        code: "TOKEN_EXPIRED"
+      ), status: :unprocessable_entity
     rescue => e
       Rails.logger.error "Error in AuthController#verify_email: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
-      render json: { error: "メール認証に失敗しました" }, status: :internal_server_error
+      render json: ApplicationSerializer.error(
+        message: "メール認証に失敗しました",
+        code: "INTERNAL_SERVER_ERROR"
+      ), status: :internal_server_error
     end
   end
 
@@ -115,14 +133,20 @@ class Api::V1::AuthController < ApplicationController
       result = AuthService.resend_verification(params[:email])
 
       if result.success
-        render json: result.data, status: :ok
+        render json: result, status: :ok
       else
-        render json: { error: result.error }, status: :bad_request
+        render json: ApplicationSerializer.error(
+          message: result.error,
+          code: "BAD_REQUEST"
+        ), status: :bad_request
       end
     rescue => e
       Rails.logger.error "Error in AuthController#resend_verification: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
-      render json: { error: "認証メール再送に失敗しました" }, status: :internal_server_error
+      render json: ApplicationSerializer.error(
+        message: "認証メール再送に失敗しました",
+        code: "INTERNAL_SERVER_ERROR"
+      ), status: :internal_server_error
     end
   end
 
@@ -132,14 +156,20 @@ class Api::V1::AuthController < ApplicationController
       result = AuthService.forgot_password(params[:email])
 
       if result.success
-        render json: result.data, status: :ok
+        render json: result, status: :ok
       else
-        render json: { error: result.error }, status: :bad_request
+        render json: ApplicationSerializer.error(
+          message: result.error,
+          code: "BAD_REQUEST"
+        ), status: :bad_request
       end
     rescue => e
       Rails.logger.error "Error in AuthController#forgot_password: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
-      render json: { error: "パスワードリセットの申請に失敗しました" }, status: :internal_server_error
+      render json: ApplicationSerializer.error(
+        message: "パスワードリセットの申請に失敗しました",
+        code: "INTERNAL_SERVER_ERROR"
+      ), status: :internal_server_error
     end
   end
 
@@ -153,28 +183,38 @@ class Api::V1::AuthController < ApplicationController
       )
 
       if result.success
-        render json: result.data, status: :ok
+        render json: result, status: :ok
       else
-        render json: { error: result.error }, status: :bad_request
+        render json: ApplicationSerializer.error(
+          message: result.error,
+          code: "BAD_REQUEST"
+        ), status: :bad_request
       end
     rescue AuthService::TokenExpiredError => e
-      render json: { error: e.message }, status: :unprocessable_entity
+      render json: ApplicationSerializer.error(
+        message: e.message,
+        code: "UNPROCESSABLE_ENTITY"
+      ), status: :unprocessable_entity
     rescue AuthService::ValidationError => e
-      render json: {
-        error: e.message,
-        details: e.details
-      }, status: :unprocessable_entity
+      render json: ApplicationSerializer.error(
+        message: e.message,
+        code: "VALIDATION_ERROR",
+        details: e.details || []
+      ), status: :unprocessable_entity
     rescue => e
       Rails.logger.error "Error in AuthController#reset_password: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
-      render json: { error: "パスワードのリセットに失敗しました" }, status: :internal_server_error
+      render json: ApplicationSerializer.error(
+        message: "パスワードのリセットに失敗しました",
+        code: "INTERNAL_SERVER_ERROR"
+      ), status: :internal_server_error
     end
   end
 
   # GET /api/v1/auth/me
   def me
-    user_data = AuthService.get_current_user_data(current_user)
-    render json: { user: user_data.merge(email_verified: current_user.email_verified?) }, status: :ok
+    result = AuthService.get_current_user_data(current_user)
+    render json: result, status: :ok
   end
 
   private

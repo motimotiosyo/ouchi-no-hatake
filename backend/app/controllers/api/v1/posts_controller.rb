@@ -18,24 +18,27 @@ class Api::V1::PostsController < ApplicationController
       pagination_info = PostService.build_pagination_info(page, per_page, total_count)
       response_data = PostService.build_posts_list(posts, current_user, pagination_info)
 
-      render json: response_data
+      render json: ApplicationSerializer.success(data: response_data)
     rescue => e
       Rails.logger.error "Error in PostsController#index: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
 
       empty_pagination = PostService.build_pagination_info(1, per_page, 0)
-      render json: PostService.build_posts_list([], current_user, empty_pagination)
+      render json: ApplicationSerializer.success(data: PostService.build_posts_list([], current_user, empty_pagination))
     end
   end
 
   def show
     begin
       post_data = PostService.build_post_response(@post, current_user)
-      render json: post_data
+      render json: ApplicationSerializer.success(data: post_data)
     rescue => e
       Rails.logger.error "Error in PostsController#show: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
-      render json: { error: "Internal server error" }, status: :internal_server_error
+      render json: ApplicationSerializer.error(
+        message: "投稿の取得に失敗しました",
+        code: "INTERNAL_SERVER_ERROR"
+      ), status: :internal_server_error
     end
   end
 
@@ -49,50 +52,55 @@ class Api::V1::PostsController < ApplicationController
       end
 
       result = PostService.create_post(current_user, post_params)
-      render json: { post: result.data }, status: :created
+      render json: ApplicationSerializer.success(data: { post: result.data }), status: :created
     rescue PostService::ValidationError => e
       Rails.logger.error "Post validation failed: #{e.details&.join(', ')}" if e.details
-      render json: {
-        error: e.message,
-        details: e.details
-      }, status: :unprocessable_entity
+      render json: ApplicationSerializer.error(
+        message: e.message,
+        code: "VALIDATION_ERROR",
+        details: e.details || []
+      ), status: :unprocessable_entity
     rescue => e
       Rails.logger.error "Error in PostsController#create: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
-      render json: {
-        error: "投稿の作成に失敗しました"
-      }, status: :internal_server_error
+      render json: ApplicationSerializer.error(
+        message: "投稿の作成に失敗しました",
+        code: "INTERNAL_SERVER_ERROR"
+      ), status: :internal_server_error
     end
   end
 
   def update
     begin
       result = PostService.update_post(@post, post_params, current_user)
-      render json: { post: result.data }
+      render json: ApplicationSerializer.success(data: { post: result.data })
     rescue PostService::ValidationError => e
-      render json: {
-        error: e.message,
-        details: e.details
-      }, status: :unprocessable_entity
+      render json: ApplicationSerializer.error(
+        message: e.message,
+        code: "VALIDATION_ERROR",
+        details: e.details || []
+      ), status: :unprocessable_entity
     rescue => e
       Rails.logger.error "Error in PostsController#update: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
-      render json: {
-        error: "投稿の更新に失敗しました"
-      }, status: :internal_server_error
+      render json: ApplicationSerializer.error(
+        message: "投稿の更新に失敗しました",
+        code: "INTERNAL_SERVER_ERROR"
+      ), status: :internal_server_error
     end
   end
 
   def destroy
     begin
       @post.destroy
-      render json: { message: "投稿を削除しました" }
+      render json: ApplicationSerializer.success(data: { message: "投稿を削除しました" })
     rescue => e
       Rails.logger.error "Error in PostsController#destroy: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
-      render json: {
-        error: "投稿の削除に失敗しました"
-      }, status: :internal_server_error
+      render json: ApplicationSerializer.error(
+        message: "投稿の削除に失敗しました",
+        code: "INTERNAL_SERVER_ERROR"
+      ), status: :internal_server_error
     end
   end
 
@@ -123,9 +131,10 @@ class Api::V1::PostsController < ApplicationController
       @post = current_user.posts.find(params[:id])
     end
   rescue ActiveRecord::RecordNotFound
-    render json: {
-      error: "投稿が見つかりません"
-    }, status: :not_found
+    render json: ApplicationSerializer.error(
+      message: "投稿が見つかりません",
+      code: "NOT_FOUND"
+    ), status: :not_found
   end
 
 
