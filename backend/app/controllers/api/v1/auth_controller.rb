@@ -104,13 +104,10 @@ class Api::V1::AuthController < ApplicationController
     begin
       result = AuthService.verify_email(params[:token])
 
-      if result.success
+      if result[:success]
         render json: result, status: :ok
       else
-        render json: ApplicationSerializer.error(
-          message: result.error,
-          code: "BAD_REQUEST"
-        ), status: :bad_request
+        render json: result, status: :bad_request
       end
     rescue AuthService::TokenExpiredError => e
       render json: ApplicationSerializer.error(
@@ -132,13 +129,10 @@ class Api::V1::AuthController < ApplicationController
     begin
       result = AuthService.resend_verification(params[:email])
 
-      if result.success
+      if result[:success]
         render json: result, status: :ok
       else
-        render json: ApplicationSerializer.error(
-          message: result.error,
-          code: "BAD_REQUEST"
-        ), status: :bad_request
+        render json: result, status: :bad_request
       end
     rescue => e
       Rails.logger.error "Error in AuthController#resend_verification: #{e.message}"
