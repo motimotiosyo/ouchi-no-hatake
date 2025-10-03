@@ -65,7 +65,7 @@ class ApplicationController < ActionController::API
       render json: ApplicationSerializer.error(
         message: "メールアドレスの認証が完了していません。認証メールをご確認ください",
         code: "EMAIL_NOT_VERIFIED",
-        details: ["requires_verification: true", "email: #{@current_user.email}"]
+        details: [ "requires_verification: true", "email: #{@current_user.email}" ]
       ), status: :forbidden
     end
   end
