@@ -35,24 +35,18 @@ export interface VerificationResult extends ApiResponse<{
 
 export interface ResendResult extends ApiResponse<{
   message: string
-}> {
-  // 追加のプロパティがある場合はここに定義
-}
+}> {}
 
 // 認証レスポンス型
 export interface AuthResponse extends ApiResponse<{
   message: string
   token: string
   user: User
-}> {
-  // 追加のプロパティがある場合はここに定義
-}
+}> {}
 
 export interface UserResponse extends ApiResponse<{
   user: User
-}> {
-  // 追加のプロパティがある場合はここに定義
-}
+}> {}
 
 // 基本認証状態の型定義
 export interface AuthState {
