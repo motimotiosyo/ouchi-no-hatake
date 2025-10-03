@@ -104,7 +104,7 @@ export function AuthActionsProvider({ children }: { children: ReactNode }) {
     } catch {
       return { 
         success: false, 
-        error: 'ネットワークエラーが発生しました' 
+        error: { message: 'ネットワークエラーが発生しました' } 
       }
     }
   }, [])
@@ -133,7 +133,7 @@ export function AuthActionsProvider({ children }: { children: ReactNode }) {
     } catch {
       return { 
         success: false, 
-        error: 'ネットワークエラーが発生しました' 
+        error: { message: 'ネットワークエラーが発生しました' } 
       }
     }
   }, [])
