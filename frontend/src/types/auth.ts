@@ -1,10 +1,10 @@
 // 認証関連の共通型定義
 
 // 統一APIレスポンス形式
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   success: boolean
   data?: T
-  meta?: Record<string, any>
+  meta?: Record<string, unknown>
 }
 
 export interface ApiErrorResponse {
@@ -29,22 +29,30 @@ export interface VerificationResult extends ApiResponse<{
   message: string
   token?: string
   user?: User
-}> {}
+}> {
+  expired?: boolean
+}
 
 export interface ResendResult extends ApiResponse<{
   message: string
-}> {}
+}> {
+  // 追加のプロパティがある場合はここに定義
+}
 
 // 認証レスポンス型
 export interface AuthResponse extends ApiResponse<{
   message: string
   token: string
   user: User
-}> {}
+}> {
+  // 追加のプロパティがある場合はここに定義
+}
 
 export interface UserResponse extends ApiResponse<{
   user: User
-}> {}
+}> {
+  // 追加のプロパティがある場合はここに定義
+}
 
 // 基本認証状態の型定義
 export interface AuthState {
