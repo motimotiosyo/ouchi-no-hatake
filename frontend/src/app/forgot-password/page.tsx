@@ -32,11 +32,12 @@ export default function ForgotPasswordPage() {
         })
       })
 
-      if (response.ok) {
+      const result = await response.json()
+      
+      if (response.ok && result.success) {
         setIsSuccess(true)
       } else {
-        const errorData = await response.json()
-        setApiError(errorData.error || 'パスワードリセットの申請に失敗しました')
+        setApiError(result.error?.message || 'パスワードリセットの申請に失敗しました')
       }
     } catch {
       setApiError('ネットワークエラーが発生しました')

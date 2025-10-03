@@ -43,7 +43,7 @@ export default function VerifyEmailPage() {
           } else {
             setStatus('error')
           }
-          setErrorMessage(result.error || '認証に失敗しました')
+          setErrorMessage(result.error?.message || '認証に失敗しました')
         }
       } catch {
         setStatus('error')

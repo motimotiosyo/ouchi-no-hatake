@@ -23,9 +23,7 @@ class AuthService < ApplicationService
       # 認証メール送信
       send_verification_email(user)
 
-      OpenStruct.new(
-        success: true,
-        user: user,
+      ApplicationSerializer.success(
         data: build_registration_response(user)
       )
     else
@@ -51,46 +49,41 @@ class AuthService < ApplicationService
     # JWT発行
     token = JsonWebToken.encode(user_id: user.id)
 
-    OpenStruct.new(
-      success: true,
-      user: user,
-      token: token,
-      data: build_login_response(user, token),
-      email_not_verified_data: build_email_not_verified_response(user.email)
+    ApplicationSerializer.success(
+      data: build_login_response(user, token)
     )
   end
 
   # ログアウト処理
   def self.logout_user(token)
-    return OpenStruct.new(success: false, error: "トークンが提供されていません") if token.blank?
+    return ApplicationSerializer.error(message: "トークンが提供されていません", code: "MISSING_TOKEN") if token.blank?
 
     blacklist_result = JsonWebToken.blacklist_token(token)
 
-    OpenStruct.new(
-      success: true,
+    ApplicationSerializer.success(
       data: { message: "ログアウトに成功しました" }
     )
   rescue StandardError => e
     Rails.logger.error "Logout error: #{e.message}"
-    OpenStruct.new(
-      success: false,
-      error: "ログアウトに失敗しました"
+    ApplicationSerializer.error(
+      message: "ログアウトに失敗しました",
+      code: "LOGOUT_FAILED"
     )
   end
 
   # トークン検証
   def self.verify_token(token)
-    return { valid: false } if token.blank?
+    return ApplicationSerializer.success(data: { valid: false }) if token.blank?
 
-    { valid: JsonWebToken.valid_token?(token) }
+    ApplicationSerializer.success(data: { valid: JsonWebToken.valid_token?(token) })
   end
 
   # メール認証処理
   def self.verify_email(token)
-    return OpenStruct.new(success: false, error: "認証トークンが提供されていません") if token.blank?
+    return ApplicationSerializer.error(message: "認証トークンが提供されていません", code: "MISSING_TOKEN") if token.blank?
 
     user = User.find_by(email_verification_token: token)
-    return OpenStruct.new(success: false, error: "無効な認証トークンです") if user.nil?
+    return ApplicationSerializer.error(message: "無効な認証トークンです", code: "INVALID_TOKEN") if user.nil?
 
     if user.verification_token_expired?
       raise TokenExpiredError.new("認証トークンの有効期限が切れています。再度登録をお試しください")
@@ -102,10 +95,7 @@ class AuthService < ApplicationService
     # JWT発行
     jwt_token = JsonWebToken.encode(user_id: user.id)
 
-    OpenStruct.new(
-      success: true,
-      user: user,
-      token: jwt_token,
+    ApplicationSerializer.success(
       data: build_email_verification_response(user, jwt_token)
     )
   end
@@ -113,10 +103,10 @@ class AuthService < ApplicationService
   # 認証メール再送
   def self.resend_verification(email)
     user = User.find_by(email: email&.downcase)
-    return OpenStruct.new(success: false, error: "ユーザーが見つかりません") unless user
+    return ApplicationSerializer.error(message: "ユーザーが見つかりません", code: "USER_NOT_FOUND") unless user
 
     if user.email_verified?
-      return OpenStruct.new(success: false, error: "このメールアドレスは既に認証済みです")
+      return ApplicationSerializer.error(message: "このメールアドレスは既に認証済みです", code: "ALREADY_VERIFIED")
     end
 
     # 新しいトークン生成
@@ -125,29 +115,27 @@ class AuthService < ApplicationService
     # メール送信
     send_verification_email(user)
 
-    OpenStruct.new(
-      success: true,
+    ApplicationSerializer.success(
       data: { message: "認証メールを再送しました" }
     )
   end
 
   # パスワードリセット要求
   def self.forgot_password(email)
-    return OpenStruct.new(success: false, error: "メールアドレスが提供されていません") if email.blank?
+    return ApplicationSerializer.error(message: "メールアドレスが提供されていません", code: "MISSING_EMAIL") if email.blank?
 
     user = User.find_by(email: email&.downcase)
 
     if user.nil?
       # セキュリティのため、ユーザーが存在しない場合も成功レスポンスを返す
-      return OpenStruct.new(
-        success: true,
+      return ApplicationSerializer.success(
         data: { message: "パスワードリセットメールを送信しました。メールをご確認ください" }
       )
     end
 
     # メール未認証ユーザーの場合
     unless user.email_verified?
-      return OpenStruct.new(success: false, error: "メールアドレスの認証が完了していません")
+      return ApplicationSerializer.error(message: "メールアドレスの認証が完了していません", code: "EMAIL_NOT_VERIFIED")
     end
 
     # パスワードリセットトークンを生成（PasswordResetTokenモデル使用）
@@ -156,36 +144,34 @@ class AuthService < ApplicationService
     # リセットメール送信
     send_password_reset_email_with_token(user, reset_token.token)
 
-    OpenStruct.new(
-      success: true,
+    ApplicationSerializer.success(
       data: { message: "パスワードリセットメールを送信しました。メールをご確認ください" }
     )
   end
 
   # パスワードリセット実行
   def self.reset_password(token, new_password, password_confirmation)
-    return OpenStruct.new(success: false, error: "リセットトークンが提供されていません") if token.blank?
-    return OpenStruct.new(success: false, error: "パスワードが提供されていません") if new_password.blank? || password_confirmation.blank?
+    return ApplicationSerializer.error(message: "リセットトークンが提供されていません", code: "MISSING_TOKEN") if token.blank?
+    return ApplicationSerializer.error(message: "パスワードが提供されていません", code: "MISSING_PASSWORD") if new_password.blank? || password_confirmation.blank?
 
     if new_password != password_confirmation
-      return OpenStruct.new(success: false, error: "パスワードが一致しません")
+      return ApplicationSerializer.error(message: "パスワードが一致しません", code: "PASSWORD_MISMATCH")
     end
 
     # トークンの有効性チェック
     reset_token = PasswordResetToken.find_valid_token(token)
-    return OpenStruct.new(success: false, error: "無効または期限切れのリセットトークンです") if reset_token.nil?
+    return ApplicationSerializer.error(message: "無効または期限切れのリセットトークンです", code: "INVALID_TOKEN") if reset_token.nil?
 
     # ユーザーを検索
     user = User.find_by(email: reset_token.email)
-    return OpenStruct.new(success: false, error: "ユーザーが見つかりません") if user.nil?
+    return ApplicationSerializer.error(message: "ユーザーが見つかりません", code: "USER_NOT_FOUND") if user.nil?
 
     # パスワードを更新
     if user.update(password: new_password, password_confirmation: password_confirmation)
       # リセットトークンを削除
       reset_token.destroy
 
-      OpenStruct.new(
-        success: true,
+      ApplicationSerializer.success(
         data: { message: "パスワードが正常に更新されました" }
       )
     else
@@ -198,7 +184,8 @@ class AuthService < ApplicationService
 
   # 現在のユーザー情報取得
   def self.get_current_user_data(user)
-    build_user_response(user)
+    user_data = build_user_response(user).merge(email_verified: user.email_verified?)
+    ApplicationSerializer.success(data: { user: user_data })
   end
 
   private

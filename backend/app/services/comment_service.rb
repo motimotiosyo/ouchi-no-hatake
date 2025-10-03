@@ -16,10 +16,8 @@ class CommentService < ApplicationService
     comment.user = user
 
     if comment.save
-      OpenStruct.new(
-        success: true,
-        comment: comment,
-        data: build_comment_response(comment)
+      ApplicationSerializer.success(
+        data: { comment: build_comment_response(comment) }
       )
     else
       raise ValidationError.new(

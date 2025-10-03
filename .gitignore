@@ -65,3 +65,7 @@ build-iPhoneSimulator/
 
 # Serena configuration and memories
 .serena/
+
+# Temporary reports and documentation
+tmp/
+docs/

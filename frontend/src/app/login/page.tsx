@@ -38,23 +38,28 @@ export default function LoginPage() {
         body: JSON.stringify(data)
       })
 
-      if (response.ok) {
-        const result = await response.json()
+      const result = await response.json()
+      
+      if (response.ok && result.success) {
         console.log('🔐 ログイン成功:', result)
 
         // useAuthのlogin関数を使ってJWT保存
-        login(result.token, result.user)
+        login(result.data.token, result.data.user)
         
         // ログイン成功時の遷移（フラッシュメッセージ付き）
         window.location.href = '/?flash_message=' + encodeURIComponent('ログインしました') + '&flash_type=success'
       } else {
-        const error = await response.json()
-        setApiError(error.message || error.error || 'ログインに失敗しました')
+        setApiError(result.error?.message || 'ログインに失敗しました')
         
         // メール認証が必要な場合の処理
-        if (error.requires_verification && error.email) {
+        if (result.error?.code === 'EMAIL_NOT_VERIFIED') {
           setRequiresVerification(true)
-          setUnverifiedEmail(error.email)
+          // エラー詳細からメールアドレスを抽出
+          const emailDetail = result.error?.details?.find((detail: string) => detail.includes('email:'))
+          if (emailDetail) {
+            const email = emailDetail.split('email: ')[1]
+            setUnverifiedEmail(email)
+          }
         }
       }
     } catch {

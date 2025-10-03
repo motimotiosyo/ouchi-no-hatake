@@ -14,25 +14,28 @@ class Api::V1::CommentsController < ApplicationController
       comments_data = CommentService.build_nested_comments_data(top_level_comments)
     end
 
-    render json: { comments: comments_data }
+    render json: ApplicationSerializer.success(data: { comments: comments_data })
   end
 
   # POST /api/v1/posts/:post_id/comments
   def create
     begin
       result = CommentService.create_comment(@post, current_user, comment_params)
-      render json: { comment: result.data }, status: :created
+      render json: result, status: :created
 
     rescue CommentService::ValidationError => e
-      render json: {
-        errors: e.details || [ e.message ]
-      }, status: :unprocessable_entity
+      render json: ApplicationSerializer.error(
+        message: e.message,
+        code: "VALIDATION_ERROR",
+        details: e.details || [ e.message ]
+      ), status: :unprocessable_entity
     rescue => e
       Rails.logger.error "Error in CommentsController#create: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
-      render json: {
-        errors: [ "コメントの作成に失敗しました" ]
-      }, status: :internal_server_error
+      render json: ApplicationSerializer.error(
+        message: "コメントの作成に失敗しました",
+        code: "INTERNAL_SERVER_ERROR"
+      ), status: :internal_server_error
     end
   end
 
@@ -41,14 +44,21 @@ class Api::V1::CommentsController < ApplicationController
     begin
       if @comment.user == current_user
         @comment.destroy
-        render json: { message: "コメントを削除しました" }
+        render json: ApplicationSerializer.success(data: { message: "コメントを削除しました" })
       else
-        render json: { error: "権限がありません" }, status: :forbidden
+        render json: ApplicationSerializer.error(
+          message: "権限がありません",
+          code: "FORBIDDEN"
+        ), status: :forbidden
       end
     rescue => e
       Rails.logger.error "Error in CommentsController#destroy: #{e.message}"
-      Rails.logger.error e.backtrace.join("\n")
-      render json: { error: "コメントの削除に失敗しました" }, status: :internal_server_error
+      Rails.logger.error e.backtrace.join("
+")
+      render json: ApplicationSerializer.error(
+        message: "コメントの削除に失敗しました",
+        code: "INTERNAL_SERVER_ERROR"
+      ), status: :internal_server_error
     end
   end
 

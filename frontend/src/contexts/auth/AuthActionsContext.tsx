@@ -84,11 +84,11 @@ export function AuthActionsProvider({ children }: { children: ReactNode }) {
 
       const data = await response.json()
 
-      if (response.ok) {
+      if (response.ok && data.success) {
         // 認証成功時はログイン状態にする
-        localStorage.setItem('auth_token', data.token)
-        localStorage.setItem('auth_user', JSON.stringify({ ...data.user, email_verified: true }))
-        setCookie('auth_token', data.token, 7)
+        localStorage.setItem('auth_token', data.data.token)
+        localStorage.setItem('auth_user', JSON.stringify({ ...data.data.user, email_verified: true }))
+        setCookie('auth_token', data.data.token, 7)
         
         // ページリロードして状態を更新
         window.location.reload()
@@ -97,14 +97,14 @@ export function AuthActionsProvider({ children }: { children: ReactNode }) {
       } else {
         return { 
           success: false, 
-          error: data.error || 'メール認証に失敗しました',
-          expired: data.expired || false
+          error: data.error?.message || 'メール認証に失敗しました',
+          expired: data.error?.code === 'TOKEN_EXPIRED' || false
         }
       }
     } catch {
       return { 
         success: false, 
-        error: 'ネットワークエラーが発生しました' 
+        error: { message: 'ネットワークエラーが発生しました' } 
       }
     }
   }, [])
@@ -122,18 +122,18 @@ export function AuthActionsProvider({ children }: { children: ReactNode }) {
 
       const data = await response.json()
 
-      if (response.ok) {
+      if (response.ok && data.success) {
         return { success: true }
       } else {
         return { 
           success: false, 
-          error: data.error || '認証メールの再送信に失敗しました'
+          error: data.error?.message || '認証メールの再送信に失敗しました'
         }
       }
     } catch {
       return { 
         success: false, 
-        error: 'ネットワークエラーが発生しました' 
+        error: { message: 'ネットワークエラーが発生しました' } 
       }
     }
   }, [])

@@ -37,7 +37,7 @@ export default function DeleteConfirmDialog({ isOpen, onClose, onSuccess, growth
           onClose()
         }
       } catch (err) {
-        console.error('Error deleting growth record:', err)
+        console.error('成長記録の削除でエラーが発生しました:', err)
       }
     })
   }

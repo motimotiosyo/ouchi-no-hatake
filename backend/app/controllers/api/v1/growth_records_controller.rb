@@ -19,14 +19,15 @@ class Api::V1::GrowthRecordsController < ApplicationController
       pagination_info = GrowthRecordService.build_pagination_info(page, per_page, total_count)
 
       response_data = GrowthRecordService.build_growth_records_list(growth_records, pagination_info)
-      render json: response_data
+      render json: ApplicationSerializer.success(data: response_data)
 
     rescue => e
       Rails.logger.error "Error in GrowthRecordsController#index: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
-      render json: {
-        error: "成長記録の取得に失敗しました"
-      }, status: :internal_server_error
+      render json: ApplicationSerializer.error(
+        message: "成長記録の取得に失敗しました",
+        code: "INTERNAL_SERVER_ERROR"
+      ), status: :internal_server_error
     end
   end
 
@@ -37,65 +38,71 @@ class Api::V1::GrowthRecordsController < ApplicationController
         .order(created_at: :desc)
 
       response_data = GrowthRecordService.build_growth_record_detail(@growth_record, posts)
-      render json: response_data
+      render json: ApplicationSerializer.success(data: response_data)
 
     rescue => e
       Rails.logger.error "Error in GrowthRecordsController#show: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
-      render json: {
-        error: "成長記録の詳細取得に失敗しました"
-      }, status: :internal_server_error
+      render json: ApplicationSerializer.error(
+        message: "成長記録の詳細取得に失敗しました",
+        code: "INTERNAL_SERVER_ERROR"
+      ), status: :internal_server_error
     end
   end
 
   def create
     begin
       result = GrowthRecordService.create_growth_record(current_user, growth_record_params)
-      render json: { growth_record: result.data }, status: :created
+      render json: ApplicationSerializer.success(data: { growth_record: result.data }), status: :created
 
     rescue GrowthRecordService::ValidationError => e
-      render json: {
-        error: e.message,
-        details: e.details
-      }, status: :unprocessable_entity
+      render json: ApplicationSerializer.error(
+        message: e.message,
+        code: "VALIDATION_ERROR",
+        details: e.details || []
+      ), status: :unprocessable_entity
     rescue => e
       Rails.logger.error "Error in GrowthRecordsController#create: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
-      render json: {
-        error: "成長記録の作成に失敗しました"
-      }, status: :internal_server_error
+      render json: ApplicationSerializer.error(
+        message: "成長記録の作成に失敗しました",
+        code: "INTERNAL_SERVER_ERROR"
+      ), status: :internal_server_error
     end
   end
 
   def update
     begin
       result = GrowthRecordService.update_growth_record(@growth_record, growth_record_params)
-      render json: { growth_record: result.data }
+      render json: ApplicationSerializer.success(data: { growth_record: result.data })
 
     rescue GrowthRecordService::ValidationError => e
-      render json: {
-        error: e.message,
-        details: e.details
-      }, status: :unprocessable_entity
+      render json: ApplicationSerializer.error(
+        message: e.message,
+        code: "VALIDATION_ERROR",
+        details: e.details || []
+      ), status: :unprocessable_entity
     rescue => e
       Rails.logger.error "Error in GrowthRecordsController#update: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
-      render json: {
-        error: "成長記録の更新に失敗しました"
-      }, status: :internal_server_error
+      render json: ApplicationSerializer.error(
+        message: "成長記録の更新に失敗しました",
+        code: "INTERNAL_SERVER_ERROR"
+      ), status: :internal_server_error
     end
   end
 
   def destroy
     begin
       @growth_record.destroy
-      render json: { message: "成長記録を削除しました" }
+      render json: ApplicationSerializer.success(data: { message: "成長記録を削除しました" })
     rescue => e
       Rails.logger.error "Error in GrowthRecordsController#destroy: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")
-      render json: {
-        error: "成長記録の削除に失敗しました"
-      }, status: :internal_server_error
+      render json: ApplicationSerializer.error(
+        message: "成長記録の削除に失敗しました",
+        code: "INTERNAL_SERVER_ERROR"
+      ), status: :internal_server_error
     end
   end
 
@@ -104,17 +111,19 @@ class Api::V1::GrowthRecordsController < ApplicationController
   def set_growth_record
     @growth_record = current_user.growth_records.find(params[:id])
   rescue ActiveRecord::RecordNotFound
-    render json: {
-      error: "成長記録が見つかりません"
-    }, status: :not_found
+    render json: ApplicationSerializer.error(
+      message: "成長記録が見つかりません",
+      code: "NOT_FOUND"
+    ), status: :not_found
   end
 
   def set_growth_record_for_show
     @growth_record = GrowthRecord.includes(:plant, :user).find(params[:id])
   rescue ActiveRecord::RecordNotFound
-    render json: {
-      error: "成長記録が見つかりません"
-    }, status: :not_found
+    render json: ApplicationSerializer.error(
+      message: "成長記録が見つかりません",
+      code: "NOT_FOUND"
+    ), status: :not_found
   end
 
   def growth_record_params

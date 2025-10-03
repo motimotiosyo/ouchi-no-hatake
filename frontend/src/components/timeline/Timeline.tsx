@@ -80,16 +80,16 @@ export default function Timeline() {
       
       const data = await response.json()
       
-      if (data && data.posts && data.pagination) {
+      if (data && data.success && data.data && data.data.posts && data.data.pagination) {
         if (append) {
-          setPosts(prev => [...prev, ...data.posts])
+          setPosts(prev => [...prev, ...data.data.posts])
         } else {
-          setPosts(data.posts)
+          setPosts(data.data.posts)
         }
-        setPagination(data.pagination)
+        setPagination(data.data.pagination)
       }
     } catch (err) {
-      console.error('Error fetching posts:', err)
+      console.error('投稿の取得でエラーが発生しました:', err)
       setError(err instanceof Error ? err.message : 'エラーが発生しました')
     } finally {
       setLoadingMore(false)

@@ -92,12 +92,12 @@ export default function PostDetailPage() {
         })
 
         if (postResponse.ok) {
-          const targetPost = await postResponse.json()
+          const result = await postResponse.json()
           
-          if (targetPost) {
-            setPost(targetPost)
-            setLikesCount(targetPost.likes_count)
-            setIsLiked(targetPost.liked_by_current_user)
+          if (result && result.success && result.data) {
+            setPost(result.data)
+            setLikesCount(result.data.likes_count)
+            setIsLiked(result.data.liked_by_current_user)
           } else {
             console.error('投稿が見つかりません')
             router.push('/')
@@ -111,7 +111,8 @@ export default function PostDetailPage() {
           
           if (listResponse.ok) {
             const postData = await listResponse.json()
-            const targetPost = postData.posts?.find((p: Post) => p.id === parseInt(params.id as string))
+            const targetPost = postData.success && postData.data && postData.data.posts ? 
+              postData.data.posts.find((p: Post) => p.id === parseInt(params.id as string)) : null
             
             if (targetPost) {
               setPost(targetPost)
@@ -132,7 +133,9 @@ export default function PostDetailPage() {
 
         if (commentsResponse.ok) {
           const commentsData = await commentsResponse.json()
-          setComments(commentsData.comments || [])
+          if (commentsData.success) {
+            setComments(commentsData.data.comments || [])
+          }
         }
       } catch (error) {
         console.error('データ取得でエラーが発生しました:', error)
@@ -176,9 +179,11 @@ export default function PostDetailPage() {
       })
 
       if (response.ok) {
-        const data = await response.json()
-        setLikesCount(data.likes_count)
-        setIsLiked(data.liked)
+        const result = await response.json()
+        if (result.success && result.data) {
+          setLikesCount(result.data.likes_count)
+          setIsLiked(result.data.liked)
+        }
       } else {
         const errorData = await response.json()
         console.error('いいね処理に失敗しました:', errorData)
@@ -225,16 +230,16 @@ export default function PostDetailPage() {
         })
       })
 
-      if (response.ok) {
-        const data = await response.json()
-        setComments(prev => [...prev, data.comment])
+      const result = await response.json()
+      
+      if (response.ok && result.success) {
+        setComments(prev => [...prev, result.data.comment])
         setNewComment('')
         setReplyingTo(null)
         // コメント一覧を再取得して最新状態を反映
         window.location.reload() // 簡易的な再読み込み
       } else {
-        const errorData = await response.json()
-        console.error('コメント投稿に失敗しました:', errorData)
+        console.error('コメント投稿に失敗しました:', result.error?.message)
       }
     } catch (error) {
       console.error('コメント投稿でエラーが発生しました:', error)

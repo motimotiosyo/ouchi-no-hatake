@@ -58,12 +58,12 @@ export default function GrowthRecordDetail({ id }: Props) {
     try {
       const data = await authenticatedCall(`/api/v1/growth_records/${id}`)
       
-      if (data) {
-        setGrowthRecord(data.growth_record)
-        setPosts(data.posts || [])
+      if (data && data.success && data.data) {
+        setGrowthRecord(data.data.growth_record)
+        setPosts(data.data.posts || [])
       }
     } catch (err) {
-      console.error('Error fetching growth record:', err)
+      console.error('成長記録の取得でエラーが発生しました:', err)
     }
   }, [id, authenticatedCall])
 
