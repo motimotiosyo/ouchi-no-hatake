@@ -38,12 +38,12 @@ export default function VerifyEmailPage() {
             router.push('/')
           }, 3000)
         } else {
-          if (result.expired) {
+          if (result.error.code === 'TOKEN_EXPIRED') {
             setStatus('expired')
           } else {
             setStatus('error')
           }
-          setErrorMessage(result.error?.message || '認証に失敗しました')
+          setErrorMessage(result.error.message)
         }
       } catch {
         setStatus('error')

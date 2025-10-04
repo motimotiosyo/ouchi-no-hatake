@@ -10,16 +10,29 @@ export interface ApiResponse<T = unknown> {
 }
 
 /**
+ * APIエラー詳細
+ */
+export interface ApiErrorDetail {
+  message: string
+  code?: string
+  details?: string[]
+}
+
+/**
  * APIエラーレスポンス
  */
 export interface ApiErrorResponse {
   success: false
-  error: {
-    message: string
-    code?: string
-    details?: string[]
-  }
+  error: ApiErrorDetail
+  meta?: Record<string, unknown>
 }
+
+/**
+ * API結果型（成功/失敗を明確に区別）
+ */
+export type ApiResult<T> =
+  | (ApiResponse<T> & { success: true })
+  | (ApiErrorResponse & { success: false })
 
 /**
  * APIエラークラス

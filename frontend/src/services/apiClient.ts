@@ -1,5 +1,5 @@
 import Logger from '@/utils/logger'
-import { ApiResponse, ApiErrorResponse, ApiError, HttpMethod, AuthenticatedApiRequestConfig } from '@/types/api'
+import { ApiResponse, ApiErrorResponse, ApiError, AuthenticatedApiRequestConfig } from '@/types/api'
 
 // API設定
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001'
