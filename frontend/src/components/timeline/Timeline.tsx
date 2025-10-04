@@ -5,34 +5,7 @@ import TimelinePost from './TimelinePost'
 import CreatePostModal from '../posts/CreatePostModal'
 import { useAuthContext as useAuth } from '@/contexts/auth'
 import { API_BASE_URL } from '@/lib/api'
-
-interface Post {
-  id: number
-  title: string
-  content: string
-  post_type: 'growth_record_post' | 'general_post'
-  created_at: string
-  images?: string[]
-  likes_count: number
-  liked_by_current_user: boolean
-  comments_count: number
-  user: {
-    id: number
-    name: string
-  }
-  growth_record?: {
-    id: number
-    record_name: string
-    plant: {
-      id: number
-      name: string
-    }
-  }
-  category?: {
-    id: number
-    name: string
-  }
-}
+import type { Post } from '@/types'
 
 interface PaginationInfo {
   current_page: number

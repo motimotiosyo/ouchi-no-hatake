@@ -38,7 +38,7 @@ export default function SignupSuccessPage() {
       if (result.success) {
         setResendMessage('認証メールを再送信しました。メールボックスをご確認ください。')
       } else {
-        setResendMessage(result.error?.message || '再送信に失敗しました')
+        setResendMessage(result.error.message)
       }
     } catch {
       setResendMessage('予期しないエラーが発生しました')

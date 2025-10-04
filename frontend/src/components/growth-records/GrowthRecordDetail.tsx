@@ -7,6 +7,7 @@ import { useApi } from '@/hooks/useApi'
 import CreateGrowthRecordModal from './CreateGrowthRecordModal'
 import DeleteConfirmDialog from './DeleteConfirmDialog'
 import CreatePostModal from '../posts/CreatePostModal'
+import type { Post } from '@/types'
 
 interface GrowthRecord {
   id: number
@@ -24,17 +25,6 @@ interface GrowthRecord {
     description: string
   }
   user: {
-    id: number
-    name: string
-  }
-}
-
-interface Post {
-  id: number
-  title: string
-  content: string
-  created_at: string
-  category: {
     id: number
     name: string
   }
@@ -281,9 +271,11 @@ export default function GrowthRecordDetail({ id }: Props) {
             {posts.map((post) => (
               <div key={post.id} className="border-b border-gray-200 pb-4 last:border-b-0">
                 <div className="flex justify-between items-start mb-2">
-                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                    {post.category.name}
-                  </span>
+                  {post.category && (
+                    <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                      {post.category.name}
+                    </span>
+                  )}
                   <div className="text-sm text-gray-500">
                     {formatDateTime(post.created_at)}
                   </div>

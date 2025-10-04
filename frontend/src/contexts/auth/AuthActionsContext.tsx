@@ -89,22 +89,24 @@ export function AuthActionsProvider({ children }: { children: ReactNode }) {
         localStorage.setItem('auth_token', data.data.token)
         localStorage.setItem('auth_user', JSON.stringify({ ...data.data.user, email_verified: true }))
         setCookie('auth_token', data.data.token, 7)
-        
+
         // ページリロードして状態を更新
         window.location.reload()
-        
-        return { success: true }
+
+        return { success: true, data: data.data }
       } else {
-        return { 
-          success: false, 
-          error: data.error?.message || 'メール認証に失敗しました',
-          expired: data.error?.code === 'TOKEN_EXPIRED' || false
+        return {
+          success: false,
+          error: {
+            message: data.error?.message || 'メール認証に失敗しました',
+            code: data.error?.code
+          }
         }
       }
     } catch {
-      return { 
-        success: false, 
-        error: { message: 'ネットワークエラーが発生しました' } 
+      return {
+        success: false,
+        error: { message: 'ネットワークエラーが発生しました' }
       }
     }
   }, [])
@@ -123,17 +125,20 @@ export function AuthActionsProvider({ children }: { children: ReactNode }) {
       const data = await response.json()
 
       if (response.ok && data.success) {
-        return { success: true }
+        return { success: true, data: data.data }
       } else {
-        return { 
-          success: false, 
-          error: data.error?.message || '認証メールの再送信に失敗しました'
+        return {
+          success: false,
+          error: {
+            message: data.error?.message || '認証メールの再送信に失敗しました',
+            code: data.error?.code
+          }
         }
       }
     } catch {
-      return { 
-        success: false, 
-        error: { message: 'ネットワークエラーが発生しました' } 
+      return {
+        success: false,
+        error: { message: 'ネットワークエラーが発生しました' }
       }
     }
   }, [])

@@ -6,6 +6,7 @@ import { forgotPasswordSchema, type ForgotPasswordFormData } from '@/lib/validat
 import { apiCall } from '@/lib/api'
 import { useState } from 'react'
 import Link from 'next/link'
+import type { ApiResult } from '@/types/api'
 
 export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -32,12 +33,12 @@ export default function ForgotPasswordPage() {
         })
       })
 
-      const result = await response.json()
-      
-      if (response.ok && result.success) {
+      const result = await response.json() as ApiResult<{ message: string }>
+
+      if (result.success) {
         setIsSuccess(true)
       } else {
-        setApiError(result.error?.message || 'パスワードリセットの申請に失敗しました')
+        setApiError(result.error.message)
       }
     } catch {
       setApiError('ネットワークエラーが発生しました')

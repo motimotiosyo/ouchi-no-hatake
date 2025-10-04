@@ -1,53 +1,35 @@
 // 認証関連の共通型定義
-
-// 統一APIレスポンス形式
-export interface ApiResponse<T = unknown> {
-  success: boolean
-  data?: T
-  meta?: Record<string, unknown>
-}
-
-export interface ApiErrorResponse {
-  success: false
-  error: {
-    message: string
-    code?: string
-    details?: string[]
-  }
-}
+import { ApiResult } from './api'
+import { ID } from './common'
 
 // ユーザー情報の型定義
 export interface User {
-  id: number
+  id: ID
   email: string
   name: string
   email_verified?: boolean
 }
 
-// API関連の結果型（新形式対応）
-export interface VerificationResult extends ApiResponse<{
+// API関連の結果型（統一形式）
+export type VerificationResult = ApiResult<{
   message: string
   token?: string
   user?: User
-}> {
-  expired?: boolean
-  error?: { message: string }
-}
+}>
 
-export type ResendResult = ApiResponse<{
+export type ResendResult = ApiResult<{
   message: string
-}> & {
-  error?: { message: string }
-}
+}>
 
 // 認証レスポンス型
-export type AuthResponse = ApiResponse<{
+export type AuthResponse = ApiResult<{
   message: string
   token: string
   user: User
+  requires_verification?: boolean
 }>
 
-export type UserResponse = ApiResponse<{
+export type UserResponse = ApiResult<{
   user: User
 }>
 

@@ -78,7 +78,7 @@ export default function ResendVerificationPage() {
         setSuccessMessage('認証メールを再送信しました。メールボックスをご確認ください。')
         setLastSentTime(Date.now())
       } else {
-        setErrorMessage(result.error?.message || '再送信に失敗しました')
+        setErrorMessage(result.error.message)
       }
     } catch {
       setErrorMessage('予期しないエラーが発生しました')
