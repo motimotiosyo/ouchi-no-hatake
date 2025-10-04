@@ -6,51 +6,7 @@ import { useAuthContext as useAuth } from '@/contexts/auth'
 import { useImageModal } from '@/contexts/ImageModalContext'
 import Link from 'next/link'
 import { API_BASE_URL } from '@/lib/api'
-import type { ApiResult } from '@/types/api'
-
-interface Comment {
-  id: number
-  content: string
-  created_at: string
-  parent_comment_id?: number
-  user: {
-    id: number
-    name: string
-  }
-  replying_to?: {
-    id: number
-    user_name: string
-  }
-  replies?: Comment[]
-}
-
-interface Post {
-  id: number
-  title: string
-  content: string
-  post_type: 'growth_record_post' | 'general_post'
-  created_at: string
-  images?: string[]
-  likes_count: number
-  liked_by_current_user: boolean
-  comments_count: number
-  user: {
-    id: number
-    name: string
-  }
-  growth_record?: {
-    id: number
-    record_name: string
-    plant: {
-      id: number
-      name: string
-    }
-  }
-  category?: {
-    id: number
-    name: string
-  }
-}
+import type { ApiResult, Post, Comment } from '@/types'
 
 export default function PostDetailPage() {
   const params = useParams()
