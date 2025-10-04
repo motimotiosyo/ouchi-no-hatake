@@ -6,6 +6,7 @@ import { useAuthContext as useAuth } from '@/contexts/auth'
 import { useImageModal } from '@/contexts/ImageModalContext'
 import Link from 'next/link'
 import { API_BASE_URL } from '@/lib/api'
+import type { ApiResult } from '@/types/api'
 
 interface Comment {
   id: number
@@ -230,16 +231,16 @@ export default function PostDetailPage() {
         })
       })
 
-      const result = await response.json()
-      
-      if (response.ok && result.success) {
+      const result = await response.json() as ApiResult<{ comment: Comment }>
+
+      if (result.success) {
         setComments(prev => [...prev, result.data.comment])
         setNewComment('')
         setReplyingTo(null)
         // コメント一覧を再取得して最新状態を反映
         window.location.reload() // 簡易的な再読み込み
       } else {
-        console.error('コメント投稿に失敗しました:', result.error?.message)
+        console.error('コメント投稿に失敗しました:', result.error.message)
       }
     } catch (error) {
       console.error('コメント投稿でエラーが発生しました:', error)

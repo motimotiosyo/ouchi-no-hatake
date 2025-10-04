@@ -26,6 +26,7 @@ export type AuthResponse = ApiResult<{
   message: string
   token: string
   user: User
+  requires_verification?: boolean
 }>
 
 export type UserResponse = ApiResult<{

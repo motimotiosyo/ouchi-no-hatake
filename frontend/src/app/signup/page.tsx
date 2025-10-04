@@ -7,6 +7,7 @@ import { apiCall } from '@/lib/api'
 import { useAuthContext as useAuth } from '@/contexts/auth'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import type { AuthResponse } from '@/types/auth'
 
 export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -33,9 +34,9 @@ export default function SignupPage() {
         body: JSON.stringify({ user: data })
       })
 
-      const result = await response.json()
-      
-      if (response.ok && result.success) {
+      const result = await response.json() as AuthResponse
+
+      if (result.success) {
         console.log('📝 新規登録成功:', result)
 
         // バックエンドがrequires_verification: trueを返す場合
@@ -48,7 +49,7 @@ export default function SignupPage() {
           window.location.href = '/?flash_message=' + encodeURIComponent('新規登録が完了しました') + '&flash_type=success'
         }
       } else {
-        setApiError(result.error?.message || '新規登録に失敗しました')
+        setApiError(result.error.message)
       }
     } catch {
       setApiError('ネットワークエラーが発生しました')

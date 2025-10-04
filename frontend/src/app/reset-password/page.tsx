@@ -7,6 +7,7 @@ import { apiCall } from '@/lib/api'
 import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
+import type { ApiResult } from '@/types/api'
 
 // Dynamic rendering を強制する
 export const dynamic = 'force-dynamic'
@@ -55,16 +56,16 @@ export default function ResetPasswordPage() {
         })
       })
 
-      const result = await response.json()
-      
-      if (response.ok && result.success) {
+      const result = await response.json() as ApiResult<{ message: string }>
+
+      if (result.success) {
         setIsSuccess(true)
         // 3秒後にログインページにリダイレクト
         setTimeout(() => {
           router.push('/login')
         }, 3000)
       } else {
-        setApiError(result.error?.message || 'パスワードのリセットに失敗しました')
+        setApiError(result.error.message)
       }
     } catch {
       setApiError('ネットワークエラーが発生しました')

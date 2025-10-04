@@ -31,7 +31,7 @@ export interface ApiErrorResponse {
  * API結果型（成功/失敗を明確に区別）
  */
 export type ApiResult<T> =
-  | (ApiResponse<T> & { success: true })
+  | (ApiResponse<T> & { success: true; data: T })
   | (ApiErrorResponse & { success: false })
 
 /**
