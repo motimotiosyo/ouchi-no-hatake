@@ -68,4 +68,6 @@ build-iPhoneSimulator/
 
 # Temporary reports and documentation
 tmp/
-docs/
+
+# Internal development documentation (non-public)
+docs/internal/
