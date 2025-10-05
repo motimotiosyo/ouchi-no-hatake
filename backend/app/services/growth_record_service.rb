@@ -83,6 +83,11 @@ class GrowthRecordService < ApplicationService
     growth_record = user.growth_records.build(params)
     growth_record.record_number = next_record_number
 
+    # record_name が空の場合、自動生成
+    if params[:record_name].blank?
+      growth_record.record_name = "成長記録#{next_record_number}"
+    end
+
     if growth_record.save
       OpenStruct.new(
         success: true,
@@ -101,6 +106,11 @@ class GrowthRecordService < ApplicationService
 
   # 成長記録更新
   def self.update_growth_record(record, params)
+    # record_name をクリア（空文字列）した場合も自動生成
+    if params.key?(:record_name) && params[:record_name].blank?
+      params = params.merge(record_name: "成長記録#{record.record_number}")
+    end
+
     if record.update(params)
       OpenStruct.new(
         success: true,
