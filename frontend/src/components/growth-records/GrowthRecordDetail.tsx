@@ -210,9 +210,7 @@ export default function GrowthRecordDetail({ id }: Props) {
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
               {growthRecord.plant.name}
             </h1>
-            {growthRecord.record_name && (
-              <p className="text-gray-600 mb-2">{growthRecord.record_name}</p>
-            )}
+            <p className="text-gray-600 mb-2">{growthRecord.record_name}</p>
             <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(growthRecord.status)}`}>
               {getStatusText(growthRecord.status)}
             </span>

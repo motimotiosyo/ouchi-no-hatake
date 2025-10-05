@@ -228,7 +228,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
             {/* 記録名 */}
             <div>
               <label htmlFor="record_name" className="block text-sm font-medium text-gray-700 mb-2">
-                記録名
+                記録名（任意）
               </label>
               <input
                 type="text"
@@ -236,9 +236,12 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
                 name="record_name"
                 value={formData.record_name}
                 onChange={handleInputChange}
-                placeholder="例: 春のミニトマト栽培"
+                placeholder="未入力の場合は自動で命名されます"
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
               />
+              <p className="text-xs text-gray-500 mt-1">
+                例: 春のミニトマト栽培（空欄の場合「成長記録1」などの名前が自動で付きます）
+              </p>
             </div>
 
             {/* 栽培場所 */}
