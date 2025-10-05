@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuthContext as useAuth } from '@/contexts/auth'
-import { useApi } from '@/hooks/useApi'
+import { apiClient } from '@/services/apiClient'
 
 interface GrowthRecord {
   id: number
@@ -57,8 +57,9 @@ export default function CreatePostModal({
   preselectedGrowthRecordId 
 }: Props) {
   const { executeProtectedAsync } = useAuth()
-  const { authenticatedCall, loading, error, clearError } = useApi()
   const [growthRecords, setGrowthRecords] = useState<GrowthRecord[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   // フォーム状態
   const [formData, setFormData] = useState({
@@ -76,15 +77,21 @@ export default function CreatePostModal({
 
   const fetchGrowthRecords = useCallback(async () => {
     try {
-      const data = await authenticatedCall('/api/v1/growth_records?per_page=100')
+      const token = localStorage.getItem('auth_token')
+      const result = await apiClient.get<{ growth_records: GrowthRecord[] }>(
+        '/api/v1/growth_records?per_page=100',
+        token || undefined
+      )
       
-      if (data && data.success && data.data) {
-        setGrowthRecords(data.data.growth_records || [])
+      if (result.success) {
+        setGrowthRecords(result.data.growth_records || [])
+      } else {
+        console.error('成長記録の取得に失敗:', result.error.message)
       }
     } catch (err) {
       console.error('成長記録の取得でエラーが発生しました:', err)
     }
-  }, [authenticatedCall])
+  }, [])
 
   // データ取得とフォーム初期化
   useEffect(() => {
@@ -114,16 +121,15 @@ export default function CreatePostModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    clearError()
+    setError(null)
 
     await executeProtectedAsync(async () => {
       try {
+        setLoading(true)
         const isEditMode = !!editData
         const endpoint = isEditMode 
           ? `/api/v1/posts/${editData.id}`
           : '/api/v1/posts'
-        
-        const method = isEditMode ? 'PUT' : 'POST'
 
         // FormDataを使用して送信
         const formDataToSend = new FormData()
@@ -142,18 +148,23 @@ export default function CreatePostModal({
           formDataToSend.append('post[images][]', image)
         })
 
-        const data = await authenticatedCall(endpoint, {
-          method: method,
-          body: formDataToSend
-        })
+        const token = localStorage.getItem('auth_token')
+        const result = isEditMode
+          ? await apiClient.put(endpoint, formDataToSend, token || undefined)
+          : await apiClient.post(endpoint, formDataToSend, token || undefined)
 
-        if (data) {
+        if (result.success) {
           // 成功時
           onSuccess()
           handleClose()
+        } else {
+          setError(result.error.message)
         }
       } catch (err) {
         console.error(`投稿の${editData ? '更新' : '作成'}でエラーが発生しました:`, err)
+        setError(`投稿の${editData ? '更新' : '作成'}に失敗しました`)
+      } finally {
+        setLoading(false)
       }
     })
   }
@@ -169,7 +180,7 @@ export default function CreatePostModal({
     setSelectedImages([])
     setImagePreviews([])
     setImageError('')
-    clearError()
+    setError(null)
     onClose()
   }
 

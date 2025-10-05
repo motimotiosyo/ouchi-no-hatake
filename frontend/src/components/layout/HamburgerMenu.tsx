@@ -1,8 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useAuthContext as useAuth } from '@/contexts/auth'
-import { useApi } from '@/hooks/useApi'
+import { useAuthContext as useAuth, useAuthActions } from '@/contexts/auth'
 
 interface HamburgerMenuProps {
   isOpen: boolean
@@ -11,38 +10,18 @@ interface HamburgerMenuProps {
 
 export default function HamburgerMenu({ isOpen, onClose }: HamburgerMenuProps) {
   const { user } = useAuth()
-  const { logout } = useApi()
+  const { logout } = useAuthActions()
   const [isLoggingOut, setIsLoggingOut] = useState(false)
-  
+
 
   const handleLogout = async () => {
-    // ログアウトはJWT期限切れでも実行するため、直接処理
     try {
       setIsLoggingOut(true)
-      console.log('ログアウト開始')
-      
-      // 1. APIログアウト呼び出し
       await logout()
-      console.log('ログアウトAPI成功')
-      
     } catch (error) {
-      console.error('ログアウトAPIエラー:', error)
+      console.error('ログアウトエラー:', error)
+      setIsLoggingOut(false)
     }
-    
-    // 2. 確実にローカル状態をクリア（API成功・失敗に関わらず）
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('auth_user')
-    
-    // 3. Cookieもクリア
-    document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; secure=true; samesite=none'
-    document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'
-    document.cookie = 'auth_token=; expires=Thu, 01 Jan 1970 00:00:00 GMT'
-    
-    console.log('ローカル状態クリア完了')
-    setIsLoggingOut(false)
-    
-    // 4. フラッシュメッセージ付きでタイムライン（ルートページ）にリダイレクト
-    window.location.href = '/?flash_message=' + encodeURIComponent('ログアウトしました') + '&flash_type=success'
   }
 
   if (!isOpen) return null
