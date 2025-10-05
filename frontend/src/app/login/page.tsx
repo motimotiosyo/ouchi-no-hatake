@@ -3,12 +3,12 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { loginSchema, type LoginFormData } from '@/lib/validation'
-import { apiCall } from '@/lib/api'
+import { apiClient } from '@/services/apiClient'
 import { useAuthContext as useAuth } from '@/contexts/auth'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import type { AuthResponse } from '@/types/auth'
+import type { User } from '@/types/auth'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -34,12 +34,15 @@ export default function LoginPage() {
     setUnverifiedEmail('')
 
     try {
-      const response = await apiCall('/api/v1/auth/login', {
-        method: 'POST',
-        body: JSON.stringify(data)
-      })
-
-      const result = await response.json() as AuthResponse
+      const result = await apiClient.post<{
+        message: string
+        token: string
+        user: User
+        requires_verification?: boolean
+      }>(
+        '/api/v1/auth/login',
+        data
+      )
 
       if (result.success) {
         console.log('🔐 ログイン成功:', result)
