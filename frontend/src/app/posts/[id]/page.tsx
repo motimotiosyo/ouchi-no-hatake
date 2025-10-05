@@ -6,7 +6,8 @@ import { useAuthContext as useAuth } from '@/contexts/auth'
 import { useImageModal } from '@/contexts/ImageModalContext'
 import Link from 'next/link'
 import { API_BASE_URL } from '@/lib/api'
-import type { ApiResult, Post, Comment } from '@/types'
+import { apiClient } from '@/services/apiClient'
+import type { Post, Comment } from '@/types'
 
 export default function PostDetailPage() {
   const params = useParams()
@@ -34,43 +35,22 @@ export default function PostDetailPage() {
       if (!params.id) return
       
       try {
-        const headers: HeadersInit = {
-          'Content-Type': 'application/json'
-        }
-        
         const token = localStorage.getItem('auth_token')
-        if (token) {
-          headers.Authorization = `Bearer ${token}`
-        }
 
         // 投稿詳細取得（個別投稿IDで取得）
-        const postResponse = await fetch(`${API_BASE_URL}/api/v1/posts/${params.id}`, {
-          headers
-        })
+        const postResult = await apiClient.get<Post>(`/api/v1/posts/${params.id}`, token || undefined)
 
-        if (postResponse.ok) {
-          const result = await postResponse.json()
-          
-          if (result && result.success && result.data) {
-            setPost(result.data)
-            setLikesCount(result.data.likes_count)
-            setIsLiked(result.data.liked_by_current_user)
-          } else {
-            console.error('投稿が見つかりません')
-            router.push('/')
-            return
-          }
+        if (postResult.success) {
+          setPost(postResult.data)
+          setLikesCount(postResult.data.likes_count)
+          setIsLiked(postResult.data.liked_by_current_user)
         } else {
           // 個別取得がない場合、一覧から検索
-          const listResponse = await fetch(`${API_BASE_URL}/api/v1/posts?page=1&per_page=100`, {
-            headers
-          })
-          
-          if (listResponse.ok) {
-            const postData = await listResponse.json()
-            const targetPost = postData.success && postData.data && postData.data.posts ? 
-              postData.data.posts.find((p: Post) => p.id === parseInt(params.id as string)) : null
-            
+          const listResult = await apiClient.get<{ posts: Post[], pagination: { current_page: number, per_page: number, total_count: number, has_more: boolean } }>('/api/v1/posts?page=1&per_page=100', token || undefined)
+
+          if (listResult.success) {
+            const targetPost = listResult.data.posts.find((p: Post) => p.id === parseInt(params.id as string))
+
             if (targetPost) {
               setPost(targetPost)
               setLikesCount(targetPost.likes_count)
@@ -80,19 +60,18 @@ export default function PostDetailPage() {
               router.push('/')
               return
             }
+          } else {
+            console.error('投稿が見つかりません')
+            router.push('/')
+            return
           }
         }
 
         // コメント取得（ネスト表示）
-        const commentsResponse = await fetch(`${API_BASE_URL}/api/v1/posts/${params.id}/comments`, {
-          headers
-        })
+        const commentsResult = await apiClient.get<{ comments: Comment[] }>(`/api/v1/posts/${params.id}/comments`, token || undefined)
 
-        if (commentsResponse.ok) {
-          const commentsData = await commentsResponse.json()
-          if (commentsData.success) {
-            setComments(commentsData.data.comments || [])
-          }
+        if (commentsResult.success) {
+          setComments(commentsResult.data.comments || [])
         }
       } catch (error) {
         console.error('データ取得でエラーが発生しました:', error)
@@ -118,32 +97,22 @@ export default function PostDetailPage() {
     
     try {
       const token = localStorage.getItem('auth_token')
-      
+
       if (!token) {
         console.error('トークンが見つかりません')
         setShowLoginModal(true)
         return
       }
-      
-      const method = isLiked ? 'DELETE' : 'POST'
-      
-      const response = await fetch(`${API_BASE_URL}/api/v1/posts/${post.id}/likes`, {
-        method,
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      })
 
-      if (response.ok) {
-        const result = await response.json()
-        if (result.success && result.data) {
-          setLikesCount(result.data.likes_count)
-          setIsLiked(result.data.liked)
-        }
+      const result = isLiked
+        ? await apiClient.delete<{ likes_count: number, liked: boolean }>(`/api/v1/posts/${post.id}/likes`, token)
+        : await apiClient.post<{ likes_count: number, liked: boolean }>(`/api/v1/posts/${post.id}/likes`, {}, token)
+
+      if (result.success) {
+        setLikesCount(result.data.likes_count)
+        setIsLiked(result.data.liked)
       } else {
-        const errorData = await response.json()
-        console.error('いいね処理に失敗しました:', errorData)
+        console.error('いいね処理に失敗しました:', result.error.message)
       }
     } catch (error) {
       console.error('いいね処理でエラーが発生しました:', error)
@@ -173,21 +142,16 @@ export default function PostDetailPage() {
         return
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/v1/posts/${post.id}/comments`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
+      const result = await apiClient.post<{ comment: Comment }>(
+        `/api/v1/posts/${post.id}/comments`,
+        {
           comment: {
             content: newComment.trim(),
             parent_comment_id: replyingTo
           }
-        })
-      })
-
-      const result = await response.json() as ApiResult<{ comment: Comment }>
+        },
+        token
+      )
 
       if (result.success) {
         setComments(prev => [...prev, result.data.comment])
@@ -222,20 +186,13 @@ export default function PostDetailPage() {
         return
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/v1/posts/${post.id}/comments/${deleteCommentId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      })
+      const result = await apiClient.delete<void>(`/api/v1/posts/${post.id}/comments/${deleteCommentId}`, token)
 
-      if (response.ok) {
+      if (result.success) {
         setComments(prev => prev.filter(comment => comment.id !== deleteCommentId))
         setDeleteCommentId(null)
       } else {
-        const errorData = await response.json()
-        console.error('コメント削除に失敗しました:', errorData)
+        console.error('コメント削除に失敗しました:', result.error.message)
       }
     } catch (error) {
       console.error('コメント削除でエラーが発生しました:', error)

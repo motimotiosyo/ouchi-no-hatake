@@ -3,11 +3,11 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { registerSchema, type RegisterFormData } from '@/lib/validation'
-import { apiCall } from '@/lib/api'
+import { apiClient } from '@/services/apiClient'
 import { useAuthContext as useAuth } from '@/contexts/auth'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import type { AuthResponse } from '@/types/auth'
+import type { User } from '@/types/auth'
 
 export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -29,12 +29,15 @@ export default function SignupPage() {
     setApiError(null)
 
     try {
-      const response = await apiCall('/api/v1/auth/register', {
-        method: 'POST',
-        body: JSON.stringify({ user: data })
-      })
-
-      const result = await response.json() as AuthResponse
+      const result = await apiClient.post<{
+        message: string
+        token: string
+        user: User
+        requires_verification?: boolean
+      }>(
+        '/api/v1/auth/register',
+        { user: data }
+      )
 
       if (result.success) {
         console.log('📝 新規登録成功:', result)

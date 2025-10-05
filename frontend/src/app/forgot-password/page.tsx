@@ -3,10 +3,10 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { forgotPasswordSchema, type ForgotPasswordFormData } from '@/lib/validation'
-import { apiCall } from '@/lib/api'
+import { apiClient } from '@/services/apiClient'
 import { useState } from 'react'
 import Link from 'next/link'
-import type { ApiResult } from '@/types/api'
+
 
 export default function ForgotPasswordPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -26,14 +26,10 @@ export default function ForgotPasswordPage() {
     setApiError(null)
 
     try {
-      const response = await apiCall('/api/v1/auth/forgot_password', {
-        method: 'POST',
-        body: JSON.stringify({
-          email: data.email
-        })
-      })
-
-      const result = await response.json() as ApiResult<{ message: string }>
+      const result = await apiClient.post<{ message: string }>(
+        '/api/v1/auth/forgot_password',
+        { email: data.email }
+      )
 
       if (result.success) {
         setIsSuccess(true)

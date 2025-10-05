@@ -1,5 +1,5 @@
 import Logger from '@/utils/logger'
-import { ApiResponse, ApiErrorResponse, ApiError, AuthenticatedApiRequestConfig } from '@/types/api'
+import { ApiResponse, ApiErrorResponse, ApiError, ApiResult, AuthenticatedApiRequestConfig } from '@/types/api'
 
 // API設定
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001'
@@ -180,6 +180,134 @@ class ApiClient {
     }
 
     return body as BodyInit
+  }
+
+  /**
+   * GETリクエスト（ApiResult型を返す）
+   */
+  async get<T>(endpoint: string, token?: string): Promise<ApiResult<T>> {
+    try {
+      const response = token
+        ? await this.authenticatedRequest<T>(endpoint, token, { method: 'GET' })
+        : await this.request<T>(endpoint, { method: 'GET' })
+
+      if (response.success && response.data !== undefined) {
+        return { success: true, data: response.data }
+      } else {
+        return {
+          success: false,
+          error: {
+            message: 'エラーが発生しました'
+          }
+        }
+      }
+    } catch (error) {
+      const apiError = this.handleError(error)
+      return {
+        success: false,
+        error: {
+          message: apiError.message,
+          code: apiError.code,
+          details: apiError.details
+        }
+      }
+    }
+  }
+
+  /**
+   * POSTリクエスト（ApiResult型を返す）
+   */
+  async post<T>(endpoint: string, body?: unknown, token?: string): Promise<ApiResult<T>> {
+    try {
+      const response = token
+        ? await this.authenticatedRequest<T>(endpoint, token, { method: 'POST', body })
+        : await this.request<T>(endpoint, { method: 'POST', body })
+
+      if (response.success && response.data !== undefined) {
+        return { success: true, data: response.data }
+      } else {
+        return {
+          success: false,
+          error: {
+            message: 'エラーが発生しました'
+          }
+        }
+      }
+    } catch (error) {
+      const apiError = this.handleError(error)
+      return {
+        success: false,
+        error: {
+          message: apiError.message,
+          code: apiError.code,
+          details: apiError.details
+        }
+      }
+    }
+  }
+
+  /**
+   * PUTリクエスト（ApiResult型を返す）
+   */
+  async put<T>(endpoint: string, body?: unknown, token?: string): Promise<ApiResult<T>> {
+    try {
+      const response = token
+        ? await this.authenticatedRequest<T>(endpoint, token, { method: 'PUT', body })
+        : await this.request<T>(endpoint, { method: 'PUT', body })
+
+      if (response.success && response.data !== undefined) {
+        return { success: true, data: response.data }
+      } else {
+        return {
+          success: false,
+          error: {
+            message: 'エラーが発生しました'
+          }
+        }
+      }
+    } catch (error) {
+      const apiError = this.handleError(error)
+      return {
+        success: false,
+        error: {
+          message: apiError.message,
+          code: apiError.code,
+          details: apiError.details
+        }
+      }
+    }
+  }
+
+  /**
+   * DELETEリクエスト（ApiResult型を返す）
+   */
+  async delete<T>(endpoint: string, token?: string): Promise<ApiResult<T>> {
+    try {
+      const response = token
+        ? await this.authenticatedRequest<T>(endpoint, token, { method: 'DELETE' })
+        : await this.request<T>(endpoint, { method: 'DELETE' })
+
+      if (response.success && response.data !== undefined) {
+        return { success: true, data: response.data }
+      } else {
+        return {
+          success: false,
+          error: {
+            message: 'エラーが発生しました'
+          }
+        }
+      }
+    } catch (error) {
+      const apiError = this.handleError(error)
+      return {
+        success: false,
+        error: {
+          message: apiError.message,
+          code: apiError.code,
+          details: apiError.details
+        }
+      }
+    }
   }
 }
 

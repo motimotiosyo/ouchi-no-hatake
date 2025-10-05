@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { API_BASE_URL } from '@/lib/api'
+import { apiClient } from '@/services/apiClient'
 
 interface TimelinePostProps {
   post: {
@@ -89,26 +90,15 @@ export default function TimelinePost({ post }: TimelinePostProps) {
         return
       }
       
-      const method = isLiked ? 'DELETE' : 'POST'
-      
-      const response = await fetch(`${API_BASE_URL}/api/v1/posts/${post.id}/likes`, {
-        method,
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      })
+      const result = isLiked
+        ? await apiClient.delete<{ likes_count: number, liked: boolean }>(`/api/v1/posts/${post.id}/likes`, token)
+        : await apiClient.post<{ likes_count: number, liked: boolean }>(`/api/v1/posts/${post.id}/likes`, {}, token)
 
-      if (response.ok) {
-        const result = await response.json()
-        if (result.success && result.data) {
-          setLikesCount(result.data.likes_count)
-          setIsLiked(result.data.liked)
-        }
+      if (result.success) {
+        setLikesCount(result.data.likes_count)
+        setIsLiked(result.data.liked)
       } else {
-        const errorData = await response.json()
-        console.error('いいね処理に失敗しました:', errorData)
-        console.error('ステータス:', response.status)
+        console.error('いいね処理に失敗しました:', result.error.message)
       }
     } catch (error) {
       console.error('いいね処理でエラーが発生しました:', error)

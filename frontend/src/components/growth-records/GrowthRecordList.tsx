@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useAuthContext as useAuth } from '@/contexts/auth'
-import { useApi } from '@/hooks/useApi'
+import { apiClient } from '@/services/apiClient'
 import GrowthRecordCard from './GrowthRecordCard'
 import CreateGrowthRecordModal from './CreateGrowthRecordModal'
 
@@ -32,35 +32,47 @@ interface PaginationInfo {
 
 export default function GrowthRecordList() {
   const { user, executeProtected } = useAuth()
-  const { authenticatedCall, loading, error } = useApi()
   const [growthRecords, setGrowthRecords] = useState<GrowthRecord[]>([])
+  const [loading, setLoading] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [pagination, setPagination] = useState<PaginationInfo | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const observer = useRef<IntersectionObserver | null>(null)
 
   const fetchGrowthRecords = useCallback(async (page: number = 1, append: boolean = false) => {
     try {
-      if (page > 1) {
+      if (page === 1) {
+        setLoading(true)
+      } else {
         setLoadingMore(true)
       }
-      
-      const data = await authenticatedCall(`/api/v1/growth_records?page=${page}&per_page=10`)
-      
-      if (data && data.success && data.data && data.data.growth_records && data.data.pagination) {
+      setError(null)
+
+      const token = localStorage.getItem('auth_token')
+      const result = await apiClient.get<{ growth_records: GrowthRecord[], pagination: PaginationInfo }>(
+        `/api/v1/growth_records?page=${page}&per_page=10`,
+        token || undefined
+      )
+
+      if (result.success) {
         if (append) {
-          setGrowthRecords(prev => [...prev, ...data.data.growth_records])
+          setGrowthRecords(prev => [...prev, ...result.data.growth_records])
         } else {
-          setGrowthRecords(data.data.growth_records)
+          setGrowthRecords(result.data.growth_records)
         }
-        setPagination(data.data.pagination)
+        setPagination(result.data.pagination)
+      } else {
+        setError(result.error.message)
       }
     } catch (err) {
       console.error('成長記録の取得でエラーが発生しました:', err)
+      setError('成長記録の取得に失敗しました')
     } finally {
+      setLoading(false)
       setLoadingMore(false)
     }
-  }, [authenticatedCall])
+  }, [])
 
   const lastRecordElementRef = useCallback((node: HTMLDivElement | null) => {
     if (loading || loadingMore) return

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import TimelinePost from './TimelinePost'
 import CreatePostModal from '../posts/CreatePostModal'
 import { useAuthContext as useAuth } from '@/contexts/auth'
-import { API_BASE_URL } from '@/lib/api'
+import { apiClient } from '@/services/apiClient'
 import type { Post } from '@/types'
 
 interface PaginationInfo {
@@ -31,35 +31,22 @@ export default function Timeline() {
       } else {
         setLoading(true)
       }
-      
-      // 認証ヘッダーを条件付きで追加
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json'
-      }
-      
+
       const token = localStorage.getItem('auth_token')
-      if (token) {
-        headers.Authorization = `Bearer ${token}`
-      }
-      
-      const response = await fetch(`${API_BASE_URL}/api/v1/posts?page=${page}&per_page=10`, {
-        method: 'GET',
-        headers
-      })
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`)
-      }
-      
-      const data = await response.json()
-      
-      if (data && data.success && data.data && data.data.posts && data.data.pagination) {
+      const result = await apiClient.get<{ posts: Post[], pagination: PaginationInfo }>(
+        `/api/v1/posts?page=${page}&per_page=10`,
+        token || undefined
+      )
+
+      if (result.success) {
         if (append) {
-          setPosts(prev => [...prev, ...data.data.posts])
+          setPosts(prev => [...prev, ...result.data.posts])
         } else {
-          setPosts(data.data.posts)
+          setPosts(result.data.posts)
         }
-        setPagination(data.data.pagination)
+        setPagination(result.data.pagination)
+      } else {
+        setError(result.error.message)
       }
     } catch (err) {
       console.error('投稿の取得でエラーが発生しました:', err)

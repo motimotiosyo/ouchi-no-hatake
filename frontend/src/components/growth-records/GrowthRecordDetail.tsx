@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthContext as useAuth } from '@/contexts/auth'
-import { useApi } from '@/hooks/useApi'
+import { apiClient } from '@/services/apiClient'
 import CreateGrowthRecordModal from './CreateGrowthRecordModal'
 import DeleteConfirmDialog from './DeleteConfirmDialog'
 import CreatePostModal from '../posts/CreatePostModal'
@@ -36,7 +36,8 @@ interface Props {
 
 export default function GrowthRecordDetail({ id }: Props) {
   const { user, executeProtected } = useAuth()
-  const { authenticatedCall, loading, error } = useApi()
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const router = useRouter()
   const [growthRecord, setGrowthRecord] = useState<GrowthRecord | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
@@ -46,16 +47,28 @@ export default function GrowthRecordDetail({ id }: Props) {
 
   const fetchGrowthRecord = useCallback(async () => {
     try {
-      const data = await authenticatedCall(`/api/v1/growth_records/${id}`)
-      
-      if (data && data.success && data.data) {
-        setGrowthRecord(data.data.growth_record)
-        setPosts(data.data.posts || [])
+      setLoading(true)
+      setError(null)
+
+      const token = localStorage.getItem('auth_token')
+      const result = await apiClient.get<{ growth_record: GrowthRecord, posts: Post[] }>(
+        `/api/v1/growth_records/${id}`,
+        token || undefined
+      )
+
+      if (result.success) {
+        setGrowthRecord(result.data.growth_record)
+        setPosts(result.data.posts || [])
+      } else {
+        setError(result.error.message)
       }
     } catch (err) {
       console.error('成長記録の取得でエラーが発生しました:', err)
+      setError('成長記録の取得に失敗しました')
+    } finally {
+      setLoading(false)
     }
-  }, [id, authenticatedCall])
+  }, [id])
 
   useEffect(() => {
     fetchGrowthRecord()

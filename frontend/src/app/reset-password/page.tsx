@@ -3,11 +3,11 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { resetPasswordSchema, type ResetPasswordFormData } from '@/lib/validation'
-import { apiCall } from '@/lib/api'
+import { apiClient } from '@/services/apiClient'
 import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
-import type { ApiResult } from '@/types/api'
+
 
 // Dynamic rendering を強制する
 export const dynamic = 'force-dynamic'
@@ -47,16 +47,14 @@ export default function ResetPasswordPage() {
     setApiError(null)
 
     try {
-      const response = await apiCall('/api/v1/auth/reset_password', {
-        method: 'PUT',
-        body: JSON.stringify({
+      const result = await apiClient.put<{ message: string }>(
+        '/api/v1/auth/reset_password',
+        {
           token: token,
           password: data.password,
           password_confirmation: data.passwordConfirmation
-        })
-      })
-
-      const result = await response.json() as ApiResult<{ message: string }>
+        }
+      )
 
       if (result.success) {
         setIsSuccess(true)

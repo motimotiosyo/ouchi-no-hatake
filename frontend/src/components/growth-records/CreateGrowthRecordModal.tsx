@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useAuthContext as useAuth } from '@/contexts/auth'
-import { useApi, usePublicApi } from '@/hooks/useApi'
+import { apiClient } from '@/services/apiClient'
 
 interface Plant {
   id: number
@@ -29,9 +29,9 @@ interface Props {
 
 export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, editData }: Props) {
   const { executeProtectedAsync } = useAuth()
-  const { authenticatedCall, loading, error, clearError } = useApi()
-  const { publicCall } = usePublicApi()
   const [plants, setPlants] = useState<Plant[]>([])
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   // フォーム状態
   const [formData, setFormData] = useState({
@@ -45,15 +45,17 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
 
   const fetchPlants = useCallback(async () => {
     try {
-      const data = await publicCall('/api/v1/plants')
+      const result = await apiClient.get<{ plants: Plant[] }>('/api/v1/plants')
       
-      if (data && data.success && data.data) {
-        setPlants(data.data.plants || [])
+      if (result.success) {
+        setPlants(result.data.plants || [])
+      } else {
+        console.error('植物データの取得に失敗:', result.error.message)
       }
     } catch (err) {
       console.error('植物データの取得でエラーが発生しました:', err)
     }
-  }, [publicCall])
+  }, [])
 
   // 植物一覧取得と編集データ設定
   useEffect(() => {
@@ -76,28 +78,30 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    clearError()
+    setError(null)
 
     await executeProtectedAsync(async () => {
       try {
+        setLoading(true)
         const isEditMode = !!editData
         const endpoint = isEditMode 
           ? `/api/v1/growth_records/${editData.id}`
           : '/api/v1/growth_records'
-        
-        const method = isEditMode ? 'PUT' : 'POST'
 
-        const data = await authenticatedCall(endpoint, {
-          method: method,
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            growth_record: formData
-          })
-        })
+        const token = localStorage.getItem('auth_token')
+        const result = isEditMode
+          ? await apiClient.put<{ growth_record: GrowthRecord }>(
+              endpoint,
+              { growth_record: formData },
+              token || undefined
+            )
+          : await apiClient.post<{ growth_record: GrowthRecord }>(
+              endpoint,
+              { growth_record: formData },
+              token || undefined
+            )
 
-        if (data) {
+        if (result.success) {
           // 成功時
           onSuccess()
           onClose()
@@ -111,9 +115,14 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
             ended_on: '',
             status: 'planning'
           })
+        } else {
+          setError(result.error.message)
         }
       } catch (err) {
         console.error(`成長記録の${editData ? '更新' : '作成'}でエラーが発生しました:`, err)
+        setError(`成長記録の${editData ? '更新' : '作成'}に失敗しました`)
+      } finally {
+        setLoading(false)
       }
     })
   }
@@ -128,7 +137,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
 
   const handleClose = () => {
     onClose()
-    clearError()
+    setError(null)
     setFormData({
       plant_id: '',
       record_name: '',
