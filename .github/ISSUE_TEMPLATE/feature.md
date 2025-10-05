@@ -9,13 +9,26 @@ assignees: ''
 ## 機能概要
 <!-- 何を実装するか、なぜ必要かを簡潔に説明 -->
 
-## 開発方針チェック
-> 開発思想「品質・保守性ファースト」「セキュリティファースト」「標準化」に沿って実装してください
+## 実装前チェック
+> **重要**: 実装開始前に必ず確認してください
 
-- [ ] **品質・保守性**: 単一責任原則を守る（メソッド50行以内、クラス200行以内）
-- [ ] **セキュリティ**: 機密情報のログ出力を行わない
-- [ ] **標準化**: コーディング規約・命名規則に従う
-- [ ] **標準化**: 統一されたAPIレスポンス形式を使用する（API変更時）
+### 参考コード確認
+**バックエンド実装時**:
+- [ ] [backend/app/services/post_service.rb](../../backend/app/services/post_service.rb) を確認済み
+- [ ] [backend/app/serializers/application_serializer.rb](../../backend/app/serializers/application_serializer.rb) を確認済み
+- [ ] ApplicationSerializer パターンを理解済み
+
+**フロントエンド実装時**:
+- [ ] [frontend/src/services/apiClient.ts](../../frontend/src/services/apiClient.ts) を確認済み
+- [ ] [frontend/src/types/api.ts](../../frontend/src/types/api.ts) を確認済み
+- [ ] ApiResult<T> パターンを理解済み
+
+### ブランチ確認
+- [ ] `git branch` で現在のブランチ確認済み
+- [ ] mainブランチではないことを確認済み
+- [ ] 適切なfeature/ブランチを作成済み
+
+---
 
 ## 実装内容
 
@@ -25,6 +38,29 @@ assignees: ''
 - [ ] **API**: [新規/変更エンドポイント]
 - [ ] **その他**: [設定・ドキュメント等]
 
+---
+
+## 実装中セルフチェック
+> **重要**: 実装中に随時確認してください
+
+### パターン準拠
+**バックエンド**:
+- [ ] Controller は50行以内
+- [ ] Service層にビジネスロジック配置済み
+- [ ] ApplicationSerializer でレスポンス統一済み
+
+**フロントエンド**:
+- [ ] apiClient.post/get/put/delete 使用（直接fetch禁止）
+- [ ] ApiResult<T> で型安全なエラーハンドリング実装済み
+- [ ] types/ に型定義追加済み
+
+### セキュリティ
+- [ ] 機密情報（JWT、パスワード、個人情報）のログ出力なし
+- [ ] Logger.debug() または環境分岐使用
+- [ ] console.log は開発環境のみで使用
+
+---
+
 ## 達成条件（Definition of Done）
 
 ### 機能要件
@@ -32,10 +68,12 @@ assignees: ''
 - [ ] エラーケースが適切にハンドリングされている
 - [ ] ユーザーフィードバック（成功・エラーメッセージ）が表示される
 
-### 技術要件  
+### 技術要件
 - [ ] コーディング規約に準拠している
 - [ ] メソッド・クラス・ファイルサイズが基準内（50行・200行・500行）
 - [ ] セキュリティ要件を満たしている（機密情報ログなし）
+- [ ] RuboCop/ESLint 通過
+- [ ] ビルド成功確認済み
 
 ### 品質要件
 - [ ] 手動テストでの動作確認完了
