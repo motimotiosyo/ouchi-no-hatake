@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { API_BASE_URL } from '@/lib/api'
+import { apiClient } from '@/services/apiClient'
 import { User, AuthState } from '@/types/auth'
 import { getCookie, setCookie, deleteCookie } from '@/utils/cookies'
 import Logger from '@/utils/logger'
@@ -11,23 +11,11 @@ const AuthContext = createContext<AuthState | undefined>(undefined)
 
 // サーバーから現在のユーザー情報を取得する関数
 const fetchCurrentUser = async (token: string): Promise<User | null> => {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include',
-    })
-
-    if (response.ok) {
-      const data = await response.json()
-      return data.success ? data.data.user : null
-    } else {
-      return null
-    }
-  } catch {
+  const result = await apiClient.get<{ user: User }>('/api/v1/auth/me', token)
+  
+  if (result.success) {
+    return result.data.user
+  } else {
     return null
   }
 }

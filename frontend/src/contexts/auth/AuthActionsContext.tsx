@@ -2,7 +2,8 @@
 
 import { createContext, useContext, useCallback, ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
-import { authenticatedApiCall, API_BASE_URL } from '@/lib/api'
+import { authenticatedApiCall } from '@/lib/api'
+import { apiClient } from '@/services/apiClient'
 import { User, AuthActions, VerificationResult, ResendResult } from '@/types/auth'
 import { setCookie, deleteCookie } from '@/utils/cookies'
 import { useAuth } from './AuthContext'
@@ -73,72 +74,42 @@ export function AuthActionsProvider({ children }: { children: ReactNode }) {
 
   // メール認証確認関数
   const verifyEmail = useCallback(async (token: string): Promise<VerificationResult> => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/auth/verify-email`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ token }),
-      })
+    const result = await apiClient.post<{ message: string, token: string, user: User }>('/api/v1/auth/verify-email', { token })
 
-      const data = await response.json()
+    if (result.success) {
+      // 認証成功時はログイン状態にする
+      localStorage.setItem('auth_token', result.data.token)
+      localStorage.setItem('auth_user', JSON.stringify({ ...result.data.user, email_verified: true }))
+      setCookie('auth_token', result.data.token, 7)
 
-      if (response.ok && data.success) {
-        // 認証成功時はログイン状態にする
-        localStorage.setItem('auth_token', data.data.token)
-        localStorage.setItem('auth_user', JSON.stringify({ ...data.data.user, email_verified: true }))
-        setCookie('auth_token', data.data.token, 7)
+      // ページリロードして状態を更新
+      window.location.reload()
 
-        // ページリロードして状態を更新
-        window.location.reload()
-
-        return { success: true, data: data.data }
-      } else {
-        return {
-          success: false,
-          error: {
-            message: data.error?.message || 'メール認証に失敗しました',
-            code: data.error?.code
-          }
-        }
-      }
-    } catch {
+      return { success: true, data: result.data }
+    } else {
       return {
         success: false,
-        error: { message: 'ネットワークエラーが発生しました' }
+        error: {
+          message: result.error.message || 'メール認証に失敗しました',
+          code: result.error.code
+        }
       }
     }
   }, [])
 
   // 認証メール再送信関数
   const resendVerification = useCallback(async (email: string): Promise<ResendResult> => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/auth/resend-verification`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      })
+    const result = await apiClient.post<{ message: string }>('/api/v1/auth/resend-verification', { email })
 
-      const data = await response.json()
-
-      if (response.ok && data.success) {
-        return { success: true, data: data.data }
-      } else {
-        return {
-          success: false,
-          error: {
-            message: data.error?.message || '認証メールの再送信に失敗しました',
-            code: data.error?.code
-          }
-        }
-      }
-    } catch {
+    if (result.success) {
+      return { success: true, data: result.data }
+    } else {
       return {
         success: false,
-        error: { message: 'ネットワークエラーが発生しました' }
+        error: {
+          message: result.error.message || '認証メールの再送信に失敗しました',
+          code: result.error.code
+        }
       }
     }
   }, [])
