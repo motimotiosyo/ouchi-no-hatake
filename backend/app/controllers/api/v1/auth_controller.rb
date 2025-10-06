@@ -31,7 +31,7 @@ class Api::V1::AuthController < ApplicationController
 
       # サーバーサイドでCookieをセット
       cookies[:auth_token] = {
-        value: result.token,
+        value: result[:data][:token],
         expires: 6.months.from_now,
         path: "/",
         same_site: :none,
@@ -61,7 +61,7 @@ class Api::V1::AuthController < ApplicationController
       token = current_token
       result = AuthService.logout_user(token)
 
-      if result.success
+      if result[:success]
         # サーバーサイドでCookie削除（複数パターンで確実に削除）
         cookies.delete(:auth_token, {
           path: "/",
@@ -74,7 +74,7 @@ class Api::V1::AuthController < ApplicationController
         render json: result, status: :ok
       else
         render json: ApplicationSerializer.error(
-          message: result.error,
+          message: result[:error][:message],
           code: "BAD_REQUEST"
         ), status: :bad_request
       end
@@ -149,11 +149,11 @@ class Api::V1::AuthController < ApplicationController
     begin
       result = AuthService.forgot_password(params[:email])
 
-      if result.success
+      if result[:success]
         render json: result, status: :ok
       else
         render json: ApplicationSerializer.error(
-          message: result.error,
+          message: result[:error][:message],
           code: "BAD_REQUEST"
         ), status: :bad_request
       end
@@ -176,11 +176,11 @@ class Api::V1::AuthController < ApplicationController
         params[:password_confirmation]
       )
 
-      if result.success
+      if result[:success]
         render json: result, status: :ok
       else
         render json: ApplicationSerializer.error(
-          message: result.error,
+          message: result[:error][:message],
           code: "BAD_REQUEST"
         ), status: :bad_request
       end
