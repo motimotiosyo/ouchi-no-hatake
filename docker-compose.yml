@@ -39,13 +39,14 @@ services:
       dockerfile: Dockerfile.dev
     volumes:
       - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
     ports:
       - "3000:3000"
     env_file:
       - frontend/.env.development
     depends_on:
       - backend
-    command: npx next dev --turbopack
 
 volumes:
   db_data:  # ← 修正：volumes定義はここに

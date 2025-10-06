@@ -16,5 +16,5 @@ COPY . .
 
 EXPOSE 3000
 
-# npx を使用してNext.jsを起動
-CMD ["npx", "next", "dev", "--turbopack"]
+# Next.jsを起動
+CMD ["npm", "run", "dev"]
