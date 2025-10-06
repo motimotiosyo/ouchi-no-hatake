@@ -53,7 +53,7 @@ class Api::V1::GrowthRecordsController < ApplicationController
   def create
     begin
       result = GrowthRecordService.create_growth_record(current_user, growth_record_params)
-      render json: ApplicationSerializer.success(data: { growth_record: result.data }), status: :created
+      render json: result, status: :created
 
     rescue GrowthRecordService::ValidationError => e
       render json: ApplicationSerializer.error(
@@ -74,7 +74,7 @@ class Api::V1::GrowthRecordsController < ApplicationController
   def update
     begin
       result = GrowthRecordService.update_growth_record(@growth_record, growth_record_params)
-      render json: ApplicationSerializer.success(data: { growth_record: result.data })
+      render json: result
 
     rescue GrowthRecordService::ValidationError => e
       render json: ApplicationSerializer.error(

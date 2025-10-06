@@ -71,9 +71,7 @@ class PostService < ApplicationService
     post = user.posts.build(params)
 
     if post.save
-      OpenStruct.new(
-        success: true,
-        post: post,
+      ApplicationSerializer.success(
         data: build_post_response(post, user)
       )
     else
@@ -89,9 +87,7 @@ class PostService < ApplicationService
   # 投稿更新
   def self.update_post(post, params, current_user)
     if post.update(params)
-      OpenStruct.new(
-        success: true,
-        post: post,
+      ApplicationSerializer.success(
         data: build_post_response(post, current_user)
       )
     else

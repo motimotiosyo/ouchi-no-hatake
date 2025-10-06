@@ -5,7 +5,7 @@ class Api::V1::LikesController < ApplicationController
   def create
     begin
       result = LikeService.create_like(@post, current_user)
-      render json: ApplicationSerializer.success(data: result.data), status: :created
+      render json: result, status: :created
 
     rescue LikeService::DuplicateLikeError => e
       render json: ApplicationSerializer.error(
@@ -33,13 +33,10 @@ class Api::V1::LikesController < ApplicationController
     begin
       result = LikeService.delete_like(@post, current_user)
 
-      if result.success
-        render json: ApplicationSerializer.success(data: result.data), status: :ok
+      if result[:success]
+        render json: result, status: :ok
       else
-        render json: ApplicationSerializer.error(
-          message: result.error,
-          code: "NOT_FOUND"
-        ), status: :not_found
+        render json: result, status: :not_found
       end
     rescue => e
       Rails.logger.error "Error in LikesController#destroy: #{e.message}"

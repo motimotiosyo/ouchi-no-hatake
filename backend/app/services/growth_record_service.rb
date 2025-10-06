@@ -89,9 +89,7 @@ class GrowthRecordService < ApplicationService
     end
 
     if growth_record.save
-      OpenStruct.new(
-        success: true,
-        growth_record: growth_record,
+      ApplicationSerializer.success(
         data: build_growth_record_response(growth_record)
       )
     else
@@ -112,9 +110,7 @@ class GrowthRecordService < ApplicationService
     end
 
     if record.update(params)
-      OpenStruct.new(
-        success: true,
-        growth_record: record,
+      ApplicationSerializer.success(
         data: build_growth_record_response(record)
       )
     else
