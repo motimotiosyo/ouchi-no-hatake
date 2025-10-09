@@ -7,6 +7,8 @@ export interface User {
   id: ID
   email: string
   name: string
+  bio?: string
+  avatar_url?: string
   email_verified?: boolean
 }
 

@@ -12,8 +12,18 @@ class Api::V1::PostsController < ApplicationController
       per_page = params[:per_page]&.to_i || 10
       offset = (page - 1) * per_page
 
-      posts = Post.timeline.limit(per_page).offset(offset)
-      total_count = Post.count
+      # user_idパラメータがある場合は特定ユーザーの投稿のみ取得
+      posts = if params[:user_id]
+        Post.where(user_id: params[:user_id]).timeline.limit(per_page).offset(offset)
+      else
+        Post.timeline.limit(per_page).offset(offset)
+      end
+
+      total_count = if params[:user_id]
+        Post.where(user_id: params[:user_id]).count
+      else
+        Post.count
+      end
 
       pagination_info = PostService.build_pagination_info(page, per_page, total_count)
       response_data = PostService.build_posts_list(posts, current_user, pagination_info)

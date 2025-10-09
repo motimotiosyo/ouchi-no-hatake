@@ -230,10 +230,22 @@ class AuthService < ApplicationService
   end
 
   def self.build_user_response(user)
+    avatar_url = if user.avatar.attached?
+      if Rails.env.development?
+        Rails.application.routes.url_helpers.rails_blob_url(user.avatar, host: "http://localhost:3001")
+      else
+        Rails.application.routes.url_helpers.rails_blob_path(user.avatar, only_path: true)
+      end
+    else
+      nil
+    end
+
     {
       id: user.id,
       email: user.email,
-      name: user.name
+      name: user.name,
+      bio: user.bio,
+      avatar_url: avatar_url
     }
   end
 
