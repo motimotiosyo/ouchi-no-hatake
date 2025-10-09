@@ -35,7 +35,7 @@ interface PaginationInfo {
 type TabType = 'posts' | 'growth-records'
 
 export default function ProfilePage() {
-  const { user, executeProtected } = useAuth()
+  const { user } = useAuth()
   const [activeTab, setActiveTab] = useState<TabType>('posts')
 
   // 投稿一覧の状態
