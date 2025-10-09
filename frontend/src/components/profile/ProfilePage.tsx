@@ -1,167 +1,15 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState } from 'react'
 import { useAuthContext as useAuth } from '@/contexts/auth'
-import { apiClient } from '@/services/apiClient'
-import TimelinePost from '@/components/timeline/TimelinePost'
-import GrowthRecordCard from '@/components/growth-records/GrowthRecordCard'
-import type { Post } from '@/types'
-
-interface GrowthRecord {
-  id: number
-  record_number: number
-  record_name: string
-  location: string
-  started_on: string
-  ended_on?: string
-  status: 'planning' | 'growing' | 'completed' | 'failed'
-  thumbnail_url?: string
-  created_at: string
-  updated_at: string
-  plant: {
-    id: number
-    name: string
-    description: string
-  }
-}
-
-interface PaginationInfo {
-  current_page: number
-  per_page: number
-  total_count: number
-  has_more: boolean
-}
+import PostsTab from './PostsTab'
+import GrowthRecordsTab from './GrowthRecordsTab'
 
 type TabType = 'posts' | 'growth-records'
 
 export default function ProfilePage() {
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState<TabType>('posts')
-
-  // 投稿一覧の状態
-  const [posts, setPosts] = useState<Post[]>([])
-  const [postsLoading, setPostsLoading] = useState(false)
-  const [postsLoadingMore, setPostsLoadingMore] = useState(false)
-  const [postsPagination, setPostsPagination] = useState<PaginationInfo | null>(null)
-  const [postsError, setPostsError] = useState<string | null>(null)
-  const postsObserver = useRef<IntersectionObserver | null>(null)
-
-  // 成長記録一覧の状態
-  const [growthRecords, setGrowthRecords] = useState<GrowthRecord[]>([])
-  const [growthRecordsLoading, setGrowthRecordsLoading] = useState(false)
-  const [growthRecordsLoadingMore, setGrowthRecordsLoadingMore] = useState(false)
-  const [growthRecordsPagination, setGrowthRecordsPagination] = useState<PaginationInfo | null>(null)
-  const [growthRecordsError, setGrowthRecordsError] = useState<string | null>(null)
-  const growthRecordsObserver = useRef<IntersectionObserver | null>(null)
-
-  // 投稿一覧の取得
-  const fetchPosts = useCallback(async (page: number = 1, append: boolean = false) => {
-    if (!user) return
-
-    try {
-      if (page > 1) {
-        setPostsLoadingMore(true)
-      } else {
-        setPostsLoading(true)
-      }
-
-      const token = localStorage.getItem('auth_token')
-      const result = await apiClient.get<{ posts: Post[], pagination: PaginationInfo }>(
-        `/api/v1/posts?user_id=${user.id}&page=${page}&per_page=10`,
-        token || undefined
-      )
-
-      if (result.success) {
-        if (append) {
-          setPosts(prev => [...prev, ...result.data.posts])
-        } else {
-          setPosts(result.data.posts)
-        }
-        setPostsPagination(result.data.pagination)
-        setPostsError(null)
-      } else {
-        setPostsError(result.error.message)
-      }
-    } catch (err) {
-      console.error('投稿の取得でエラーが発生しました:', err)
-      setPostsError(err instanceof Error ? err.message : 'エラーが発生しました')
-    } finally {
-      setPostsLoadingMore(false)
-      setPostsLoading(false)
-    }
-  }, [user])
-
-  // 成長記録一覧の取得
-  const fetchGrowthRecords = useCallback(async (page: number = 1, append: boolean = false) => {
-    try {
-      if (page === 1) {
-        setGrowthRecordsLoading(true)
-      } else {
-        setGrowthRecordsLoadingMore(true)
-      }
-      setGrowthRecordsError(null)
-
-      const token = localStorage.getItem('auth_token')
-      const result = await apiClient.get<{ growth_records: GrowthRecord[], pagination: PaginationInfo }>(
-        `/api/v1/growth_records?page=${page}&per_page=10`,
-        token || undefined
-      )
-
-      if (result.success) {
-        if (append) {
-          setGrowthRecords(prev => [...prev, ...result.data.growth_records])
-        } else {
-          setGrowthRecords(result.data.growth_records)
-        }
-        setGrowthRecordsPagination(result.data.pagination)
-      } else {
-        setGrowthRecordsError(result.error.message)
-      }
-    } catch (err) {
-      console.error('成長記録の取得でエラーが発生しました:', err)
-      setGrowthRecordsError(err instanceof Error ? err.message : 'エラーが発生しました')
-    } finally {
-      setGrowthRecordsLoading(false)
-      setGrowthRecordsLoadingMore(false)
-    }
-  }, [])
-
-  // 投稿の無限スクロール
-  const lastPostElementRef = useCallback((node: HTMLDivElement | null) => {
-    if (postsLoading || postsLoadingMore) return
-    if (postsObserver.current) postsObserver.current.disconnect()
-
-    postsObserver.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && postsPagination?.has_more) {
-        fetchPosts(postsPagination.current_page + 1, true)
-      }
-    })
-
-    if (node) postsObserver.current.observe(node)
-  }, [postsLoading, postsLoadingMore, postsPagination, fetchPosts])
-
-  // 成長記録の無限スクロール
-  const lastGrowthRecordElementRef = useCallback((node: HTMLDivElement | null) => {
-    if (growthRecordsLoading || growthRecordsLoadingMore) return
-    if (growthRecordsObserver.current) growthRecordsObserver.current.disconnect()
-
-    growthRecordsObserver.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && growthRecordsPagination?.has_more) {
-        fetchGrowthRecords(growthRecordsPagination.current_page + 1, true)
-      }
-    })
-
-    if (node) growthRecordsObserver.current.observe(node)
-  }, [growthRecordsLoading, growthRecordsLoadingMore, growthRecordsPagination, fetchGrowthRecords])
-
-  // タブ切り替え時のデータ取得
-  useEffect(() => {
-    if (activeTab === 'posts' && posts.length === 0 && !postsLoading) {
-      fetchPosts()
-    } else if (activeTab === 'growth-records' && growthRecords.length === 0 && !growthRecordsLoading) {
-      fetchGrowthRecords()
-    }
-  }, [activeTab, posts.length, growthRecords.length, postsLoading, growthRecordsLoading, fetchPosts, fetchGrowthRecords])
 
   if (!user) {
     return (
@@ -231,74 +79,8 @@ export default function ProfilePage() {
       </div>
 
       {/* タブコンテンツ */}
-      {activeTab === 'posts' && (
-        <div>
-          {postsLoading && posts.length === 0 ? (
-            <div className="flex justify-center py-8">
-              <div className="text-gray-600">読み込み中...</div>
-            </div>
-          ) : postsError ? (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-600">{postsError}</p>
-            </div>
-          ) : posts.length === 0 ? (
-            <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <p className="text-gray-600">まだ投稿がありません</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {posts.map((post, index) => (
-                <div
-                  key={post.id}
-                  ref={index === posts.length - 1 ? lastPostElementRef : null}
-                  className="bg-white rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 border border-gray-200 transition-all duration-200 px-4 py-4"
-                >
-                  <TimelinePost post={post} />
-                </div>
-              ))}
-              {postsLoadingMore && (
-                <div className="flex justify-center py-4">
-                  <div className="text-gray-600">読み込み中...</div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {activeTab === 'growth-records' && (
-        <div>
-          {growthRecordsLoading && growthRecords.length === 0 ? (
-            <div className="flex justify-center py-8">
-              <div className="text-gray-600">読み込み中...</div>
-            </div>
-          ) : growthRecordsError ? (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-              <p className="text-red-600">{growthRecordsError}</p>
-            </div>
-          ) : growthRecords.length === 0 ? (
-            <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <p className="text-gray-600">まだ成長記録がありません</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {growthRecords.map((record, index) => (
-                <div
-                  key={record.id}
-                  ref={index === growthRecords.length - 1 ? lastGrowthRecordElementRef : null}
-                >
-                  <GrowthRecordCard record={record} onUpdate={() => fetchGrowthRecords()} />
-                </div>
-              ))}
-              {growthRecordsLoadingMore && (
-                <div className="flex justify-center py-4">
-                  <div className="text-gray-600">読み込み中...</div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
+      {activeTab === 'posts' && <PostsTab userId={user.id} />}
+      {activeTab === 'growth-records' && <GrowthRecordsTab />}
     </div>
   )
 }
