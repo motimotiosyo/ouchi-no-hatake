@@ -42,6 +42,7 @@ class LikeService < ApplicationService
       ApplicationSerializer.error(
         message: "いいねが見つかりません",
         code: "NOT_FOUND"
+      )
     end
   end
 
