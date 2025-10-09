@@ -16,6 +16,7 @@ interface GrowthRecord {
   status: 'planning' | 'growing' | 'completed' | 'failed'
   created_at: string
   updated_at: string
+  thumbnail_url?: string
   plant: {
     id: number
     name: string
@@ -41,8 +42,9 @@ export default function GrowthRecordCard({ record, onUpdate }: Props) {
     location: record.location,
     started_on: record.started_on,
     ended_on: record.ended_on,
-    status: record.status
-  }), [record.id, record.plant.id, record.record_name, record.location, record.started_on, record.ended_on, record.status])
+    status: record.status,
+    thumbnail_url: record.thumbnail_url
+  }), [record.id, record.plant.id, record.record_name, record.location, record.started_on, record.ended_on, record.status, record.thumbnail_url])
 
   const growthRecordData = useMemo(() => ({
     id: record.id,
@@ -120,8 +122,16 @@ export default function GrowthRecordCard({ record, onUpdate }: Props) {
         <div className="p-4">
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center pointer-events-auto">
-                <span className="text-2xl pointer-events-none">🌱</span>
+              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden pointer-events-auto">
+                {record.thumbnail_url ? (
+                  <img 
+                    src={record.thumbnail_url} 
+                    alt={record.record_name} 
+                    className="w-full h-full object-cover pointer-events-none"
+                  />
+                ) : (
+                  <span className="text-2xl pointer-events-none">🌱</span>
+                )}
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900">{record.plant.name}</h3>
@@ -191,8 +201,16 @@ export default function GrowthRecordCard({ record, onUpdate }: Props) {
         <div className="py-3 px-4">
           <div className="flex items-center space-x-4">
             {/* サムネイル用スペース */}
-            <div className="w-20 h-20 min-h-20 aspect-square bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 pointer-events-auto">
-              <span className="text-2xl pointer-events-none">🌱</span>
+            <div className="w-20 h-20 min-h-20 aspect-square bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden pointer-events-auto">
+              {record.thumbnail_url ? (
+                <img 
+                  src={record.thumbnail_url} 
+                  alt={record.record_name} 
+                  className="w-full h-full object-cover pointer-events-none"
+                />
+              ) : (
+                <span className="text-2xl pointer-events-none">🌱</span>
+              )}
             </div>
             
             {/* メイン情報 */}

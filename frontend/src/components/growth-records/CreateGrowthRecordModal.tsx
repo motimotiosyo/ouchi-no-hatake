@@ -18,6 +18,12 @@ interface GrowthRecord {
   started_on: string
   ended_on?: string
   status: 'planning' | 'growing' | 'completed' | 'failed'
+  thumbnail_url?: string
+}
+
+// サムネイル画像アップロード制限
+const THUMBNAIL_UPLOAD_LIMITS = {
+  MAX_FILE_SIZE: 10 * 1024 * 1024 // 10MB
 }
 
 interface Props {
@@ -42,6 +48,12 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
     ended_on: '',
     status: 'planning' as 'planning' | 'growing' | 'completed' | 'failed'
   })
+  
+  // サムネイル画像選択状態
+  const [selectedThumbnail, setSelectedThumbnail] = useState<File | null>(null)
+  const [thumbnailPreview, setThumbnailPreview] = useState<string>('')
+  const [imageError, setImageError] = useState<string>('')
+  const [removeThumbnail, setRemoveThumbnail] = useState<boolean>(false)
 
   const fetchPlants = useCallback(async () => {
     try {
@@ -72,10 +84,71 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
           ended_on: editData.ended_on || '',
           status: editData.status || 'planning'
         })
+        
+        // 既存のサムネイル画像がある場合はプレビューを設定
+        if (editData.thumbnail_url) {
+          setThumbnailPreview(editData.thumbnail_url)
+        }
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
+
+  const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    setImageError('') // エラーをクリア
+    
+    if (file) {
+      // ファイルサイズをチェック
+      if (file.size > THUMBNAIL_UPLOAD_LIMITS.MAX_FILE_SIZE) {
+        setImageError(`ファイルサイズは${THUMBNAIL_UPLOAD_LIMITS.MAX_FILE_SIZE / (1024 * 1024)}MB以下にしてください`)
+        return
+      }
+      
+      // JPEG/PNG形式をチェック
+      if (!['image/jpeg', 'image/png'].includes(file.type)) {
+        setImageError('JPEG（.jpg）またはPNG（.png）形式の画像のみアップロードできます')
+        return
+      }
+      
+      // ファイル拡張子とMIMEタイプの整合性をチェック
+      const fileName = file.name.toLowerCase()
+      const fileType = file.type
+      
+      if ((fileName.endsWith('.jpg') || fileName.endsWith('.jpeg')) && fileType !== 'image/jpeg') {
+        setImageError('ファイルの拡張子とファイル形式が一致しません。悪意のあるファイルの可能性があります')
+        return
+      }
+      
+      if (fileName.endsWith('.png') && fileType !== 'image/png') {
+        setImageError('ファイルの拡張子とファイル形式が一致しません。悪意のあるファイルの可能性があります')
+        return
+      }
+      
+      setSelectedThumbnail(file)
+      setRemoveThumbnail(false) // 新しい画像を選択したら削除フラグをクリア
+      
+      // プレビュー画像を生成
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        if (e.target?.result) {
+          setThumbnailPreview(e.target.result as string)
+        }
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleRemoveThumbnailPreview = () => {
+    setSelectedThumbnail(null)
+    setThumbnailPreview('')
+    setImageError('')
+    
+    // 編集モードで既存の画像がある場合は削除フラグを立てる
+    if (editData?.thumbnail_url) {
+      setRemoveThumbnail(true)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -89,33 +162,36 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
           ? `/api/v1/growth_records/${editData.id}`
           : '/api/v1/growth_records'
 
+        // FormDataを使用して送信
+        const formDataToSend = new FormData()
+        formDataToSend.append('growth_record[plant_id]', formData.plant_id)
+        formDataToSend.append('growth_record[record_name]', formData.record_name)
+        formDataToSend.append('growth_record[location]', formData.location)
+        formDataToSend.append('growth_record[started_on]', formData.started_on)
+        if (formData.ended_on) {
+          formDataToSend.append('growth_record[ended_on]', formData.ended_on)
+        }
+        formDataToSend.append('growth_record[status]', formData.status)
+        
+        // サムネイル画像を追加
+        if (selectedThumbnail) {
+          formDataToSend.append('growth_record[thumbnail]', selectedThumbnail)
+        }
+        
+        // 画像削除フラグを追加（編集モードで削除チェックがある場合）
+        if (isEditMode && removeThumbnail) {
+          formDataToSend.append('growth_record[remove_thumbnail]', 'true')
+        }
+
         const token = localStorage.getItem('auth_token')
         const result = isEditMode
-          ? await apiClient.put<{ growth_record: GrowthRecord }>(
-              endpoint,
-              { growth_record: formData },
-              token || undefined
-            )
-          : await apiClient.post<{ growth_record: GrowthRecord }>(
-              endpoint,
-              { growth_record: formData },
-              token || undefined
-            )
+          ? await apiClient.put<{ growth_record: GrowthRecord }>(endpoint, formDataToSend, token || undefined)
+          : await apiClient.post<{ growth_record: GrowthRecord }>(endpoint, formDataToSend, token || undefined)
 
         if (result.success) {
           // 成功時
           onSuccess()
-          onClose()
-          
-          // フォームリセット
-          setFormData({
-            plant_id: '',
-            record_name: '',
-            location: '',
-            started_on: '',
-            ended_on: '',
-            status: 'planning'
-          })
+          handleClose()
         } else {
           setError(result.error.message)
         }
@@ -147,6 +223,10 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
       ended_on: '',
       status: 'planning'
     })
+    setSelectedThumbnail(null)
+    setThumbnailPreview('')
+    setImageError('')
+    setRemoveThumbnail(false)
   }
 
   if (!isOpen) return null
@@ -300,6 +380,64 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
                 />
               </div>
             )}
+
+            {/* サムネイル画像アップロード */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                サムネイル画像
+                <span className="text-sm font-normal text-gray-500 ml-2">
+                  ({THUMBNAIL_UPLOAD_LIMITS.MAX_FILE_SIZE / (1024 * 1024)}MB以下)
+                </span>
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleThumbnailChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              />
+              
+              {/* 画像エラーメッセージ */}
+              {imageError && (
+                <div className="mt-2 p-2 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
+                  {imageError}
+                </div>
+              )}
+              
+              {/* 画像プレビュー */}
+              {thumbnailPreview && (
+                <div className="mt-3">
+                  <div className="relative inline-block">
+                    <img
+                      src={thumbnailPreview}
+                      alt="サムネイルプレビュー"
+                      className="w-32 h-32 object-cover rounded-md border border-gray-300"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleRemoveThumbnailPreview}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600 transition-colors"
+                    >
+                      ×
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              {/* 編集モードで既存画像削除のチェックボックス */}
+              {editData?.thumbnail_url && !selectedThumbnail && !thumbnailPreview && (
+                <div className="mt-2">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={removeThumbnail}
+                      onChange={(e) => setRemoveThumbnail(e.target.checked)}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-gray-700">サムネイル画像を削除する</span>
+                  </label>
+                </div>
+              )}
+            </div>
 
             {/* ボタン */}
             <div className="flex justify-end space-x-3 pt-4">

@@ -19,6 +19,7 @@ interface GrowthRecord {
   status: 'planning' | 'growing' | 'completed' | 'failed'
   created_at: string
   updated_at: string
+  thumbnail_url?: string
   plant: {
     id: number
     name: string
@@ -205,54 +206,74 @@ export default function GrowthRecordDetail({ id }: Props) {
 
       {/* 成長記録基本情報 */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              {growthRecord.plant.name}
-            </h1>
-            <p className="text-gray-600 mb-2">{growthRecord.record_name}</p>
-            <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(growthRecord.status)}`}>
-              {getStatusText(growthRecord.status)}
-            </span>
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* サムネイル画像 */}
+          <div className="flex-shrink-0">
+            {growthRecord.thumbnail_url ? (
+              <img
+                src={growthRecord.thumbnail_url}
+                alt={`${growthRecord.plant.name} - ${growthRecord.record_name}`}
+                className="w-full md:w-48 h-48 object-cover rounded-lg"
+              />
+            ) : (
+              <div className="w-full md:w-48 h-48 bg-gray-100 rounded-lg flex items-center justify-center">
+                <span className="text-6xl">🌱</span>
+              </div>
+            )}
           </div>
-          {user && user.id === growthRecord.user.id && (
-            <div className="flex space-x-2">
-              <button
-                onClick={handleEditButtonClick}
-                className="px-4 py-2 text-sm text-orange-600 bg-orange-50 rounded hover:bg-orange-100 transition-colors"
-              >
-                編集
-              </button>
-              <button
-                onClick={handleDeleteButtonClick}
-                className="px-4 py-2 text-sm text-red-600 bg-red-50 rounded hover:bg-red-100 transition-colors"
-              >
-                削除
-              </button>
+          
+          {/* 基本情報 */}
+          <div className="flex-1">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                  {growthRecord.plant.name}
+                </h1>
+                <p className="text-gray-600 mb-2">{growthRecord.record_name}</p>
+                <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(growthRecord.status)}`}>
+                  {getStatusText(growthRecord.status)}
+                </span>
+              </div>
+              {user && user.id === growthRecord.user.id && (
+                <div className="flex space-x-2">
+                  <button
+                    onClick={handleEditButtonClick}
+                    className="px-4 py-2 text-sm text-orange-600 bg-orange-50 rounded hover:bg-orange-100 transition-colors"
+                  >
+                    編集
+                  </button>
+                  <button
+                    onClick={handleDeleteButtonClick}
+                    className="px-4 py-2 text-sm text-red-600 bg-red-50 rounded hover:bg-red-100 transition-colors"
+                  >
+                    削除
+                  </button>
+                </div>
+              )}
             </div>
-          )}
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 mb-1">栽培場所</h3>
-            <p className="text-gray-900">{growthRecord.location}</p>
-          </div>
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 mb-1">記録番号</h3>
-            <p className="text-gray-900">#{growthRecord.record_number}</p>
-          </div>
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 mb-1">栽培開始日</h3>
-            <p className="text-gray-900">
-              {growthRecord.started_on ? formatDate(growthRecord.started_on) : '---.--.-'}
-            </p>
-          </div>
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 mb-1">栽培終了日</h3>
-            <p className="text-gray-900">
-              {growthRecord.ended_on ? formatDate(growthRecord.ended_on) : '---.--.-'}
-            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 mb-1">栽培場所</h3>
+                <p className="text-gray-900">{growthRecord.location}</p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 mb-1">記録番号</h3>
+                <p className="text-gray-900">#{growthRecord.record_number}</p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 mb-1">栽培開始日</h3>
+                <p className="text-gray-900">
+                  {growthRecord.started_on ? formatDate(growthRecord.started_on) : '---.--.-'}
+                </p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 mb-1">栽培終了日</h3>
+                <p className="text-gray-900">
+                  {growthRecord.ended_on ? formatDate(growthRecord.ended_on) : '---.--.-'}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -310,7 +331,8 @@ export default function GrowthRecordDetail({ id }: Props) {
           location: growthRecord.location,
           started_on: growthRecord.started_on,
           ended_on: growthRecord.ended_on,
-          status: growthRecord.status
+          status: growthRecord.status,
+          thumbnail_url: growthRecord.thumbnail_url
         } : undefined}
       />
 
