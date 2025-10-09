@@ -76,9 +76,8 @@ class GrowthRecordService < ApplicationService
   def self.create_growth_record(user, params)
     plant = Plant.find(params[:plant_id])
 
-    # record_numberを自動生成（単調増加、再利用しない）
-    max_record_number = user.growth_records.where(plant: plant).maximum(:record_number) || 0
-    next_record_number = max_record_number + 1
+    # シーケンステーブルから次の番号を取得（単調増加、再利用しない）
+    next_record_number = GrowthRecordSequence.next_number(user, plant)
 
     growth_record = user.growth_records.build(params)
     growth_record.record_number = next_record_number
