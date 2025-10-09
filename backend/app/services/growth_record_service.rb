@@ -76,9 +76,8 @@ class GrowthRecordService < ApplicationService
   def self.create_growth_record(user, params)
     plant = Plant.find(params[:plant_id])
 
-    # record_numberを自動生成
-    last_record = user.growth_records.where(plant: plant).order(:record_number).last
-    next_record_number = last_record ? last_record.record_number + 1 : 1
+    # シーケンステーブルから次の番号を取得（単調増加、再利用しない）
+    next_record_number = GrowthRecordSequence.next_number(user, plant)
 
     growth_record = user.growth_records.build(params)
     growth_record.record_number = next_record_number
@@ -89,9 +88,7 @@ class GrowthRecordService < ApplicationService
     end
 
     if growth_record.save
-      OpenStruct.new(
-        success: true,
-        growth_record: growth_record,
+      ApplicationSerializer.success(
         data: build_growth_record_response(growth_record)
       )
     else
@@ -112,9 +109,7 @@ class GrowthRecordService < ApplicationService
     end
 
     if record.update(params)
-      OpenStruct.new(
-        success: true,
-        growth_record: record,
+      ApplicationSerializer.success(
         data: build_growth_record_response(record)
       )
     else

@@ -20,9 +20,10 @@ const FlashContext = createContext<FlashContextType | undefined>(undefined)
 export function FlashProvider({ children }: { children: ReactNode }) {
   const [messages, setMessages] = useState<FlashMessage[]>([])
 
-  // URLパラメータからフラッシュメッセージを読み取る
+  // URLパラメータとlocalStorageからフラッシュメッセージを読み取る
   useEffect(() => {
     if (typeof window !== 'undefined') {
+      // URLパラメータからの読み取り
       const urlParams = new URLSearchParams(window.location.search)
       const flashMessage = urlParams.get('flash_message')
       const flashType = urlParams.get('flash_type') as FlashMessage['type']
@@ -41,6 +42,26 @@ export function FlashProvider({ children }: { children: ReactNode }) {
         // URLパラメータをクリア
         const newUrl = window.location.pathname
         window.history.replaceState({}, '', newUrl)
+      }
+      
+      // localStorageからの読み取り（リロード時のメッセージ用）
+      const storedMessage = localStorage.getItem('flash_message')
+      const storedType = localStorage.getItem('flash_type') as FlashMessage['type']
+      
+      if (storedMessage && storedType) {
+        const id = Date.now().toString()
+        const newMessage = { id, message: storedMessage, type: storedType }
+        
+        setMessages(prev => [...prev, newMessage])
+        
+        // 5秒後に自動削除
+        setTimeout(() => {
+          setMessages(prev => prev.filter(msg => msg.id !== id))
+        }, 5000)
+        
+        // localStorageをクリア
+        localStorage.removeItem('flash_message')
+        localStorage.removeItem('flash_type')
       }
     }
   }, [])

@@ -16,9 +16,7 @@ class LikeService < ApplicationService
     like = post.likes.build(user: user)
 
     if like.save
-      OpenStruct.new(
-        success: true,
-        like: like,
+      ApplicationSerializer.success(
         data: build_like_response(post, true)
       )
     else
@@ -37,14 +35,13 @@ class LikeService < ApplicationService
 
     if like
       like.destroy
-      OpenStruct.new(
-        success: true,
+      ApplicationSerializer.success(
         data: build_like_response(post, false)
       )
     else
-      OpenStruct.new(
-        success: false,
-        error: "いいねが見つかりません"
+      ApplicationSerializer.error(
+        message: "いいねが見つかりません",
+        code: "NOT_FOUND"
       )
     end
   end

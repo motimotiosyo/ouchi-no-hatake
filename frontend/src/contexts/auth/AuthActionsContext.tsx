@@ -50,12 +50,12 @@ export function AuthActionsProvider({ children }: { children: ReactNode }) {
       
       Logger.auth('User logout completed', user?.id)
       
-      // 新規追加: ログアウト後のリダイレクトとメッセージ設定
-      router.push('/')
-      // ページ遷移後にメッセージを設定（遷移先でメッセージが確実に表示されるように遅延）
-      setTimeout(() => {
-        setRedirectMessage('ログアウトしました')
-      }, 100)
+      // ログアウト後のリダイレクトとメッセージ設定
+      // リロード前にlocalStorageにメッセージを保存
+      localStorage.setItem('flash_message', 'ログアウトしました')
+      localStorage.setItem('flash_type', 'info')
+      // リロードを伴うリダイレクト
+      window.location.href = '/'
     }
   }, [user?.id, token, router, setRedirectMessage])
 
