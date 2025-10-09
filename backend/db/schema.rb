@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_09_08_000000) do
+ActiveRecord::Schema[7.2].define(version: 2025_10_09_031503) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -77,6 +77,17 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_08_000000) do
     t.index ["post_id", "created_at"], name: "index_comments_on_post_id_and_created_at"
     t.index ["post_id"], name: "index_comments_on_post_id"
     t.index ["user_id"], name: "index_comments_on_user_id"
+  end
+
+  create_table "growth_record_sequences", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "plant_id", null: false
+    t.integer "last_number", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["plant_id"], name: "index_growth_record_sequences_on_plant_id"
+    t.index ["user_id", "plant_id"], name: "index_growth_record_sequences_on_user_id_and_plant_id", unique: true
+    t.index ["user_id"], name: "index_growth_record_sequences_on_user_id"
   end
 
   create_table "growth_record_steps", force: :cascade do |t|
@@ -201,6 +212,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_09_08_000000) do
   add_foreign_key "comments", "comments", column: "parent_comment_id"
   add_foreign_key "comments", "posts"
   add_foreign_key "comments", "users"
+  add_foreign_key "growth_record_sequences", "plants"
+  add_foreign_key "growth_record_sequences", "users"
   add_foreign_key "growth_record_steps", "growth_records"
   add_foreign_key "growth_record_steps", "guide_steps"
   add_foreign_key "growth_records", "plants"

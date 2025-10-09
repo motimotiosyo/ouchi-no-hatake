@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo, useCallback } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import CreateGrowthRecordModal from './CreateGrowthRecordModal'
 import DeleteConfirmDialog from './DeleteConfirmDialog'
@@ -31,6 +32,32 @@ export default function GrowthRecordCard({ record, onUpdate }: Props) {
   const [showMenu, setShowMenu] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+
+  // editDataとgrowthRecordをメモ化して再レンダリングを防ぐ
+  const editData = useMemo(() => ({
+    id: record.id,
+    plant_id: record.plant.id,
+    record_name: record.record_name,
+    location: record.location,
+    started_on: record.started_on,
+    ended_on: record.ended_on,
+    status: record.status
+  }), [record.id, record.plant.id, record.record_name, record.location, record.started_on, record.ended_on, record.status])
+
+  const growthRecordData = useMemo(() => ({
+    id: record.id,
+    plant_name: record.plant.name,
+    record_name: record.record_name
+  }), [record.id, record.plant.name, record.record_name])
+
+  // モーダルの開閉コールバックをメモ化
+  const handleEditModalClose = useCallback(() => {
+    setIsEditModalOpen(false)
+  }, [])
+
+  const handleDeleteDialogClose = useCallback(() => {
+    setIsDeleteDialogOpen(false)
+  }, [])
 
   const getStatusText = (status: string | null) => {
     if (!status) return '計画中'
@@ -74,19 +101,20 @@ export default function GrowthRecordCard({ record, onUpdate }: Props) {
   }
 
   return (
-    <div 
+    <div
       className="bg-white rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02] border border-gray-200 transition-all duration-200 relative"
-      style={{ 
+      style={{
         zIndex: showMenu ? 9999 : 'auto'
       }}
     >
       {/* 背景リンク */}
-      {!showMenu && !isEditModalOpen && !isDeleteDialogOpen && (
-        <Link 
-          href={`/growth-records/${record.id}`} 
-          className="absolute inset-0 z-0 rounded-lg"
-        />
-      )}
+      <Link
+        href={`/growth-records/${record.id}`}
+        className="absolute inset-0 z-0 rounded-lg"
+        style={{
+          pointerEvents: showMenu || isEditModalOpen || isDeleteDialogOpen ? 'none' : 'auto'
+        }}
+      />
       {/* モバイル表示 */}
       <div className="md:hidden relative z-10 pointer-events-none">
         <div className="p-4">
@@ -240,33 +268,27 @@ export default function GrowthRecordCard({ record, onUpdate }: Props) {
         </div>
       </div>
 
-      {/* 編集モーダル */}
-      <CreateGrowthRecordModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        onSuccess={onUpdate}
-        editData={{
-          id: record.id,
-          plant_id: record.plant.id,
-          record_name: record.record_name,
-          location: record.location,
-          started_on: record.started_on,
-          ended_on: record.ended_on,
-          status: record.status
-        }}
-      />
+      {/* 編集モーダル（Portalでbody直下にレンダリング） */}
+      {typeof document !== 'undefined' && createPortal(
+        <CreateGrowthRecordModal
+          isOpen={isEditModalOpen}
+          onClose={handleEditModalClose}
+          onSuccess={onUpdate}
+          editData={editData}
+        />,
+        document.body
+      )}
 
-      {/* 削除確認ダイアログ */}
-      <DeleteConfirmDialog
-        isOpen={isDeleteDialogOpen}
-        onClose={() => setIsDeleteDialogOpen(false)}
-        onSuccess={onUpdate}
-        growthRecord={{
-          id: record.id,
-          plant_name: record.plant.name,
-          record_name: record.record_name
-        }}
-      />
+      {/* 削除確認ダイアログ（Portalでbody直下にレンダリング） */}
+      {typeof document !== 'undefined' && createPortal(
+        <DeleteConfirmDialog
+          isOpen={isDeleteDialogOpen}
+          onClose={handleDeleteDialogClose}
+          onSuccess={onUpdate}
+          growthRecord={growthRecordData}
+        />,
+        document.body
+      )}
     </div>
   )
 }

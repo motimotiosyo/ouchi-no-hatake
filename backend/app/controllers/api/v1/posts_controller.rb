@@ -52,7 +52,7 @@ class Api::V1::PostsController < ApplicationController
       end
 
       result = PostService.create_post(current_user, post_params)
-      render json: ApplicationSerializer.success(data: { post: result.data }), status: :created
+      render json: result, status: :created
     rescue PostService::ValidationError => e
       Rails.logger.error "Post validation failed: #{e.details&.join(', ')}" if e.details
       render json: ApplicationSerializer.error(
@@ -73,7 +73,7 @@ class Api::V1::PostsController < ApplicationController
   def update
     begin
       result = PostService.update_post(@post, post_params, current_user)
-      render json: ApplicationSerializer.success(data: { post: result.data })
+      render json: result
     rescue PostService::ValidationError => e
       render json: ApplicationSerializer.error(
         message: e.message,

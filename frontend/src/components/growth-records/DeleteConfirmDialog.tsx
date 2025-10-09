@@ -56,8 +56,8 @@ export default function DeleteConfirmDialog({ isOpen, onClose, onSuccess, growth
   if (!isOpen) return null
 
   return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+    <div
+      className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
       style={{
         backgroundColor: 'rgba(0, 0, 0, 0.3)',
         backdropFilter: 'brightness(0.7)'
