@@ -127,6 +127,6 @@ class Api::V1::GrowthRecordsController < ApplicationController
   end
 
   def growth_record_params
-    params.require(:growth_record).permit(:plant_id, :record_name, :location, :started_on, :ended_on, :status)
+    params.require(:growth_record).permit(:plant_id, :record_name, :location, :started_on, :ended_on, :status, :thumbnail, :remove_thumbnail)
   end
 end

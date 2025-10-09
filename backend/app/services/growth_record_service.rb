@@ -36,7 +36,8 @@ class GrowthRecordService < ApplicationService
         id: record.plant.id,
         name: record.plant.name,
         description: record.plant.description
-      }
+      },
+      thumbnail_url: build_thumbnail_url(record)
     }
   end
 
@@ -103,6 +104,12 @@ class GrowthRecordService < ApplicationService
 
   # 成長記録更新
   def self.update_growth_record(record, params)
+    # サムネイル削除フラグの処理
+    if params[:remove_thumbnail] == "true"
+      record.thumbnail.purge if record.thumbnail.attached?
+      params = params.except(:remove_thumbnail)
+    end
+
     # record_name をクリア（空文字列）した場合も自動生成
     if params.key?(:record_name) && params[:record_name].blank?
       params = params.merge(record_name: "成長記録#{record.record_number}")
@@ -132,4 +139,19 @@ class GrowthRecordService < ApplicationService
       has_more: has_more
     }
   end
+
+  # サムネイルURL生成
+  def self.build_thumbnail_url(record)
+    if record.thumbnail.attached?
+      # 開発環境ではホストを含む完全なURLを返す
+      if Rails.env.development?
+        Rails.application.routes.url_helpers.rails_blob_url(record.thumbnail, host: "http://localhost:3001")
+      else
+        Rails.application.routes.url_helpers.rails_blob_path(record.thumbnail, only_path: true)
+      end
+    else
+      nil
+    end
+  end
+  private_class_method :build_thumbnail_url
 end
