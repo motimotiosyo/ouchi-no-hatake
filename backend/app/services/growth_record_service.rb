@@ -145,7 +145,7 @@ class GrowthRecordService < ApplicationService
     if record.thumbnail.attached?
       # 開発環境ではホストを含む完全なURLを返す
       if Rails.env.development?
-        Rails.application.routes.url_helpers.rails_blob_url(record.thumbnail, host: 'http://localhost:3001')
+        Rails.application.routes.url_helpers.rails_blob_url(record.thumbnail, host: "http://localhost:3001")
       else
         Rails.application.routes.url_helpers.rails_blob_path(record.thumbnail, only_path: true)
       end
