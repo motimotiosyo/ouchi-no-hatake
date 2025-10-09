@@ -10,7 +10,7 @@ class AddRecordNumberSequenceToGrowthRecords < ActiveRecord::Migration[7.2]
     end
 
     # ユーザー×植物の組み合わせは一意
-    add_index :growth_record_sequences, [:user_id, :plant_id], unique: true
+    add_index :growth_record_sequences, [ :user_id, :plant_id ], unique: true
 
     # 既存データの最大値で初期化
     reversible do |dir|
