@@ -29,7 +29,11 @@ interface PaginationInfo {
   has_more: boolean
 }
 
-export default function GrowthRecordsTab() {
+interface GrowthRecordsTabProps {
+  onCountChange?: (count: number) => void
+}
+
+export default function GrowthRecordsTab({ onCountChange }: GrowthRecordsTabProps) {
   const [growthRecords, setGrowthRecords] = useState<GrowthRecord[]>([])
   const [loading, setLoading] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -59,6 +63,9 @@ export default function GrowthRecordsTab() {
           setGrowthRecords(result.data.growth_records)
         }
         setPagination(result.data.pagination)
+        if (onCountChange && result.data.pagination) {
+          onCountChange(result.data.pagination.total_count)
+        }
       } else {
         setError(result.error.message)
       }

@@ -14,9 +14,11 @@ interface PaginationInfo {
 
 interface PostsTabProps {
   userId: number
+  postType?: 'all' | 'growth_record_post' | 'general_post'
+  onCountChange?: (count: number) => void
 }
 
-export default function PostsTab({ userId }: PostsTabProps) {
+export default function PostsTab({ userId, postType = 'all', onCountChange }: PostsTabProps) {
   const [posts, setPosts] = useState<Post[]>([])
   const [loading, setLoading] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -33,8 +35,9 @@ export default function PostsTab({ userId }: PostsTabProps) {
       }
 
       const token = localStorage.getItem('auth_token')
+      const postTypeParam = postType !== 'all' ? `&post_type=${postType}` : ''
       const result = await apiClient.get<{ posts: Post[], pagination: PaginationInfo }>(
-        `/api/v1/posts?user_id=${userId}&page=${page}&per_page=10`,
+        `/api/v1/posts?user_id=${userId}&page=${page}&per_page=10${postTypeParam}`,
         token || undefined
       )
 
@@ -45,6 +48,9 @@ export default function PostsTab({ userId }: PostsTabProps) {
           setPosts(result.data.posts)
         }
         setPagination(result.data.pagination)
+        if (onCountChange && result.data.pagination) {
+          onCountChange(result.data.pagination.total_count)
+        }
         setError(null)
       } else {
         setError(result.error.message)
@@ -56,7 +62,7 @@ export default function PostsTab({ userId }: PostsTabProps) {
       setLoadingMore(false)
       setLoading(false)
     }
-  }, [userId])
+  }, [userId, postType])
 
   const lastPostElementRef = useCallback((node: HTMLDivElement | null) => {
     if (loading || loadingMore) return
@@ -72,10 +78,8 @@ export default function PostsTab({ userId }: PostsTabProps) {
   }, [loading, loadingMore, pagination, fetchPosts])
 
   useEffect(() => {
-    if (posts.length === 0 && !loading) {
-      fetchPosts()
-    }
-  }, [posts.length, loading, fetchPosts])
+    fetchPosts()
+  }, [fetchPosts])
 
   if (loading && posts.length === 0) {
     return (

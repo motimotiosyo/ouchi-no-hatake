@@ -245,7 +245,8 @@ class AuthService < ApplicationService
       email: user.email,
       name: user.name,
       bio: user.bio,
-      avatar_url: avatar_url
+      avatar_url: avatar_url,
+      created_at: user.created_at.iso8601
     }
   end
 

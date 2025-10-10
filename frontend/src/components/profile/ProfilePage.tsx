@@ -3,13 +3,18 @@
 import { useState } from 'react'
 import { useAuthContext as useAuth } from '@/contexts/auth'
 import PostsTab from './PostsTab'
-import GrowthRecordsTab from './GrowthRecordsTab'
+import EditProfileModal from './EditProfileModal'
 
-type TabType = 'posts' | 'growth-records'
+type PostTypeFilter = 'all' | 'growth_record_post' | 'general_post'
 
 export default function ProfilePage() {
   const { user } = useAuth()
-  const [activeTab, setActiveTab] = useState<TabType>('posts')
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState<PostTypeFilter>('all')
+
+  const handleEditSuccess = () => {
+    // モーダル閉じた後、ユーザー情報は自動的に更新される（AuthContextが再取得）
+  }
 
   if (!user) {
     return (
@@ -20,7 +25,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div>
+    <div className="max-w-2xl mx-auto">
       {/* ユーザー情報ヘッダー */}
       <div className="bg-white rounded-lg shadow p-6 mb-6">
         <div className="flex items-start gap-4">
@@ -43,8 +48,21 @@ export default function ProfilePage() {
 
           {/* ユーザー情報 */}
           <div className="flex-1 min-w-0">
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">{user.name}</h1>
+            <div className="flex justify-between items-start mb-1">
+              <h1 className="text-2xl font-bold text-gray-900">{user.name}</h1>
+              <button
+                onClick={() => setIsEditModalOpen(true)}
+                className="px-4 py-2 text-sm text-orange-600 bg-orange-50 rounded hover:bg-orange-100 transition-colors"
+              >
+                編集
+              </button>
+            </div>
             <p className="text-gray-500 text-sm mb-3">{user.email}</p>
+            {user.created_at && (
+              <p className="text-gray-500 text-sm mb-3">
+                登録日: {new Date(user.created_at).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })}
+              </p>
+            )}
             {user.bio && (
               <p className="text-gray-700 whitespace-pre-wrap">{user.bio}</p>
             )}
@@ -52,35 +70,53 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* タブナビゲーション */}
-      <div className="border-b border-gray-200 mb-6">
-        <nav className="-mb-px flex gap-8">
+      {/* タブナビゲーション（スイッチ式） */}
+      <div className="mb-6">
+        <div className="flex rounded-lg border border-gray-300 p-1 bg-gray-100">
           <button
-            onClick={() => setActiveTab('posts')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-              activeTab === 'posts'
-                ? 'border-green-500 text-green-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            onClick={() => setActiveTab('all')}
+            className={`flex-1 py-2 rounded-md font-medium text-sm transition-all ${
+              activeTab === 'all'
+                ? 'bg-white text-green-600 shadow'
+                : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            投稿一覧
+            投稿全て
           </button>
           <button
-            onClick={() => setActiveTab('growth-records')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
-              activeTab === 'growth-records'
-                ? 'border-green-500 text-green-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+            onClick={() => setActiveTab('growth_record_post')}
+            className={`flex-1 py-2 rounded-md font-medium text-sm transition-all ${
+              activeTab === 'growth_record_post'
+                ? 'bg-white text-green-600 shadow'
+                : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            成長記録一覧
+            成長メモ
           </button>
-        </nav>
+          <button
+            onClick={() => setActiveTab('general_post')}
+            className={`flex-1 py-2 rounded-md font-medium text-sm transition-all ${
+              activeTab === 'general_post'
+                ? 'bg-white text-green-600 shadow'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            雑談
+          </button>
+        </div>
       </div>
 
-      {/* タブコンテンツ */}
-      {activeTab === 'posts' && <PostsTab userId={user.id} />}
-      {activeTab === 'growth-records' && <GrowthRecordsTab />}
+      {/* 投稿一覧 */}
+      <div className="mb-6">
+        <PostsTab userId={user.id} postType={activeTab} />
+      </div>
+
+      {/* 編集モーダル */}
+      <EditProfileModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        onSuccess={handleEditSuccess}
+      />
     </div>
   )
 }

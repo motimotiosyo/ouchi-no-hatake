@@ -12,6 +12,7 @@ class User < ApplicationRecord
   validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :password, length: { minimum: 6 }, if: -> { new_record? || !password.nil? }
   validates :name, presence: true
+  validate :validate_avatar
 
   before_save :downcase_email
 
@@ -57,5 +58,28 @@ class User < ApplicationRecord
 
   def downcase_email
     self.email = email.downcase
+  end
+
+  def validate_avatar
+    return unless avatar.attached?
+
+    # ファイルサイズ制限（10MB）
+    if avatar.blob.byte_size > 10.megabytes
+      errors.add(:avatar, "ファイルサイズは10MB以下にしてください")
+    end
+
+    # Content-Type検証
+    unless [ "image/jpeg", "image/png" ].include?(avatar.blob.content_type)
+      errors.add(:avatar, "JPEG（.jpg）またはPNG（.png）形式のみ対応しています")
+    end
+
+    # ファイル名と拡張子の検証
+    filename = avatar.blob.filename.to_s.downcase
+    content_type = avatar.blob.content_type
+
+    if (filename.end_with?(".jpg", ".jpeg") && content_type != "image/jpeg") ||
+       (filename.end_with?(".png") && content_type != "image/png")
+      errors.add(:avatar, "ファイル名とファイル形式が一致しません")
+    end
   end
 end
