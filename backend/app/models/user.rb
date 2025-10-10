@@ -69,7 +69,7 @@ class User < ApplicationRecord
     end
 
     # Content-Type検証
-    unless ["image/jpeg", "image/png"].include?(avatar.blob.content_type)
+    unless [ "image/jpeg", "image/png" ].include?(avatar.blob.content_type)
       errors.add(:avatar, "JPEG（.jpg）またはPNG（.png）形式のみ対応しています")
     end
 
