@@ -25,6 +25,7 @@ Rails.application.routes.draw do
       resources :plants, only: [ :index ]
 
       # ユーザー関連API
+      resources :users, only: [ :show ]
       put "/users/profile", to: "users#update_profile"
     end
 

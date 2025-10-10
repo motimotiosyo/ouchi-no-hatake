@@ -13,6 +13,16 @@ export interface User {
   created_at?: string
 }
 
+// 他者プロフィール表示用（メールアドレスはオプショナル）
+export interface UserProfile {
+  id: ID
+  name: string
+  bio?: string
+  avatar_url?: string
+  email?: string  // 本人の場合のみ含まれる
+  created_at: string
+}
+
 // API関連の結果型（統一形式）
 export type VerificationResult = ApiResult<{
   message: string
