@@ -11,7 +11,6 @@ export default function ProfilePage() {
   const { user } = useAuth()
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<PostTypeFilter>('all')
-  const [postCount, setPostCount] = useState<number>(0)
 
   const handleEditSuccess = () => {
     // モーダル閉じた後、ユーザー情報は自動的に更新される（AuthContextが再取得）
@@ -109,7 +108,7 @@ export default function ProfilePage() {
 
       {/* 投稿一覧 */}
       <div className="mb-6">
-        <PostsTab userId={user.id} postType={activeTab} onCountChange={setPostCount} />
+        <PostsTab userId={user.id} postType={activeTab} />
       </div>
 
       {/* 編集モーダル */}
