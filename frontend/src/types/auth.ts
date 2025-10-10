@@ -10,6 +10,7 @@ export interface User {
   bio?: string
   avatar_url?: string
   email_verified?: boolean
+  created_at?: string
 }
 
 // API関連の結果型（統一形式）

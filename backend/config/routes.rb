@@ -23,6 +23,9 @@ Rails.application.routes.draw do
 
       # 植物関連API
       resources :plants, only: [ :index ]
+
+      # ユーザー関連API
+      put "/users/profile", to: "users#update_profile"
     end
 
     get "health_check", to: "health_check#index"
