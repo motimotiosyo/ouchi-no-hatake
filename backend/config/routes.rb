@@ -25,7 +25,11 @@ Rails.application.routes.draw do
       resources :plants, only: [ :index ]
 
       # ユーザー関連API
-      resources :users, only: [ :show ]
+      resources :users, only: [ :show ] do
+        resource :follow, controller: "follows", only: [ :create, :destroy ]
+        get "followers", to: "follows#followers"
+        get "following", to: "follows#following"
+      end
       put "/users/profile", to: "users#update_profile"
     end
 

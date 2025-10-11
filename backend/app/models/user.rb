@@ -6,6 +6,12 @@ class User < ApplicationRecord
   has_many :liked_posts, through: :likes, source: :post
   has_many :comments, dependent: :destroy
 
+  # フォロー関連
+  has_many :active_follows, class_name: "Follow", foreign_key: "follower_id", dependent: :destroy
+  has_many :passive_follows, class_name: "Follow", foreign_key: "followee_id", dependent: :destroy
+  has_many :following, through: :active_follows, source: :followee
+  has_many :followers, through: :passive_follows, source: :follower
+
   # アバター画像
   has_one_attached :avatar
 
@@ -53,6 +59,28 @@ class User < ApplicationRecord
     where(email_verified: false)
     .where("email_verification_sent_at < ?", 24.hours.ago)
   }
+
+  # フォロー数・フォロワー数
+  def following_count
+    active_follows.count
+  end
+
+  def followers_count
+    passive_follows.count
+  end
+
+  # フォロー状態確認
+  def following?(user)
+    return false unless user
+
+    following.include?(user)
+  end
+
+  def followed_by?(user)
+    return false unless user
+
+    followers.include?(user)
+  end
 
   private
 
