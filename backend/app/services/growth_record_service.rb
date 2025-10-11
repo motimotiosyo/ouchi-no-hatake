@@ -44,7 +44,7 @@ class GrowthRecordService < ApplicationService
   end
 
   # 成長記録詳細レスポンス構築（投稿データ付き）
-  def self.build_growth_record_detail(record, posts)
+  def self.build_growth_record_detail(record, posts, current_user = nil)
     posts_data = posts.map do |post|
       post_data = {
         id: post.id,
@@ -64,8 +64,8 @@ class GrowthRecordService < ApplicationService
       post_data
     end
 
-    {
-      growth_record: build_growth_record_response(record).merge(
+        {
+      growth_record: build_growth_record_response(record, current_user).merge(
         user: {
           id: record.user.id,
           name: record.user.name
