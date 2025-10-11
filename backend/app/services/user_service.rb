@@ -40,6 +40,24 @@ class UserService < ApplicationService
     end
   end
 
+  # ユーザー情報のレスポンス構築
+  def self.build_user_response(user, current_user = nil)
+    is_owner = current_user && current_user.id == user.id
+
+    user_data = {
+      id: user.id,
+      name: user.name,
+      bio: user.bio,
+      avatar_url: build_avatar_url(user),
+      created_at: user.created_at
+    }
+
+    # 本人の場合のみメールアドレスを含める
+    user_data[:email] = user.email if is_owner
+
+    user_data
+  end
+
   def self.build_avatar_url(user)
     return nil unless user.avatar.attached?
 

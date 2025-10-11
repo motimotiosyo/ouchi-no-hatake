@@ -127,14 +127,18 @@ export default function TimelinePost({ post }: TimelinePostProps) {
       <div className="mb-3">
         {/* 1行目: ユーザー名（左）+ 日時・メニュー（右） */}
         <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center space-x-2">
+          <Link
+            href={`/users/${post.user.id}`}
+            className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="w-8 h-8 bg-gray-400 rounded-full flex items-center justify-center">
               <span className="text-white font-medium text-sm">
                 {post.user.name?.charAt(0) || '?'}
               </span>
             </div>
             <span className="font-medium text-gray-900">{post.user.name || '不明なユーザー'}</span>
-          </div>
+          </Link>
           <div className="flex items-center space-x-2">
             <span className="text-sm text-gray-500">
               {formatDateTime(post.created_at)}

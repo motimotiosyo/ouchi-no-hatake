@@ -279,6 +279,13 @@ class ApiClient {
   }
 
   /**
+   * ユーザー情報取得（ApiResult型を返す）
+   */
+  async getUser(userId: number, token?: string): Promise<ApiResult<{ user: import('@/types').UserProfile }>> {
+    return this.get<{ user: import('@/types').UserProfile }>(`/api/v1/users/${userId}`, token)
+  }
+
+  /**
    * DELETEリクエスト（ApiResult型を返す）
    */
   async delete<T>(endpoint: string, token?: string): Promise<ApiResult<T>> {
