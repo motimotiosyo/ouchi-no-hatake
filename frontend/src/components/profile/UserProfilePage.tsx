@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useAuthContext as useAuth } from '@/contexts/auth'
+import { useRouter } from 'next/navigation'
 import PostsTab from './PostsTab'
+import FollowButton from '../users/FollowButton'
 import type { UserProfile } from '@/types'
 import { apiClient } from '@/services/apiClient'
 
@@ -14,32 +16,37 @@ interface UserProfilePageProps {
 
 export default function UserProfilePage({ userId }: UserProfilePageProps) {
   const { user: currentUser } = useAuth()
+  const router = useRouter()
   const [user, setUser] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<PostTypeFilter>('all')
 
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        setLoading(true)
-        const token = localStorage.getItem('auth_token')
-        const result = await apiClient.getUser(userId, token || undefined)
+  const fetchUser = async () => {
+    try {
+      setLoading(true)
+      const token = localStorage.getItem('auth_token')
+      const result = await apiClient.getUser(userId, token || undefined)
 
-        if (result.success) {
-          setUser(result.data.user)
-        } else {
-          setError(result.error.message)
-        }
-      } catch {
-        setError('ユーザー情報の取得に失敗しました')
-      } finally {
-        setLoading(false)
+      if (result.success) {
+        setUser(result.data.user)
+      } else {
+        setError(result.error.message)
       }
+    } catch {
+      setError('ユーザー情報の取得に失敗しました')
+    } finally {
+      setLoading(false)
     }
+  }
 
+  useEffect(() => {
     fetchUser()
   }, [userId])
+
+  const handleFollowChange = () => {
+    fetchUser()
+  }
 
   if (loading) {
     return (
@@ -85,7 +92,31 @@ export default function UserProfilePage({ userId }: UserProfilePageProps) {
           <div className="flex-1 min-w-0">
             <div className="flex justify-between items-start mb-1">
               <h1 className="text-2xl font-bold text-gray-900">{user.name}</h1>
+              {/* フォローボタン */}
+              <FollowButton
+                userId={user.id}
+                isFollowing={user.is_following || false}
+                isOwnProfile={isOwner || false}
+                onFollowChange={handleFollowChange}
+              />
             </div>
+
+            {/* フォロー数・フォロワー数 */}
+            <div className="flex gap-4 mb-3">
+              <button
+                onClick={() => router.push(`/users/${user.id}/following`)}
+                className="text-sm hover:underline"
+              >
+                <span className="font-semibold">{user.following_count}</span> フォロー中
+              </button>
+              <button
+                onClick={() => router.push(`/users/${user.id}/followers`)}
+                className="text-sm hover:underline"
+              >
+                <span className="font-semibold">{user.followers_count}</span> フォロワー
+              </button>
+            </div>
+
             {/* 本人の場合のみメールアドレスを表示 */}
             {isOwner && user.email && (
               <p className="text-gray-500 text-sm mb-3">{user.email}</p>

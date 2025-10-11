@@ -49,11 +49,18 @@ class UserService < ApplicationService
       name: user.name,
       bio: user.bio,
       avatar_url: build_avatar_url(user),
-      created_at: user.created_at
+      created_at: user.created_at,
+      following_count: user.following_count,
+      followers_count: user.followers_count
     }
 
     # 本人の場合のみメールアドレスを含める
     user_data[:email] = user.email if is_owner
+
+    # ログインユーザーの場合、フォロー状態を含める
+    if current_user
+      user_data[:is_following] = current_user.following?(user)
+    end
 
     user_data
   end

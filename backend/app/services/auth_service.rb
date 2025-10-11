@@ -246,7 +246,9 @@ class AuthService < ApplicationService
       name: user.name,
       bio: user.bio,
       avatar_url: avatar_url,
-      created_at: user.created_at.iso8601
+      created_at: user.created_at.iso8601,
+      following_count: user.following_count,
+      followers_count: user.followers_count
     }
   end
 

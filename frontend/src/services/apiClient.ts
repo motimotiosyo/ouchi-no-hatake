@@ -286,6 +286,34 @@ class ApiClient {
   }
 
   /**
+   * ユーザーフォロー（ApiResult型を返す）
+   */
+  async followUser(userId: number, token: string): Promise<ApiResult<{ message: string }>> {
+    return this.post<{ message: string }>(`/api/v1/users/${userId}/follow`, {}, token)
+  }
+
+  /**
+   * ユーザーフォロー解除（ApiResult型を返す）
+   */
+  async unfollowUser(userId: number, token: string): Promise<ApiResult<{ message: string }>> {
+    return this.delete<{ message: string }>(`/api/v1/users/${userId}/follow`, token)
+  }
+
+  /**
+   * フォロワー一覧取得（ApiResult型を返す）
+   */
+  async getFollowers(userId: number, token?: string): Promise<ApiResult<{ followers: import('@/types').UserProfile[], total_count: number }>> {
+    return this.get<{ followers: import('@/types').UserProfile[], total_count: number }>(`/api/v1/users/${userId}/followers`, token)
+  }
+
+  /**
+   * フォロー中一覧取得（ApiResult型を返す）
+   */
+  async getFollowing(userId: number, token?: string): Promise<ApiResult<{ following: import('@/types').UserProfile[], total_count: number }>> {
+    return this.get<{ following: import('@/types').UserProfile[], total_count: number }>(`/api/v1/users/${userId}/following`, token)
+  }
+
+  /**
    * DELETEリクエスト（ApiResult型を返す）
    */
   async delete<T>(endpoint: string, token?: string): Promise<ApiResult<T>> {

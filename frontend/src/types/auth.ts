@@ -11,6 +11,8 @@ export interface User {
   avatar_url?: string
   email_verified?: boolean
   created_at?: string
+  following_count?: number
+  followers_count?: number
 }
 
 // 他者プロフィール表示用（メールアドレスはオプショナル）
@@ -21,6 +23,9 @@ export interface UserProfile {
   avatar_url?: string
   email?: string  // 本人の場合のみ含まれる
   created_at: string
+  following_count: number
+  followers_count: number
+  is_following?: boolean  // ログインユーザーの場合のみ含まれる
 }
 
 // API関連の結果型（統一形式）

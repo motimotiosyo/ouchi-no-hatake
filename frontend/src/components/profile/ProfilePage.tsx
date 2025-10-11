@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuthContext as useAuth } from '@/contexts/auth'
 import PostsTab from './PostsTab'
 import EditProfileModal from './EditProfileModal'
@@ -9,6 +10,7 @@ type PostTypeFilter = 'all' | 'growth_record_post' | 'general_post'
 
 export default function ProfilePage() {
   const { user } = useAuth()
+  const router = useRouter()
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<PostTypeFilter>('all')
 
@@ -57,6 +59,25 @@ export default function ProfilePage() {
                 編集
               </button>
             </div>
+
+            {/* フォロー数・フォロワー数 */}
+            {(user.following_count !== undefined || user.followers_count !== undefined) && (
+              <div className="flex gap-4 mb-3">
+                <button
+                  onClick={() => router.push(`/users/${user.id}/following`)}
+                  className="text-sm hover:underline"
+                >
+                  <span className="font-semibold">{user.following_count || 0}</span> フォロー中
+                </button>
+                <button
+                  onClick={() => router.push(`/users/${user.id}/followers`)}
+                  className="text-sm hover:underline"
+                >
+                  <span className="font-semibold">{user.followers_count || 0}</span> フォロワー
+                </button>
+              </div>
+            )}
+
             <p className="text-gray-500 text-sm mb-3">{user.email}</p>
             {user.created_at && (
               <p className="text-gray-500 text-sm mb-3">
