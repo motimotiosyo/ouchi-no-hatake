@@ -31,8 +31,8 @@ export default function FavoriteButton({
 
     setIsProcessing(true)
 
-    try {
-      executeProtected(async () => {
+    executeProtected(async () => {
+      try {
         const result = favorited
           ? await apiClient.unfavoriteGrowthRecord(growthRecordId, token)
           : await apiClient.favoriteGrowthRecord(growthRecordId, token)
@@ -42,10 +42,10 @@ export default function FavoriteButton({
           setCount(result.data.favorites_count)
           onUpdate?.(result.data.favorited, result.data.favorites_count)
         }
-      })
-    } finally {
-      setIsProcessing(false)
-    }
+      } finally {
+        setIsProcessing(false)
+      }
+    })
   }
 
   if (!user) {
