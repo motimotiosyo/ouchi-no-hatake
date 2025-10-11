@@ -5,6 +5,8 @@ class User < ApplicationRecord
   has_many :likes, dependent: :destroy
   has_many :liked_posts, through: :likes, source: :post
   has_many :comments, dependent: :destroy
+  has_many :favorite_growth_records, dependent: :destroy
+  has_many :favorited_growth_records, through: :favorite_growth_records, source: :growth_record
 
   # フォロー関連
   has_many :active_follows, class_name: "Follow", foreign_key: "follower_id", dependent: :destroy

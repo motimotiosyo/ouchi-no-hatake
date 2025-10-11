@@ -2,6 +2,7 @@ class GrowthRecord < ApplicationRecord
   belongs_to :user
   belongs_to :plant
   has_many :posts, dependent: :destroy
+  has_many :favorite_growth_records, dependent: :destroy
 
   # サムネイル画像添付（1枚のみ）
   has_one_attached :thumbnail
@@ -18,6 +19,18 @@ class GrowthRecord < ApplicationRecord
     completed: 2,
     failed: 3
   }
+
+  # お気に入り数を取得
+  def favorites_count
+    favorite_growth_records.count
+  end
+
+  # 指定ユーザーがお気に入り済みかチェック
+  def favorited_by?(user)
+    return false unless user
+
+    favorite_growth_records.exists?(user: user)
+  end
 
   # 全成長記録の record_number を再計算
   def self.resequence_all
