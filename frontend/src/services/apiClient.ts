@@ -314,6 +314,27 @@ class ApiClient {
   }
 
   /**
+   * 成長記録をお気に入りに追加（ApiResult型を返す）
+   */
+  async favoriteGrowthRecord(growthRecordId: number, token: string): Promise<ApiResult<import('@/types/growthRecord').FavoriteResponse>> {
+    return this.post<import('@/types/growthRecord').FavoriteResponse>(`/api/v1/growth_records/${growthRecordId}/favorite`, {}, token)
+  }
+
+  /**
+   * 成長記録のお気に入りを解除（ApiResult型を返す）
+   */
+  async unfavoriteGrowthRecord(growthRecordId: number, token: string): Promise<ApiResult<import('@/types/growthRecord').FavoriteResponse>> {
+    return this.delete<import('@/types/growthRecord').FavoriteResponse>(`/api/v1/growth_records/${growthRecordId}/favorite`, token)
+  }
+
+  /**
+   * ユーザーのお気に入り成長記録一覧取得（ApiResult型を返す）
+   */
+  async getUserFavoriteGrowthRecords(userId: number, token?: string): Promise<ApiResult<{ growth_records: import('@/types/growthRecord').GrowthRecord[], pagination: unknown }>> {
+    return this.get<{ growth_records: import('@/types/growthRecord').GrowthRecord[], pagination: unknown }>(`/api/v1/users/${userId}/favorite_growth_records`, token)
+  }
+
+  /**
    * DELETEリクエスト（ApiResult型を返す）
    */
   async delete<T>(endpoint: string, token?: string): Promise<ApiResult<T>> {
