@@ -158,5 +158,36 @@ html {
 }
 
 .animate-slide-in {
-  animation: slide-in 0.3s ease-out;
+  animation: slide-in 0.5s ease-out forwards;
+  opacity: 0;
+}
+
+/* 診断結果のフェードインアニメーション */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out;
+}
+
+/* 診断結果カード用アニメーション（下からゆっくり現れる） */
+@keyframes result-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-result-fade-in {
+  animation: result-slide-up 0.6s ease-out forwards;
 }
