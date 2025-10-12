@@ -335,6 +335,20 @@ class ApiClient {
   }
 
   /**
+   * 家庭菜園チェッカー: 質問取得（ApiResult型を返す）
+   */
+  async getCheckerQuestions(): Promise<ApiResult<{ questions: import('@/types/checker').Question[] }>> {
+    return this.get<{ questions: import('@/types/checker').Question[] }>('/api/v1/checker/questions')
+  }
+
+  /**
+   * 家庭菜園チェッカー: 診断実行（ApiResult型を返す）
+   */
+  async submitCheckerAnswers(choiceIds: number[]): Promise<ApiResult<{ results: import('@/types/checker').DiagnosisResult[] }>> {
+    return this.post<{ results: import('@/types/checker').DiagnosisResult[] }>('/api/v1/checker/diagnose', { choice_ids: choiceIds })
+  }
+
+  /**
    * DELETEリクエスト（ApiResult型を返す）
    */
   async delete<T>(endpoint: string, token?: string): Promise<ApiResult<T>> {
