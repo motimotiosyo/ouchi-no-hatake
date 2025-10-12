@@ -21,7 +21,7 @@ class GrowthRecordService < ApplicationService
   end
 
   # 単一成長記録のレスポンス構築
-  def self.build_growth_record_response(record)
+  def self.build_growth_record_response(record, current_user = nil)
     {
       id: record.id,
       record_number: record.record_number,
@@ -37,12 +37,14 @@ class GrowthRecordService < ApplicationService
         name: record.plant.name,
         description: record.plant.description
       },
-      thumbnail_url: build_thumbnail_url(record)
+      thumbnail_url: build_thumbnail_url(record),
+      favorites_count: record.favorites_count,
+      favorited_by_current_user: current_user ? record.favorited_by?(current_user) : false
     }
   end
 
   # 成長記録詳細レスポンス構築（投稿データ付き）
-  def self.build_growth_record_detail(record, posts)
+  def self.build_growth_record_detail(record, posts, current_user = nil)
     posts_data = posts.map do |post|
       post_data = {
         id: post.id,
@@ -62,8 +64,8 @@ class GrowthRecordService < ApplicationService
       post_data
     end
 
-    {
-      growth_record: build_growth_record_response(record).merge(
+        {
+      growth_record: build_growth_record_response(record, current_user).merge(
         user: {
           id: record.user.id,
           name: record.user.name

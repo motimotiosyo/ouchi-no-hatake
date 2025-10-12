@@ -19,7 +19,9 @@ Rails.application.routes.draw do
       end
 
       # 成長記録関連API
-      resources :growth_records, only: [ :index, :show, :create, :update, :destroy ]
+      resources :growth_records, only: [ :index, :show, :create, :update, :destroy ] do
+        resource :favorite, controller: "favorite_growth_records", only: [ :create, :destroy ]
+      end
 
       # 植物関連API
       resources :plants, only: [ :index ]
@@ -29,6 +31,7 @@ Rails.application.routes.draw do
         resource :follow, controller: "follows", only: [ :create, :destroy ]
         get "followers", to: "follows#followers"
         get "following", to: "follows#following"
+        get "favorite_growth_records", to: "users#favorite_growth_records"
       end
       put "/users/profile", to: "users#update_profile"
     end

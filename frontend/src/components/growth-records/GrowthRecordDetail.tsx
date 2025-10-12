@@ -7,6 +7,7 @@ import { apiClient } from '@/services/apiClient'
 import CreateGrowthRecordModal from './CreateGrowthRecordModal'
 import DeleteConfirmDialog from './DeleteConfirmDialog'
 import CreatePostModal from '../posts/CreatePostModal'
+import FavoriteButton from './FavoriteButton'
 import type { Post } from '@/types'
 
 interface GrowthRecord {
@@ -29,6 +30,8 @@ interface GrowthRecord {
     id: number
     name: string
   }
+  favorites_count: number
+  favorited_by_current_user: boolean
 }
 
 interface Props {
@@ -234,22 +237,40 @@ export default function GrowthRecordDetail({ id }: Props) {
                   {getStatusText(growthRecord.status)}
                 </span>
               </div>
-              {user && user.id === growthRecord.user.id && (
-                <div className="flex space-x-2">
-                  <button
-                    onClick={handleEditButtonClick}
-                    className="px-4 py-2 text-sm text-orange-600 bg-orange-50 rounded hover:bg-orange-100 transition-colors"
-                  >
-                    編集
-                  </button>
-                  <button
-                    onClick={handleDeleteButtonClick}
-                    className="px-4 py-2 text-sm text-red-600 bg-red-50 rounded hover:bg-red-100 transition-colors"
-                  >
-                    削除
-                  </button>
-                </div>
-              )}
+              <div className="flex space-x-2">
+                {/* お気に入りボタン */}
+                {user && user.id !== growthRecord.user.id && (
+                  <FavoriteButton
+                    growthRecordId={growthRecord.id}
+                    initialFavorited={growthRecord.favorited_by_current_user}
+                    initialCount={growthRecord.favorites_count}
+                    onUpdate={(favorited, count) => {
+                      setGrowthRecord(prev => prev ? {
+                        ...prev,
+                        favorited_by_current_user: favorited,
+                        favorites_count: count
+                      } : null)
+                    }}
+                  />
+                )}
+                {/* 編集・削除ボタン（本人のみ） */}
+                {user && user.id === growthRecord.user.id && (
+                  <>
+                    <button
+                      onClick={handleEditButtonClick}
+                      className="px-4 py-2 text-sm text-orange-600 bg-orange-50 rounded hover:bg-orange-100 transition-colors"
+                    >
+                      編集
+                    </button>
+                    <button
+                      onClick={handleDeleteButtonClick}
+                      className="px-4 py-2 text-sm text-red-600 bg-red-50 rounded hover:bg-red-100 transition-colors"
+                    >
+                      削除
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

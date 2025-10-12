@@ -33,11 +33,14 @@ class Api::V1::GrowthRecordsController < ApplicationController
 
   def show
     begin
+      # トークンがあれば認証を試みる（オプショナル認証）
+      set_optional_current_user
+
       posts = @growth_record.posts
         .includes(:user, :category)
         .order(created_at: :desc)
 
-      response_data = GrowthRecordService.build_growth_record_detail(@growth_record, posts)
+      response_data = GrowthRecordService.build_growth_record_detail(@growth_record, posts, current_user)
       render json: ApplicationSerializer.success(data: response_data)
 
     rescue => e
@@ -128,5 +131,21 @@ class Api::V1::GrowthRecordsController < ApplicationController
 
   def growth_record_params
     params.require(:growth_record).permit(:plant_id, :record_name, :location, :started_on, :ended_on, :status, :thumbnail, :remove_thumbnail)
+  end
+
+  def set_optional_current_user
+    header = request.headers["Authorization"]
+    return unless header
+
+    token = header.split(" ").last
+    return if token.blank?
+
+    begin
+      decoded = JsonWebToken.decode(token)
+      @current_user = User.find(decoded[:user_id]) if decoded[:user_id]
+    rescue => e
+      # 認証エラーは無視（オプショナル認証のため）
+      Rails.logger.info "Optional auth failed: #{e.message}"
+    end
   end
 end
