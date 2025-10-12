@@ -26,6 +26,10 @@ Rails.application.routes.draw do
       # 植物関連API
       resources :plants, only: [ :index ]
 
+      # 家庭菜園チェッカー関連API
+      get "checker/questions", to: "checker#questions"
+      post "checker/diagnose", to: "checker#diagnose"
+
       # ユーザー関連API
       resources :users, only: [ :show ] do
         resource :follow, controller: "follows", only: [ :create, :destroy ]
