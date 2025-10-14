@@ -135,7 +135,7 @@ export default function GrowthRecordList() {
 
       {/* 家庭菜園チェッカーへの誘導バナー */}
       <Link href="/checker">
-        <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg shadow-md border-2 border-green-200 p-6 mb-6 hover:shadow-lg hover:border-green-300 transition-all cursor-pointer">
+        <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg shadow-md border-2 border-green-200 p-6 mb-6 hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02] transition-all duration-200 cursor-pointer">
           <div className="flex items-start gap-4">
             <div className="flex-shrink-0">
               <div className="bg-green-500 rounded-full p-3">

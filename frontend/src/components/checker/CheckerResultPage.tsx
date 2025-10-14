@@ -101,8 +101,7 @@ export default function CheckerResultPage({ results, selectedChoices, onRetry }:
           const medalBgs = ['bg-yellow-50', 'bg-gray-50', 'bg-orange-50']
           const borderColors = ['border-yellow-200', 'border-gray-300', 'border-orange-200']
           const sizes = ['text-3xl', 'text-2xl', 'text-xl']
-          // 5位から順に表示: 5位->4位->3位->2位->1位
-          // 1位(index=0)は4秒後、2位(index=1)は3秒後、3位(index=2)は2秒後
+          // 3位から順に表示: 3位(0秒)->2位(1秒)->1位(2秒)
           const animationDelay = (2 - index) * 1000
 
           return (
@@ -146,65 +145,23 @@ export default function CheckerResultPage({ results, selectedChoices, onRetry }:
         })}
       </div>
 
-      {/* 4-5位結果（標準表示） */}
+      {/* 4位以下（その他の結果として折りたたみ） */}
       {results.length > 3 && (
-        <div className="space-y-4 mb-8">
-          {results.slice(3, 5).map((result, index) => {
-            const actualIndex = index + 3
-            // 5位(index=0)は0秒後、4位(index=1)は1秒後
-            const animationDelay = (1 - index) * 1000
-            return (
-              <div
-                key={result.plant.id}
-                className="bg-white rounded-lg shadow-md hover:shadow-lg border border-gray-200 transition-all duration-200 p-5 animate-slide-in-right"
-                style={{ animationDelay: `${animationDelay}ms` }}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <span className="text-xl font-bold text-green-600">
-                        {actualIndex + 1}位
-                      </span>
-                      <h3 className="text-lg font-bold text-gray-800">
-                        {result.plant.name}
-                      </h3>
-                    </div>
-                    <p className="text-gray-600 mb-3 text-sm">{result.plant.description}</p>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-gray-500">適合スコア:</span>
-                      <div className="flex-1 max-w-xs bg-gray-200 rounded-full h-2">
-                        <div
-                          className="bg-green-600 h-2 rounded-full transition-all duration-500"
-                          style={{
-                            width: `${(result.score / Math.max(...results.map(r => r.score))) * 100}%`
-                          }}
-                        />
-                      </div>
-                      <span className="text-sm font-medium text-gray-700">{result.score}点</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      )}
-
-      {/* 6位以下（折りたたみ） */}
-      {results.length > 5 && (
         <div className="mb-8">
           <button
             onClick={() => setIsOtherResultsOpen(!isOtherResultsOpen)}
-            className="w-full bg-gray-50 hover:bg-gray-100 rounded-lg shadow-md border border-gray-200 px-6 py-4 flex items-center justify-between transition-colors"
+            className="w-full bg-white rounded-lg shadow-md border border-gray-200 p-5 hover:shadow-lg transition-all duration-200 flex items-center justify-between"
           >
-            <div className="flex items-center gap-2">
-              <svg className="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+            <div className="flex items-center gap-3">
+              <svg className="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
-              <span className="font-bold text-gray-800">その他の結果（{results.length - 5}件）</span>
+              <span className="text-lg font-semibold text-gray-800">
+                その他の結果（{results.length - 3}件）
+              </span>
             </div>
             <svg
-              className={`w-5 h-5 text-gray-600 transition-transform ${isOtherResultsOpen ? 'rotate-180' : ''}`}
+              className={`w-5 h-5 text-gray-500 transition-transform ${isOtherResultsOpen ? 'rotate-180' : ''}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -212,26 +169,28 @@ export default function CheckerResultPage({ results, selectedChoices, onRetry }:
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
             </svg>
           </button>
+
           {isOtherResultsOpen && (
             <div className="mt-4 space-y-3">
-              {results.slice(5).map((result, index) => {
-                const actualIndex = index + 5
+              {results.slice(3).map((result, index) => {
+                const actualIndex = index + 3
                 return (
                   <div
                     key={result.plant.id}
-                    className="bg-white rounded-lg shadow-sm border border-gray-200 p-4"
+                    className="bg-white rounded-lg shadow border border-gray-200 p-4 hover:shadow-md transition-all duration-200"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <span className="text-lg font-bold text-gray-500">
+                        <span className="text-lg font-bold text-gray-600">
                           {actualIndex + 1}位
                         </span>
-                        <h3 className="text-base font-bold text-gray-800">
+                        <h3 className="text-lg font-bold text-gray-800">
                           {result.plant.name}
                         </h3>
                       </div>
-                      <span className="text-sm font-medium text-gray-600">{result.score}点</span>
+                      <span className="text-base font-medium text-gray-600">{result.score}点</span>
                     </div>
+                    <p className="text-gray-600 mt-2 text-sm">{result.plant.description}</p>
                   </div>
                 )
               })}
