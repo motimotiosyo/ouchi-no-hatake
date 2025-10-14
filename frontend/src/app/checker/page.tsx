@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { apiClient } from '@/services/apiClient'
 import { Question, DiagnosisResult, SelectedChoice } from '@/types/checker'
 import CheckerQuestionPage from '@/components/checker/CheckerQuestionPage'
 import CheckerResultPage from '@/components/checker/CheckerResultPage'
 
-export default function CheckerPage() {
+function CheckerPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [questions, setQuestions] = useState<Question[]>([])
@@ -178,5 +178,20 @@ export default function CheckerPage() {
         />
       </div>
     </div>
+  )
+}
+
+export default function CheckerPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    }>
+      <CheckerPageContent />
+    </Suspense>
   )
 }
