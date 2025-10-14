@@ -16,6 +16,17 @@ export interface Plant {
 }
 
 /**
+ * ガイド情報（簡易版）
+ */
+export interface GrowthRecordGuide {
+  id: ID
+  plant: {
+    id: ID
+    name: string
+  }
+}
+
+/**
  * 成長記録型
  */
 export interface GrowthRecord {
@@ -29,6 +40,7 @@ export interface GrowthRecord {
   created_at: DateTimeString
   updated_at: DateTimeString
   plant: Plant
+  guide: GrowthRecordGuide | null
   thumbnail_url: string | null
   favorites_count: number
   favorited_by_current_user: boolean

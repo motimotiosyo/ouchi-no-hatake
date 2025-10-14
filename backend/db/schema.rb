@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_10_14_124638) do
+ActiveRecord::Schema[7.2].define(version: 2025_10_14_170212) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -132,6 +132,8 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_14_124638) do
     t.integer "status", default: 0
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.bigint "guide_id"
+    t.index ["guide_id"], name: "index_growth_records_on_guide_id"
     t.index ["plant_id"], name: "index_growth_records_on_plant_id"
     t.index ["user_id"], name: "index_growth_records_on_user_id"
   end
@@ -245,6 +247,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_14_124638) do
   add_foreign_key "growth_record_sequences", "users"
   add_foreign_key "growth_record_steps", "growth_records"
   add_foreign_key "growth_record_steps", "guide_steps"
+  add_foreign_key "growth_records", "guides"
   add_foreign_key "growth_records", "plants"
   add_foreign_key "growth_records", "users"
   add_foreign_key "guide_steps", "guides"

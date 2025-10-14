@@ -1,6 +1,7 @@
 class GrowthRecord < ApplicationRecord
   belongs_to :user
   belongs_to :plant
+  belongs_to :guide, optional: true
   has_many :posts, dependent: :destroy
   has_many :favorite_growth_records, dependent: :destroy
 

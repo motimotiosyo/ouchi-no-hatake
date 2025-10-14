@@ -10,6 +10,14 @@ interface Plant {
   description: string
 }
 
+interface Guide {
+  id: number
+  plant: {
+    id: number
+    name: string
+  }
+}
+
 interface GrowthRecord {
   id: number
   plant_id: number
@@ -36,12 +44,14 @@ interface Props {
 export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, editData }: Props) {
   const { executeProtectedAsync } = useAuth()
   const [plants, setPlants] = useState<Plant[]>([])
+  const [guides, setGuides] = useState<Guide[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   // フォーム状態
   const [formData, setFormData] = useState({
     plant_id: '',
+    guide_id: '',
     record_name: '',
     location: '',
     started_on: '',
@@ -58,7 +68,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
   const fetchPlants = useCallback(async () => {
     try {
       const result = await apiClient.get<{ plants: Plant[] }>('/api/v1/plants')
-      
+
       if (result.success) {
         setPlants(result.data.plants || [])
       } else {
@@ -69,6 +79,29 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
     }
   }, [])
 
+  const fetchGuides = useCallback(async (plantId: string) => {
+    if (!plantId) {
+      setGuides([])
+      return
+    }
+
+    try {
+      const result = await apiClient.get<{ guides: Guide[] }>('/api/v1/guides')
+
+      if (result.success) {
+        // 選択した植物に対応するガイドのみフィルタリング
+        const filteredGuides = (result.data.guides || []).filter(
+          guide => guide.plant.id.toString() === plantId
+        )
+        setGuides(filteredGuides)
+      } else {
+        console.error('ガイドデータの取得に失敗:', result.error.message)
+      }
+    } catch (err) {
+      console.error('ガイドデータの取得でエラーが発生しました:', err)
+    }
+  }, [])
+
   // 植物一覧取得と編集データ設定
   useEffect(() => {
     if (isOpen) {
@@ -76,15 +109,20 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
 
       // 編集モードの場合、初期値を設定
       if (editData) {
+        const plantId = editData.plant_id.toString()
         setFormData({
-          plant_id: editData.plant_id.toString(),
+          plant_id: plantId,
+          guide_id: '',
           record_name: editData.record_name || '',
           location: editData.location || '',
           started_on: editData.started_on || '',
           ended_on: editData.ended_on || '',
           status: editData.status || 'planning'
         })
-        
+
+        // 植物に対応するガイドを取得
+        fetchGuides(plantId)
+
         // 既存のサムネイル画像がある場合はプレビューを設定
         if (editData.thumbnail_url) {
           setThumbnailPreview(editData.thumbnail_url)
@@ -93,6 +131,17 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen])
+
+  // 植物選択時にガイドを取得
+  useEffect(() => {
+    if (formData.plant_id) {
+      fetchGuides(formData.plant_id)
+    } else {
+      setGuides([])
+      setFormData(prev => ({ ...prev, guide_id: '' }))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.plant_id])
 
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -165,6 +214,9 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
         // FormDataを使用して送信
         const formDataToSend = new FormData()
         formDataToSend.append('growth_record[plant_id]', formData.plant_id)
+        if (formData.guide_id) {
+          formDataToSend.append('growth_record[guide_id]', formData.guide_id)
+        }
         formDataToSend.append('growth_record[record_name]', formData.record_name)
         formDataToSend.append('growth_record[location]', formData.location)
         formDataToSend.append('growth_record[started_on]', formData.started_on)
@@ -217,12 +269,14 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
     setError(null)
     setFormData({
       plant_id: '',
+      guide_id: '',
       record_name: '',
       location: '',
       started_on: '',
       ended_on: '',
       status: 'planning'
     })
+    setGuides([])
     setSelectedThumbnail(null)
     setThumbnailPreview('')
     setImageError('')
@@ -305,6 +359,32 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
                 ))}
               </select>
             </div>
+
+            {/* ガイド選択 */}
+            {formData.plant_id && guides.length > 0 && (
+              <div>
+                <label htmlFor="guide_id" className="block text-sm font-medium text-gray-700 mb-2">
+                  参考ガイド（任意）
+                </label>
+                <select
+                  id="guide_id"
+                  name="guide_id"
+                  value={formData.guide_id}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                >
+                  <option value="">選択しない</option>
+                  {guides.map(guide => (
+                    <option key={guide.id} value={guide.id}>
+                      {guide.plant.name}の育て方ガイド
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  ガイドを紐づけると、育て方の手順を参照しながら栽培を進められます
+                </p>
+              </div>
+            )}
 
             {/* 記録名 */}
             <div>

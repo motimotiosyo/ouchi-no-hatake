@@ -22,7 +22,7 @@ class GrowthRecordService < ApplicationService
 
   # 単一成長記録のレスポンス構築
   def self.build_growth_record_response(record, current_user = nil)
-    {
+    response = {
       id: record.id,
       record_number: record.record_number,
       record_name: record.record_name,
@@ -41,6 +41,21 @@ class GrowthRecordService < ApplicationService
       favorites_count: record.favorites_count,
       favorited_by_current_user: current_user ? record.favorited_by?(current_user) : false
     }
+
+    # ガイド情報を追加（紐づいている場合のみ）
+    if record.guide
+      response[:guide] = {
+        id: record.guide.id,
+        plant: {
+          id: record.guide.plant.id,
+          name: record.guide.plant.name
+        }
+      }
+    else
+      response[:guide] = nil
+    end
+
+    response
   end
 
   # 成長記録詳細レスポンス構築（投稿データ付き）

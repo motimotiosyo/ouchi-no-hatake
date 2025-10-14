@@ -26,6 +26,13 @@ interface GrowthRecord {
     name: string
     description: string
   }
+  guide?: {
+    id: number
+    plant: {
+      id: number
+      name: string
+    }
+  } | null
   user: {
     id: number
     name: string
@@ -294,6 +301,17 @@ export default function GrowthRecordDetail({ id }: Props) {
                   {growthRecord.ended_on ? formatDate(growthRecord.ended_on) : '---.--.-'}
                 </p>
               </div>
+              {growthRecord.guide && (
+                <div className="md:col-span-2">
+                  <h3 className="text-sm font-medium text-gray-500 mb-1">参考ガイド</h3>
+                  <a
+                    href={`/guides/${growthRecord.guide.id}`}
+                    className="text-blue-600 hover:text-blue-800 hover:underline"
+                  >
+                    {growthRecord.guide.plant.name}の育て方ガイド →
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         </div>
