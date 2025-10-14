@@ -17,6 +17,7 @@ function CheckerPageContent() {
   const [selectedChoices, setSelectedChoices] = useState<SelectedChoice[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [hasRestoredFromUrl, setHasRestoredFromUrl] = useState(false)
 
   // 質問データ取得
   useEffect(() => {
@@ -38,10 +39,10 @@ function CheckerPageContent() {
     fetchQuestions()
   }, [])
 
-  // URLパラメータから結果を復元
+  // URLパラメータから結果を復元（初回マウント時のみ）
   useEffect(() => {
     const choiceIdsParam = searchParams.get('choices')
-    if (choiceIdsParam && !results) {
+    if (choiceIdsParam && !results && !hasRestoredFromUrl) {
       const restoreResults = async () => {
         setIsLoading(true)
         try {
@@ -51,6 +52,7 @@ function CheckerPageContent() {
           if (result.success) {
             setResults(result.data.results)
             setSelectedChoices(result.data.selected_choices || [])
+            setHasRestoredFromUrl(true)
           }
         } catch (err) {
           // URLパラメータが不正な場合は無視
@@ -59,7 +61,8 @@ function CheckerPageContent() {
       }
       restoreResults()
     }
-  }, [searchParams, results])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
 
   // 選択肢を選択
   const handleSelectChoice = (choiceId: number) => {
@@ -115,6 +118,7 @@ function CheckerPageContent() {
     setResults(null)
     setSelectedChoices([])
     setError(null)
+    setHasRestoredFromUrl(false) // 復元フラグをリセット
     // URLパラメータをクリア
     router.push('/checker', { scroll: false })
   }
