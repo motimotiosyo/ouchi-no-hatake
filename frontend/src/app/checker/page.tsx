@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { apiClient } from '@/services/apiClient'
 import { Question, DiagnosisResult, SelectedChoice } from '@/types/checker'
 import CheckerQuestionPage from '@/components/checker/CheckerQuestionPage'
@@ -9,6 +9,7 @@ import CheckerResultPage from '@/components/checker/CheckerResultPage'
 
 export default function CheckerPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [questions, setQuestions] = useState<Question[]>([])
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [answers, setAnswers] = useState<Record<number, number>>({}) // questionIndex -> choiceId
@@ -36,6 +37,29 @@ export default function CheckerPage() {
 
     fetchQuestions()
   }, [])
+
+  // URLパラメータから結果を復元
+  useEffect(() => {
+    const choiceIdsParam = searchParams.get('choices')
+    if (choiceIdsParam && !results) {
+      const restoreResults = async () => {
+        setIsLoading(true)
+        try {
+          const choiceIds = choiceIdsParam.split(',').map(Number)
+          const result = await apiClient.submitCheckerAnswers(choiceIds)
+
+          if (result.success) {
+            setResults(result.data.results)
+            setSelectedChoices(result.data.selected_choices || [])
+          }
+        } catch (err) {
+          // URLパラメータが不正な場合は無視
+        }
+        setIsLoading(false)
+      }
+      restoreResults()
+    }
+  }, [searchParams, results])
 
   // 選択肢を選択
   const handleSelectChoice = (choiceId: number) => {
@@ -72,6 +96,11 @@ export default function CheckerPage() {
     if (result.success) {
       setResults(result.data.results)
       setSelectedChoices(result.data.selected_choices || [])
+
+      // URLパラメータに選択肢IDを保存（リロード時に結果を復元するため）
+      const params = new URLSearchParams()
+      params.set('choices', choiceIds.join(','))
+      router.push(`/checker?${params.toString()}`, { scroll: false })
     } else {
       setError(result.error.message)
     }
@@ -86,6 +115,8 @@ export default function CheckerPage() {
     setResults(null)
     setSelectedChoices([])
     setError(null)
+    // URLパラメータをクリア
+    router.push('/checker', { scroll: false })
   }
 
   // ローディング画面
