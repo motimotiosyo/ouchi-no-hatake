@@ -4,7 +4,8 @@ class Api::V1::GuidesController < ApplicationController
       result = GuideService.fetch_guides
       render json: result
     rescue => e
-      Logger.error "Error in GuidesController#index: #{e.message}"
+      Rails.logger.debug "Error in GuidesController#index: #{e.message}" if Rails.env.development?
+      Rails.logger.error "Error in GuidesController#index"
       render json: ApplicationSerializer.error(
         message: "ガイド一覧の取得に失敗しました",
         code: "INTERNAL_SERVER_ERROR"
@@ -22,7 +23,8 @@ class Api::V1::GuidesController < ApplicationController
         code: "NOT_FOUND"
       ), status: :not_found
     rescue => e
-      Logger.error "Error in GuidesController#show: #{e.message}"
+      Rails.logger.debug "Error in GuidesController#show: #{e.message}" if Rails.env.development?
+      Rails.logger.error "Error in GuidesController#show"
       render json: ApplicationSerializer.error(
         message: "ガイド詳細の取得に失敗しました",
         code: "INTERNAL_SERVER_ERROR"
