@@ -22,13 +22,13 @@ export default function AuthenticatedFooter() {
             <span className="text-xs">成長記録</span>
           </Link>
           
-          {/* 育て方指南 */}
-          <button disabled className="flex flex-col items-center space-y-1 opacity-50 cursor-not-allowed">
+          {/* 育て方ガイド */}
+          <Link href="/guides" className="flex flex-col items-center space-y-1">
             <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-8-3a1 1 0 00-.867.5 1 1 0 11-1.731-1A3 3 0 0113 8a3.001 3.001 0 01-2 2.83V11a1 1 0 11-2 0v-1a1 1 0 011-1 1 1 0 100-2zm0 8a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+              <path d="M9 4.804A7.968 7.968 0 005.5 4c-1.255 0-2.443.29-3.5.804v10A7.969 7.969 0 015.5 14c1.669 0 3.218.51 4.5 1.385A7.962 7.962 0 0114.5 14c1.255 0 2.443.29 3.5.804v-10A7.968 7.968 0 0014.5 4c-1.255 0-2.443.29-3.5.804V12a1 1 0 11-2 0V4.804z" />
             </svg>
-            <span className="text-xs">育て方指南</span>
-          </button>
+            <span className="text-xs">育て方ガイド</span>
+          </Link>
           
           {/* マイページ */}
           <Link href="/profile" className="flex flex-col items-center space-y-1">
