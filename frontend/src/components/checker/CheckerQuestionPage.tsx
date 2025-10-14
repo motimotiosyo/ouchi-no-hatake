@@ -28,6 +28,16 @@ export default function CheckerQuestionPage({
 
   return (
     <div className="px-4 py-6">
+      {/* タイトルと説明（最初の質問のみ） */}
+      {isFirstQuestion && (
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-gray-800 mb-4">家庭菜園チェッカー</h1>
+          <p className="text-gray-600 text-lg">
+            質問に答えて、あなたにぴったりの野菜を見つけましょう！
+          </p>
+        </div>
+      )}
+
       {/* 進捗表示 */}
       <div className="mb-8">
         <div className="flex justify-between items-center mb-2">

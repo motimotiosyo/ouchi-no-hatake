@@ -1,20 +1,24 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useEffect, useState, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { apiClient } from '@/services/apiClient'
-import { Question, DiagnosisResult } from '@/types/checker'
+import { Question, DiagnosisResult, SelectedChoice } from '@/types/checker'
 import CheckerQuestionPage from '@/components/checker/CheckerQuestionPage'
 import CheckerResultPage from '@/components/checker/CheckerResultPage'
 
-export default function CheckerPage() {
+function CheckerPageContent() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [questions, setQuestions] = useState<Question[]>([])
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [answers, setAnswers] = useState<Record<number, number>>({}) // questionIndex -> choiceId
   const [results, setResults] = useState<DiagnosisResult[] | null>(null)
+  const [selectedChoices, setSelectedChoices] = useState<SelectedChoice[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [hasRestoredFromUrl, setHasRestoredFromUrl] = useState(false)
+  const [animationKey, setAnimationKey] = useState(0) // アニメーションをリセットするためのkey
 
   // 質問データ取得
   useEffect(() => {
@@ -35,6 +39,32 @@ export default function CheckerPage() {
 
     fetchQuestions()
   }, [])
+
+  // URLパラメータから結果を復元（初回マウント時のみ）
+  useEffect(() => {
+    const choiceIdsParam = searchParams.get('choices')
+    if (choiceIdsParam && !results && !hasRestoredFromUrl) {
+      const restoreResults = async () => {
+        setIsLoading(true)
+        try {
+          const choiceIds = choiceIdsParam.split(',').map(Number)
+          const result = await apiClient.submitCheckerAnswers(choiceIds)
+
+          if (result.success) {
+            setResults(result.data.results)
+            setSelectedChoices(result.data.selected_choices || [])
+            setHasRestoredFromUrl(true)
+            setAnimationKey(prev => prev + 1) // アニメーションをリセット
+          }
+        } catch {
+          // URLパラメータが不正な場合は無視
+        }
+        setIsLoading(false)
+      }
+      restoreResults()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams])
 
   // 選択肢を選択
   const handleSelectChoice = (choiceId: number) => {
@@ -70,6 +100,13 @@ export default function CheckerPage() {
 
     if (result.success) {
       setResults(result.data.results)
+      setSelectedChoices(result.data.selected_choices || [])
+      setAnimationKey(prev => prev + 1) // アニメーションをリセット
+
+      // URLパラメータに選択肢IDを保存（リロード時に結果を復元するため）
+      const params = new URLSearchParams()
+      params.set('choices', choiceIds.join(','))
+      router.push(`/checker?${params.toString()}`, { scroll: false })
     } else {
       setError(result.error.message)
     }
@@ -82,7 +119,11 @@ export default function CheckerPage() {
     setCurrentQuestionIndex(0)
     setAnswers({})
     setResults(null)
+    setSelectedChoices([])
     setError(null)
+    setHasRestoredFromUrl(false) // 復元フラグをリセット
+    // URLパラメータをクリア
+    router.push('/checker', { scroll: false })
   }
 
   // ローディング画面
@@ -119,7 +160,12 @@ export default function CheckerPage() {
     return (
       <div className="flex justify-center">
         <div className="w-full max-w-2xl min-w-80">
-          <CheckerResultPage results={results} onRetry={handleRetry} />
+          <CheckerResultPage
+            key={animationKey}
+            results={results}
+            selectedChoices={selectedChoices}
+            onRetry={handleRetry}
+          />
         </div>
       </div>
     )
@@ -144,5 +190,20 @@ export default function CheckerPage() {
         />
       </div>
     </div>
+  )
+}
+
+export default function CheckerPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    }>
+      <CheckerPageContent />
+    </Suspense>
   )
 }
