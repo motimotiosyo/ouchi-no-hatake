@@ -18,6 +18,7 @@ function CheckerPageContent() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [hasRestoredFromUrl, setHasRestoredFromUrl] = useState(false)
+  const [animationKey, setAnimationKey] = useState(0) // アニメーションをリセットするためのkey
 
   // 質問データ取得
   useEffect(() => {
@@ -53,6 +54,7 @@ function CheckerPageContent() {
             setResults(result.data.results)
             setSelectedChoices(result.data.selected_choices || [])
             setHasRestoredFromUrl(true)
+            setAnimationKey(prev => prev + 1) // アニメーションをリセット
           }
         } catch (err) {
           // URLパラメータが不正な場合は無視
@@ -99,6 +101,7 @@ function CheckerPageContent() {
     if (result.success) {
       setResults(result.data.results)
       setSelectedChoices(result.data.selected_choices || [])
+      setAnimationKey(prev => prev + 1) // アニメーションをリセット
 
       // URLパラメータに選択肢IDを保存（リロード時に結果を復元するため）
       const params = new URLSearchParams()
@@ -157,7 +160,12 @@ function CheckerPageContent() {
     return (
       <div className="flex justify-center">
         <div className="w-full max-w-2xl min-w-80">
-          <CheckerResultPage results={results} selectedChoices={selectedChoices} onRetry={handleRetry} />
+          <CheckerResultPage
+            key={animationKey}
+            results={results}
+            selectedChoices={selectedChoices}
+            onRetry={handleRetry}
+          />
         </div>
       </div>
     )
