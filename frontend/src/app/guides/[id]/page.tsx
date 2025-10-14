@@ -1,17 +1,16 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter, useParams } from 'next/navigation'
+import { useParams } from 'next/navigation'
 import Link from 'next/link'
-import { useAuthContext as useAuth } from '@/contexts/auth'
+import { useRequireAuthWithRender } from '@/hooks/useRequireAuth'
 import { apiClient } from '@/services/apiClient'
 import { Guide } from '@/types/guide'
 import GuideDetail from '@/components/guides/GuideDetail'
 
 export default function GuideDetailPage() {
-  const router = useRouter()
   const params = useParams()
-  const { user, token } = useAuth()
+  const { canAccess, isLoading } = useRequireAuthWithRender()
   const [guide, setGuide] = useState<Guide | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -19,11 +18,7 @@ export default function GuideDetailPage() {
   const guideId = params?.id ? Number(params.id) : null
 
   useEffect(() => {
-    // 未ログインユーザーはログイン画面にリダイレクト
-    if (!user || !token) {
-      router.push('/login')
-      return
-    }
+    if (!canAccess) return
 
     // IDが不正な場合
     if (!guideId || isNaN(guideId)) {
@@ -36,6 +31,9 @@ export default function GuideDetailPage() {
       try {
         setLoading(true)
         setError(null)
+
+        const token = localStorage.getItem('auth_token')
+        if (!token) return
 
         const result = await apiClient.getGuideDetail(guideId, token)
 
@@ -54,29 +52,32 @@ export default function GuideDetailPage() {
     }
 
     fetchGuideDetail()
-  }, [user, token, guideId, router])
+  }, [canAccess, guideId])
 
-  if (!user || !token) {
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-gray-600">読み込み中...</div>
+      </div>
+    )
+  }
+
+  if (!canAccess) {
     return null
   }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
-            <p className="mt-4 text-gray-600">読み込み中...</p>
-          </div>
-        </div>
+      <div className="flex justify-center items-center py-8">
+        <div className="text-gray-600">読み込み中...</div>
       </div>
     )
   }
 
   if (error || !guide) {
     return (
-      <div className="min-h-screen bg-gray-50 py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="flex justify-center">
+        <div className="w-full max-w-2xl min-w-80 px-4 py-6">
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
             <p className="text-red-800">{error || 'ガイドが見つかりません'}</p>
           </div>
@@ -105,8 +106,8 @@ export default function GuideDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="flex justify-center">
+      <div className="w-full max-w-2xl min-w-80 px-4 py-6">
         {/* 戻るボタン */}
         <div className="mb-6">
           <Link
