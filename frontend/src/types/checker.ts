@@ -34,3 +34,11 @@ export interface DiagnosisResult {
   plant: DiagnosisPlant
   score: number
 }
+
+/**
+ * 選択した内容
+ */
+export interface SelectedChoice {
+  question_text: string
+  choice_text: string
+}

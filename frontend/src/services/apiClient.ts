@@ -344,8 +344,8 @@ class ApiClient {
   /**
    * 家庭菜園チェッカー: 診断実行（ApiResult型を返す）
    */
-  async submitCheckerAnswers(choiceIds: number[]): Promise<ApiResult<{ results: import('@/types/checker').DiagnosisResult[] }>> {
-    return this.post<{ results: import('@/types/checker').DiagnosisResult[] }>('/api/v1/checker/diagnose', { choice_ids: choiceIds })
+  async submitCheckerAnswers(choiceIds: number[]): Promise<ApiResult<{ results: import('@/types/checker').DiagnosisResult[], selected_choices: import('@/types/checker').SelectedChoice[] }>> {
+    return this.post<{ results: import('@/types/checker').DiagnosisResult[], selected_choices: import('@/types/checker').SelectedChoice[] }>('/api/v1/checker/diagnose', { choice_ids: choiceIds })
   }
 
   /**

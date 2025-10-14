@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { apiClient } from '@/services/apiClient'
-import { Question, DiagnosisResult } from '@/types/checker'
+import { Question, DiagnosisResult, SelectedChoice } from '@/types/checker'
 import CheckerQuestionPage from '@/components/checker/CheckerQuestionPage'
 import CheckerResultPage from '@/components/checker/CheckerResultPage'
 
@@ -13,6 +13,7 @@ export default function CheckerPage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [answers, setAnswers] = useState<Record<number, number>>({}) // questionIndex -> choiceId
   const [results, setResults] = useState<DiagnosisResult[] | null>(null)
+  const [selectedChoices, setSelectedChoices] = useState<SelectedChoice[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -70,6 +71,7 @@ export default function CheckerPage() {
 
     if (result.success) {
       setResults(result.data.results)
+      setSelectedChoices(result.data.selected_choices || [])
     } else {
       setError(result.error.message)
     }
@@ -82,6 +84,7 @@ export default function CheckerPage() {
     setCurrentQuestionIndex(0)
     setAnswers({})
     setResults(null)
+    setSelectedChoices([])
     setError(null)
   }
 
@@ -119,7 +122,7 @@ export default function CheckerPage() {
     return (
       <div className="flex justify-center">
         <div className="w-full max-w-2xl min-w-80">
-          <CheckerResultPage results={results} onRetry={handleRetry} />
+          <CheckerResultPage results={results} selectedChoices={selectedChoices} onRetry={handleRetry} />
         </div>
       </div>
     )

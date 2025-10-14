@@ -32,7 +32,10 @@ class CheckerService < ApplicationService
     # 結果構築
     results = build_diagnosis_results(plant_scores)
 
-    ApplicationSerializer.success(data: { results: results })
+    # 選択した内容を取得
+    selected_choices = build_selected_choices(choice_ids)
+
+    ApplicationSerializer.success(data: { results: results, selected_choices: selected_choices })
   rescue ActiveRecord::RecordNotFound => e
     raise ValidationError.new("指定された選択肢が見つかりません")
   end
@@ -126,6 +129,16 @@ class CheckerService < ApplicationService
           description: plant.description
         },
         score: score
+      }
+    end
+  end
+
+  # 選択した内容の構築
+  def self.build_selected_choices(choice_ids)
+    Choice.where(id: choice_ids).includes(:question).map do |choice|
+      {
+        question_text: choice.question.text,
+        choice_text: choice.text
       }
     end
   end
