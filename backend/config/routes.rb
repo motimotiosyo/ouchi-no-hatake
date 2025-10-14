@@ -30,6 +30,9 @@ Rails.application.routes.draw do
       get "checker/questions", to: "checker#questions"
       post "checker/diagnose", to: "checker#diagnose"
 
+      # 育て方ガイド関連API
+      resources :guides, only: [ :index, :show ]
+
       # ユーザー関連API
       resources :users, only: [ :show ] do
         resource :follow, controller: "follows", only: [ :create, :destroy ]
