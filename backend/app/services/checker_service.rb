@@ -78,9 +78,38 @@ class CheckerService < ApplicationService
   # 植物ごとのスコア計算
   def self.calculate_plant_scores(choice_ids)
     plant_scores = Hash.new(0)
+    # 質問1（栽培場所）と質問5（野菜種類）の選択肢を特定
+    location_choice_id = nil
+    vegetable_type_choice_id = nil
+
+    # 各選択肢がどの質問に属するかを確認
+    Choice.where(id: choice_ids).includes(:question).find_each do |choice|
+      case choice.question.text
+      when "栽培場所はどこがいいですか？"
+        location_choice_id = choice.id
+      when "どんな野菜を育てたいですか？"
+        vegetable_type_choice_id = choice.id
+      end
+    end
+
+    # 全ての選択肢のスコアを集計し、除外対象の植物を特定
+    excluded_plants = Set.new
 
     ChoiceScore.includes(:plant).where(choice_id: choice_ids).find_each do |choice_score|
+      # 質問1または質問5で0点の植物は除外対象
+      if (choice_score.choice_id == location_choice_id ||
+          choice_score.choice_id == vegetable_type_choice_id) &&
+         choice_score.score == 0
+        excluded_plants.add(choice_score.plant)
+      end
+
+      # スコア集計（後で除外対象を削除）
       plant_scores[choice_score.plant] += choice_score.score
+    end
+
+    # 除外対象の植物を削除
+    excluded_plants.each do |plant|
+      plant_scores.delete(plant)
     end
 
     # スコアの降順でソート
