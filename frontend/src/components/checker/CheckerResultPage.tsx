@@ -101,11 +101,15 @@ export default function CheckerResultPage({ results, selectedChoices, onRetry }:
           const medalBgs = ['bg-yellow-50', 'bg-gray-50', 'bg-orange-50']
           const borderColors = ['border-yellow-200', 'border-gray-300', 'border-orange-200']
           const sizes = ['text-3xl', 'text-2xl', 'text-xl']
+          // 5位から順に表示: 5位->4位->3位->2位->1位
+          // 1位(index=0)は4秒後、2位(index=1)は3秒後、3位(index=2)は2秒後
+          const animationDelay = (2 - index) * 1000
 
           return (
             <div
               key={result.plant.id}
-              className={`bg-white rounded-lg shadow-lg ${borderColors[index]} border-2 transition-all duration-200 p-6`}
+              className={`bg-white rounded-lg shadow-lg ${borderColors[index]} border-2 transition-all duration-200 p-6 animate-slide-in-right`}
+              style={{ animationDelay: `${animationDelay}ms` }}
             >
               <div className="flex items-start gap-4">
                 <div className={`${medalBgs[index]} rounded-full p-3 flex-shrink-0`}>
@@ -147,10 +151,13 @@ export default function CheckerResultPage({ results, selectedChoices, onRetry }:
         <div className="space-y-4 mb-8">
           {results.slice(3, 5).map((result, index) => {
             const actualIndex = index + 3
+            // 5位(index=0)は0秒後、4位(index=1)は1秒後
+            const animationDelay = (1 - index) * 1000
             return (
               <div
                 key={result.plant.id}
-                className="bg-white rounded-lg shadow-md hover:shadow-lg border border-gray-200 transition-all duration-200 p-5"
+                className="bg-white rounded-lg shadow-md hover:shadow-lg border border-gray-200 transition-all duration-200 p-5 animate-slide-in-right"
+                style={{ animationDelay: `${animationDelay}ms` }}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
