@@ -349,6 +349,20 @@ class ApiClient {
   }
 
   /**
+   * 育て方ガイド: 一覧取得（ApiResult型を返す）
+   */
+  async getGuides(token: string): Promise<ApiResult<{ guides: import('@/types/guide').GuideListItem[] }>> {
+    return this.get<{ guides: import('@/types/guide').GuideListItem[] }>('/api/v1/guides', token)
+  }
+
+  /**
+   * 育て方ガイド: 詳細取得（ApiResult型を返す）
+   */
+  async getGuideDetail(guideId: number, token: string): Promise<ApiResult<import('@/types/guide').Guide>> {
+    return this.get<import('@/types/guide').Guide>(`/api/v1/guides/${guideId}`, token)
+  }
+
+  /**
    * DELETEリクエスト（ApiResult型を返す）
    */
   async delete<T>(endpoint: string, token?: string): Promise<ApiResult<T>> {

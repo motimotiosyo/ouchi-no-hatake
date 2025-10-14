@@ -220,3 +220,6 @@ questions_data.each do |q_data|
 end
 
 puts "Checker data created: #{Question.count} questions, #{Choice.count} choices, #{ChoiceScore.count} scores"
+
+# 育て方ガイドデータ
+load Rails.root.join('db', 'seeds', 'guides.rb')
