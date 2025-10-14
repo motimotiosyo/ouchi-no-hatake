@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_10_11_220402) do
+ActiveRecord::Schema[7.2].define(version: 2025_10_14_124638) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -151,6 +151,11 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_11_220402) do
     t.bigint "plant_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "planting_months"
+    t.string "transplanting_months"
+    t.string "pruning_months"
+    t.string "fertilizing_months"
+    t.string "harvesting_months"
     t.index ["plant_id"], name: "index_guides_on_plant_id"
   end
 

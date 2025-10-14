@@ -52,6 +52,13 @@ class GuideService < ApplicationService
         name: guide.plant.name,
         description: guide.plant.description
       },
+      calendar: {
+        planting_months: guide.planting_months,
+        transplanting_months: guide.transplanting_months,
+        pruning_months: guide.pruning_months,
+        fertilizing_months: guide.fertilizing_months,
+        harvesting_months: guide.harvesting_months
+      },
       steps: guide.guide_steps.map { |step| build_step_response(step) }
     }
   end

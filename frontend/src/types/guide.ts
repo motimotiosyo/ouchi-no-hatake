@@ -30,10 +30,22 @@ export interface GuideListItem {
 }
 
 /**
+ * 栽培カレンダー情報
+ */
+export interface GuideCalendar {
+  planting_months: string | null
+  transplanting_months: string | null
+  pruning_months: string | null
+  fertilizing_months: string | null
+  harvesting_months: string | null
+}
+
+/**
  * ガイド（詳細）
  */
 export interface Guide {
   id: number
   plant: GuidePlant
+  calendar: GuideCalendar
   steps: GuideStep[]
 }
