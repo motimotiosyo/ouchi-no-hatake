@@ -56,7 +56,7 @@ function CheckerPageContent() {
             setHasRestoredFromUrl(true)
             setAnimationKey(prev => prev + 1) // アニメーションをリセット
           }
-        } catch (err) {
+        } catch {
           // URLパラメータが不正な場合は無視
         }
         setIsLoading(false)
