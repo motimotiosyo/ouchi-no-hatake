@@ -19,6 +19,7 @@ interface GrowthRecord {
   location: string
   started_on: string
   ended_on?: string
+  planting_method: 'seed' | 'seedling' | null
   status: 'planning' | 'growing' | 'completed' | 'failed'
   created_at: string
   updated_at: string
@@ -156,32 +157,68 @@ export default function GrowthRecordDetail({ id }: Props) {
     })
   }
 
-  const handleStepToggle = async (stepId: number, done: boolean) => {
+  const handleStepComplete = async (stepId: number, completedAt: string) => {
     if (stepToggleLoading) return
 
     await executeProtected(async () => {
       setStepToggleLoading(true)
       try {
-        const endpoint = done
-          ? `/api/v1/growth_records/${id}/steps/${stepId}/complete`
-          : `/api/v1/growth_records/${id}/steps/${stepId}/uncomplete`
+        const token = localStorage.getItem('auth_token')
+        if (!token) {
+          setError('認証トークンが見つかりません')
+          return
+        }
 
-        const result = await apiClient.patch(endpoint, {})
+        const result = await apiClient.patch(`/api/v1/growth_records/${id}/steps/${stepId}/complete`, {
+          completed_at: completedAt
+        }, token)
 
         if (result.success) {
-          // 成長記録を再取得して表示更新
           await fetchGrowthRecord()
         } else {
           if (process.env.NODE_ENV === 'development') {
-            console.error('ステップ更新エラー:', result.error.message)
+            console.error('ステップ完了エラー:', result.error.message)
           }
-          setError('ステップの更新に失敗しました')
+          setError('ステップの完了記録に失敗しました')
         }
       } catch (err) {
         if (process.env.NODE_ENV === 'development') {
-          console.error('ステップ更新でエラーが発生しました:', err)
+          console.error('ステップ完了でエラーが発生しました:', err)
         }
-        setError('ステップの更新に失敗しました')
+        setError('ステップの完了記録に失敗しました')
+      } finally {
+        setStepToggleLoading(false)
+      }
+    })
+  }
+
+  const handleStepUncomplete = async (stepId: number) => {
+    if (stepToggleLoading) return
+
+    await executeProtected(async () => {
+      setStepToggleLoading(true)
+      try {
+        const token = localStorage.getItem('auth_token')
+        if (!token) {
+          setError('認証トークンが見つかりません')
+          return
+        }
+
+        const result = await apiClient.patch(`/api/v1/growth_records/${id}/steps/${stepId}/uncomplete`, {}, token)
+
+        if (result.success) {
+          await fetchGrowthRecord()
+        } else {
+          if (process.env.NODE_ENV === 'development') {
+            console.error('ステップ完了取消エラー:', result.error.message)
+          }
+          setError('ステップの完了取消に失敗しました')
+        }
+      } catch (err) {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('ステップ完了取消でエラーが発生しました:', err)
+        }
+        setError('ステップの完了取消に失敗しました')
       } finally {
         setStepToggleLoading(false)
       }
@@ -328,9 +365,21 @@ export default function GrowthRecordDetail({ id }: Props) {
                 <p className="text-gray-900">#{growthRecord.record_number}</p>
               </div>
               <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-1">栽培開始日</h3>
+                <h3 className="text-sm font-medium text-gray-500 mb-1">
+                  {growthRecord.planting_method === 'seed'
+                    ? '種まき日'
+                    : growthRecord.planting_method === 'seedling'
+                      ? '植え付け日'
+                      : '栽培開始日'}
+                </h3>
                 <p className="text-gray-900">
                   {growthRecord.started_on ? formatDate(growthRecord.started_on) : '---.--.-'}
+                </p>
+              </div>
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 mb-1">記録開始日</h3>
+                <p className="text-gray-900">
+                  {growthRecord.created_at ? formatDate(growthRecord.created_at) : '---.--.-'}
                 </p>
               </div>
               <div>
@@ -354,7 +403,8 @@ export default function GrowthRecordDetail({ id }: Props) {
             stepInfo={growthRecord.guide.guide_step_info}
             recordStatus={growthRecord.status}
             isOwner={user?.id === growthRecord.user.id}
-            onStepToggle={handleStepToggle}
+            onStepComplete={handleStepComplete}
+            onStepUncomplete={handleStepUncomplete}
           />
         </div>
       )}

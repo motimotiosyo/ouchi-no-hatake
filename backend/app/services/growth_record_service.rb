@@ -111,6 +111,28 @@ class GrowthRecordService < ApplicationService
     end
 
     if growth_record.save
+      # ガイドが紐づいている場合、全ステップ分のgrowth_record_stepsを自動生成
+      if guide
+        guide_steps = guide.guide_steps.order(:position)
+        # 栽培方法によるフィルタリング（seedlingの場合は植え付けステップ以降）
+        visible_steps = filter_steps_by_planting_method(guide_steps, growth_record.planting_method)
+        first_visible_step = visible_steps.first
+
+        guide_steps.each do |guide_step|
+          # 育成中で最初の表示ステップの場合は自動完了
+          is_first_and_growing = growth_record.status == "growing" &&
+                                  first_visible_step &&
+                                  guide_step.id == first_visible_step.id
+
+          growth_record.growth_record_steps.create!(
+            guide_step: guide_step,
+            done: is_first_and_growing,
+            completed_at: is_first_and_growing ? growth_record.started_on : nil,
+            scheduled_on: nil
+          )
+        end
+      end
+
       ApplicationSerializer.success(
         data: build_growth_record_response(growth_record)
       )
@@ -137,7 +159,22 @@ class GrowthRecordService < ApplicationService
       params = params.merge(record_name: "成長記録#{record.record_number}")
     end
 
+    # started_on の変更を検知
+    started_on_changed = params.key?(:started_on) && params[:started_on] != record.started_on
+
     if record.update(params)
+      # started_on が変更された場合の処理
+      if started_on_changed && record.growth_record_steps.exists?
+        # 最初の完了済みステップの completed_at も更新（チェックポイント起算の基準日を更新）
+        first_completed_step = record.growth_record_steps.where(done: true).order(:completed_at).first
+        if first_completed_step
+          first_completed_step.update(completed_at: record.started_on)
+        end
+
+        # 全ステップの scheduled_on を再計算
+        GrowthRecordStepService.send(:recalculate_next_steps, record)
+      end
+
       ApplicationSerializer.success(
         data: build_growth_record_response(record)
       )
@@ -166,7 +203,7 @@ class GrowthRecordService < ApplicationService
       }
     when "growing"
       # 育成中: チェックポイント起算で現在・次のステップを判定
-      return nil unless growth_record.planting_started_on
+      return nil unless growth_record.started_on
 
       # 基準日とステップの決定
       base_date = determine_base_date(growth_record)
@@ -192,8 +229,8 @@ class GrowthRecordService < ApplicationService
       }
     when "completed", "failed"
       # 完了/失敗: 全ステップを振り返りとして表示
-      total_days = if growth_record.ended_on && growth_record.planting_started_on
-        (growth_record.ended_on - growth_record.planting_started_on).to_i
+      total_days = if growth_record.ended_on && growth_record.started_on
+        (growth_record.ended_on - growth_record.started_on).to_i
       end
 
       {
@@ -214,6 +251,7 @@ class GrowthRecordService < ApplicationService
 
     info = {
       id: step.id,
+      growth_record_step_id: growth_record_step&.id,
       title: step.title,
       description: step.description,
       position: step.position,
@@ -232,10 +270,10 @@ class GrowthRecordService < ApplicationService
     info
   end
 
-  # 基準日の決定（最後に完了したステップのcompleted_at or planting_started_on）
+  # 基準日の決定（最後に完了したステップのcompleted_at or started_on）
   def self.determine_base_date(growth_record)
     last_completed = growth_record.growth_record_steps.where(done: true).order(:completed_at).last
-    last_completed&.completed_at || growth_record.planting_started_on
+    last_completed&.completed_at || growth_record.started_on
   end
 
   # 基準ステップのdue_daysを決定

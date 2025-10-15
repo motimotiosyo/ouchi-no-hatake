@@ -46,7 +46,6 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
     location: '',
     started_on: '',
     ended_on: '',
-    planting_started_on: '',
     planting_method: 'seed' as 'seed' | 'seedling',
     status: 'planning' as 'planning' | 'growing' | 'completed' | 'failed'
   })
@@ -84,7 +83,6 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
           location: editData.location || '',
           started_on: editData.started_on || '',
           ended_on: editData.ended_on || '',
-          planting_started_on: '',
           planting_method: 'seed',
           status: editData.status || 'planning'
         })
@@ -225,7 +223,6 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
       location: '',
       started_on: '',
       ended_on: '',
-      planting_started_on: '',
       planting_method: 'seed',
       status: 'planning'
     })
@@ -353,61 +350,6 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
               </select>
             </div>
 
-            {/* 栽培開始日 */}
-            <div>
-              <label htmlFor="started_on" className="block text-sm font-medium text-gray-700 mb-2">
-                栽培開始日
-              </label>
-              <input
-                type="date"
-                id="started_on"
-                name="started_on"
-                value={formData.started_on}
-                onChange={handleInputChange}
-                required={formData.status !== 'planning'}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              />
-            </div>
-
-            {/* 栽培終了日 - 収穫済み・失敗の場合のみ表示 */}
-            {(formData.status === 'completed' || formData.status === 'failed') && (
-              <div>
-                <label htmlFor="ended_on" className="block text-sm font-medium text-gray-700 mb-2">
-                  栽培終了日
-                </label>
-                <input
-                  type="date"
-                  id="ended_on"
-                  name="ended_on"
-                  value={formData.ended_on}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                />
-              </div>
-            )}
-
-            {/* 種まき日/植え付け日 - 育成中の場合のみ表示 */}
-            {formData.status === 'growing' && (
-              <div>
-                <label htmlFor="planting_started_on" className="block text-sm font-medium text-gray-700 mb-2">
-                  種まき日/植え付け日
-                </label>
-                <input
-                  type="date"
-                  id="planting_started_on"
-                  name="planting_started_on"
-                  value={formData.planting_started_on}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                />
-                <p className="text-xs text-gray-500 mt-1">
-                  実際に種をまいた日、または苗を植え付けた日を入力してください
-                </p>
-              </div>
-            )}
-
             {/* 栽培方法 - 育成中の場合のみ表示 */}
             {formData.status === 'growing' && (
               <div>
@@ -438,6 +380,42 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
                     <span className="text-sm text-gray-700">苗から</span>
                   </label>
                 </div>
+              </div>
+            )}
+
+            {/* 栽培開始日（種まき日 or 植え付け日） */}
+            <div>
+              <label htmlFor="started_on" className="block text-sm font-medium text-gray-700 mb-2">
+                {formData.status === 'growing'
+                  ? (formData.planting_method === 'seed' ? '種まき日' : '植え付け日')
+                  : '栽培開始日'}
+              </label>
+              <input
+                type="date"
+                id="started_on"
+                name="started_on"
+                value={formData.started_on}
+                onChange={handleInputChange}
+                required={formData.status !== 'planning'}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              />
+            </div>
+
+            {/* 栽培終了日 - 収穫済み・失敗の場合のみ表示 */}
+            {(formData.status === 'completed' || formData.status === 'failed') && (
+              <div>
+                <label htmlFor="ended_on" className="block text-sm font-medium text-gray-700 mb-2">
+                  栽培終了日
+                </label>
+                <input
+                  type="date"
+                  id="ended_on"
+                  name="ended_on"
+                  value={formData.ended_on}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                />
               </div>
             )}
 

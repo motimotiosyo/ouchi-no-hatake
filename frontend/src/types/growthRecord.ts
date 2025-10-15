@@ -25,6 +25,7 @@ export interface Plant {
  */
 export interface GuideStep {
   id: ID
+  growth_record_step_id?: ID
   title: string
   description: string
   position: number
@@ -72,7 +73,6 @@ export interface GrowthRecord {
   location: string | null
   started_on: string | null
   ended_on: string | null
-  planting_started_on: string | null
   planting_method: PlantingMethod | null
   status: GrowthRecordStatus
   created_at: DateTimeString

@@ -1,15 +1,19 @@
 'use client'
 
+import { useState } from 'react'
 import type { GuideStepInfo, GrowthRecordStatus } from '@/types/growthRecord'
 
 interface Props {
   stepInfo: GuideStepInfo
   recordStatus: GrowthRecordStatus
   isOwner?: boolean
-  onStepToggle?: (stepId: number, done: boolean) => Promise<void>
+  onStepComplete?: (stepId: number, completedAt: string) => Promise<void>
+  onStepUncomplete?: (stepId: number) => Promise<void>
 }
 
-export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepToggle }: Props) {
+export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepComplete, onStepUncomplete }: Props) {
+  const [showDateInput, setShowDateInput] = useState<number | null>(null)
+  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0])
   // 計画中の表示
   if (stepInfo.status === 'planning' && stepInfo.preparation_step) {
     return (
@@ -129,21 +133,70 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepTog
                           : 'bg-white border-gray-200'
                       }`}
                     >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-gray-900">{step.title}</p>
-                          <p className="text-xs text-gray-500 mt-1">目安: {step.due_days}日後</p>
+                      <div>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-900">{step.title}</p>
+                            <p className="text-xs text-gray-500 mt-1">目安: {step.due_days}日後</p>
+                            {step.done && step.completed_at && (
+                              <p className="text-xs text-green-600 mt-1">完了日: {step.completed_at}</p>
+                            )}
+                          </div>
+                          {isOwner && (onStepComplete || onStepUncomplete) && step.growth_record_step_id && (
+                            <div className="ml-3">
+                              {!step.done ? (
+                                <button
+                                  onClick={() => setShowDateInput(step.growth_record_step_id!)}
+                                  className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                                >
+                                  完了を記録
+                                </button>
+                              ) : (
+                                onStepUncomplete && (
+                                  <button
+                                    onClick={() => onStepUncomplete(step.growth_record_step_id!)}
+                                    className="px-3 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
+                                  >
+                                    完了を取消
+                                  </button>
+                                )
+                              )}
+                            </div>
+                          )}
                         </div>
-                        {isOwner && onStepToggle && (
-                          <label className="flex items-center ml-3 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={step.done || false}
-                              onChange={() => onStepToggle(step.id, !step.done)}
-                              className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                            />
-                            <span className="ml-2 text-xs text-gray-600">完了</span>
-                          </label>
+
+                        {/* 日付入力UI */}
+                        {showDateInput === step.growth_record_step_id && onStepComplete && (
+                          <div className="mt-3 p-3 bg-white border border-gray-300 rounded">
+                            <label className="block text-xs font-medium text-gray-700 mb-2">
+                              完了日を入力してください
+                            </label>
+                            <div className="flex gap-2">
+                              <input
+                                type="date"
+                                value={selectedDate}
+                                onChange={(e) => setSelectedDate(e.target.value)}
+                                className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                              />
+                              <button
+                                onClick={async () => {
+                                  if (step.growth_record_step_id) {
+                                    await onStepComplete(step.growth_record_step_id, selectedDate)
+                                    setShowDateInput(null)
+                                  }
+                                }}
+                                className="px-3 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                              >
+                                記録
+                              </button>
+                              <button
+                                onClick={() => setShowDateInput(null)}
+                                className="px-3 py-1 text-sm bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors"
+                              >
+                                キャンセル
+                              </button>
+                            </div>
+                          </div>
                         )}
                       </div>
                     </div>
