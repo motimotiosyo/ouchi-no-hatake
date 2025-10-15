@@ -8,7 +8,9 @@ import CreateGrowthRecordModal from './CreateGrowthRecordModal'
 import DeleteConfirmDialog from './DeleteConfirmDialog'
 import CreatePostModal from '../posts/CreatePostModal'
 import FavoriteButton from './FavoriteButton'
+import GuideStepsDisplay from './GuideStepsDisplay'
 import type { Post } from '@/types'
+import type { GuideStepInfo } from '@/types/growthRecord'
 
 interface GrowthRecord {
   id: number
@@ -32,6 +34,7 @@ interface GrowthRecord {
       id: number
       name: string
     }
+    guide_step_info?: GuideStepInfo
   } | null
   user: {
     id: number
@@ -301,21 +304,23 @@ export default function GrowthRecordDetail({ id }: Props) {
                   {growthRecord.ended_on ? formatDate(growthRecord.ended_on) : '---.--.-'}
                 </p>
               </div>
-              {growthRecord.guide && (
-                <div className="md:col-span-2">
-                  <h3 className="text-sm font-medium text-gray-500 mb-1">参考ガイド</h3>
-                  <a
-                    href={`/guides/${growthRecord.guide.id}`}
-                    className="text-blue-600 hover:text-blue-800 hover:underline"
-                  >
-                    {growthRecord.guide.plant.name}の育て方ガイド →
-                  </a>
-                </div>
-              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* ガイドステップ表示セクション */}
+      {growthRecord.guide?.guide_step_info && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            栽培ガイド - {growthRecord.guide.plant.name}
+          </h2>
+          <GuideStepsDisplay
+            stepInfo={growthRecord.guide.guide_step_info}
+            recordStatus={growthRecord.status}
+          />
+        </div>
+      )}
 
       {/* 成長メモ */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

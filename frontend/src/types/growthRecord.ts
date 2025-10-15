@@ -16,6 +16,33 @@ export interface Plant {
 }
 
 /**
+ * ガイドステップ
+ */
+export interface GuideStep {
+  id: ID
+  title: string
+  description: string
+  position: number
+  due_days: number
+  is_current?: boolean
+  is_completed?: boolean
+  days_until?: number
+}
+
+/**
+ * ガイドステップ情報
+ */
+export interface GuideStepInfo {
+  status: 'planning' | 'growing' | 'completed' | 'failed'
+  elapsed_days?: number
+  total_days?: number
+  preparation_step?: GuideStep
+  current_step?: GuideStep
+  next_step?: GuideStep
+  all_steps: GuideStep[]
+}
+
+/**
  * ガイド情報（簡易版）
  */
 export interface GrowthRecordGuide {
@@ -24,6 +51,7 @@ export interface GrowthRecordGuide {
     id: ID
     name: string
   }
+  guide_step_info?: GuideStepInfo
 }
 
 /**
