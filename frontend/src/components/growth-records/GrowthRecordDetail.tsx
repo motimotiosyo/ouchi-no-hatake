@@ -77,7 +77,9 @@ export default function GrowthRecordDetail({ id }: Props) {
         setError(result.error.message)
       }
     } catch (err) {
-      console.error('成長記録の取得でエラーが発生しました:', err)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('成長記録の取得でエラーが発生しました:', err)
+      }
       setError('成長記録の取得に失敗しました')
     } finally {
       setLoading(false)
