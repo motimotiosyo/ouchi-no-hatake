@@ -58,7 +58,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
   const fetchPlants = useCallback(async () => {
     try {
       const result = await apiClient.get<{ plants: Plant[] }>('/api/v1/plants')
-      
+
       if (result.success) {
         setPlants(result.data.plants || [])
       } else {
@@ -84,7 +84,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
           ended_on: editData.ended_on || '',
           status: editData.status || 'planning'
         })
-        
+
         // 既存のサムネイル画像がある場合はプレビューを設定
         if (editData.thumbnail_url) {
           setThumbnailPreview(editData.thumbnail_url)

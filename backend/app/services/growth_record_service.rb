@@ -22,7 +22,7 @@ class GrowthRecordService < ApplicationService
 
   # 単一成長記録のレスポンス構築
   def self.build_growth_record_response(record, current_user = nil)
-    {
+    response = {
       id: record.id,
       record_number: record.record_number,
       record_name: record.record_name,
@@ -41,6 +41,22 @@ class GrowthRecordService < ApplicationService
       favorites_count: record.favorites_count,
       favorited_by_current_user: current_user ? record.favorited_by?(current_user) : false
     }
+
+    # ガイド情報を追加（紐づいている場合のみ）
+    if record.guide
+      response[:guide] = {
+        id: record.guide.id,
+        plant: {
+          id: record.guide.plant.id,
+          name: record.guide.plant.name
+        },
+        guide_step_info: calculate_current_step_info(record)
+      }
+    else
+      response[:guide] = nil
+    end
+
+    response
   end
 
   # 成長記録詳細レスポンス構築（投稿データ付き）
@@ -82,8 +98,12 @@ class GrowthRecordService < ApplicationService
     # シーケンステーブルから次の番号を取得（単調増加、再利用しない）
     next_record_number = GrowthRecordSequence.next_number(user, plant)
 
+    # ガイドを自動紐付け（plant_idから取得）
+    guide = Guide.find_by(plant: plant)
+
     growth_record = user.growth_records.build(params)
     growth_record.record_number = next_record_number
+    growth_record.guide = guide if guide
 
     # record_name が空の場合、自動生成
     if params[:record_name].blank?
@@ -127,6 +147,69 @@ class GrowthRecordService < ApplicationService
         record.errors.full_messages
       )
     end
+  end
+
+  # 現在のステップ情報を計算
+  def self.calculate_current_step_info(growth_record)
+    return nil unless growth_record.guide
+
+    guide_steps = growth_record.guide.guide_steps.order(:position)
+    return nil if guide_steps.empty?
+
+    case growth_record.status
+    when "planning"
+      # 計画中: 準備ステップ（最初のステップ）を表示
+      {
+        status: "planning",
+        preparation_step: build_step_info(guide_steps.first, nil),
+        all_steps: guide_steps.map { |step| build_step_info(step, nil) }
+      }
+    when "growing"
+      # 育成中: 経過日数から現在・次のステップを判定
+      return nil unless growth_record.started_on
+
+      elapsed_days = (Date.today - growth_record.started_on).to_i
+      current_step = guide_steps.reverse.find { |s| s.due_days <= elapsed_days }
+      next_step = guide_steps.find { |s| s.due_days > elapsed_days }
+
+      {
+        status: "growing",
+        elapsed_days: elapsed_days,
+        current_step: current_step ? build_step_info(current_step, elapsed_days) : nil,
+        next_step: next_step ? build_step_info(next_step, elapsed_days) : nil,
+        all_steps: guide_steps.map { |step| build_step_info(step, elapsed_days) }
+      }
+    when "completed", "failed"
+      # 完了/失敗: 全ステップを振り返りとして表示
+      total_days = if growth_record.ended_on && growth_record.started_on
+        (growth_record.ended_on - growth_record.started_on).to_i
+      end
+
+      {
+        status: growth_record.status,
+        total_days: total_days,
+        all_steps: guide_steps.map { |step| build_step_info(step, total_days) }
+      }
+    end
+  end
+
+  # ステップ情報を構築
+  def self.build_step_info(step, elapsed_days)
+    info = {
+      id: step.id,
+      title: step.title,
+      description: step.description,
+      position: step.position,
+      due_days: step.due_days
+    }
+
+    if elapsed_days
+      info[:is_current] = step.due_days <= elapsed_days
+      info[:is_completed] = step.due_days < elapsed_days
+      info[:days_until] = step.due_days - elapsed_days if step.due_days > elapsed_days
+    end
+
+    info
   end
 
   # ページネーション情報構築

@@ -8,7 +8,9 @@ import CreateGrowthRecordModal from './CreateGrowthRecordModal'
 import DeleteConfirmDialog from './DeleteConfirmDialog'
 import CreatePostModal from '../posts/CreatePostModal'
 import FavoriteButton from './FavoriteButton'
+import GuideStepsDisplay from './GuideStepsDisplay'
 import type { Post } from '@/types'
+import type { GuideStepInfo } from '@/types/growthRecord'
 
 interface GrowthRecord {
   id: number
@@ -26,6 +28,14 @@ interface GrowthRecord {
     name: string
     description: string
   }
+  guide?: {
+    id: number
+    plant: {
+      id: number
+      name: string
+    }
+    guide_step_info?: GuideStepInfo
+  } | null
   user: {
     id: number
     name: string
@@ -67,7 +77,9 @@ export default function GrowthRecordDetail({ id }: Props) {
         setError(result.error.message)
       }
     } catch (err) {
-      console.error('成長記録の取得でエラーが発生しました:', err)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('成長記録の取得でエラーが発生しました:', err)
+      }
       setError('成長記録の取得に失敗しました')
     } finally {
       setLoading(false)
@@ -298,6 +310,19 @@ export default function GrowthRecordDetail({ id }: Props) {
           </div>
         </div>
       </div>
+
+      {/* ガイドステップ表示セクション */}
+      {growthRecord.guide?.guide_step_info && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            栽培ガイド - {growthRecord.guide.plant.name}
+          </h2>
+          <GuideStepsDisplay
+            stepInfo={growthRecord.guide.guide_step_info}
+            recordStatus={growthRecord.status}
+          />
+        </div>
+      )}
 
       {/* 成長メモ */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">

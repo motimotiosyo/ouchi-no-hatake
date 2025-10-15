@@ -10,7 +10,7 @@ class Api::V1::GrowthRecordsController < ApplicationController
       offset = (page - 1) * per_page
 
       growth_records = current_user.growth_records
-        .includes(:plant)
+        .includes(:plant, guide: :plant)
         .order(created_at: :desc)
         .limit(per_page)
         .offset(offset)
@@ -121,7 +121,7 @@ class Api::V1::GrowthRecordsController < ApplicationController
   end
 
   def set_growth_record_for_show
-    @growth_record = GrowthRecord.includes(:plant, :user).find(params[:id])
+    @growth_record = GrowthRecord.includes(:plant, :user, guide: :plant).find(params[:id])
   rescue ActiveRecord::RecordNotFound
     render json: ApplicationSerializer.error(
       message: "成長記録が見つかりません",
@@ -130,7 +130,7 @@ class Api::V1::GrowthRecordsController < ApplicationController
   end
 
   def growth_record_params
-    params.require(:growth_record).permit(:plant_id, :record_name, :location, :started_on, :ended_on, :status, :thumbnail, :remove_thumbnail)
+    params.require(:growth_record).permit(:plant_id, :guide_id, :record_name, :location, :started_on, :ended_on, :status, :thumbnail, :remove_thumbnail)
   end
 
   def set_optional_current_user
