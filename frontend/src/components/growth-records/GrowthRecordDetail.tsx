@@ -58,6 +58,7 @@ export default function GrowthRecordDetail({ id }: Props) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false)
+  const [stepToggleLoading, setStepToggleLoading] = useState(false)
 
   const fetchGrowthRecord = useCallback(async () => {
     try {
@@ -152,6 +153,38 @@ export default function GrowthRecordDetail({ id }: Props) {
   const handleCreatePostButtonClick = () => {
     executeProtected(() => {
       setIsCreatePostModalOpen(true)
+    })
+  }
+
+  const handleStepToggle = async (stepId: number, done: boolean) => {
+    if (stepToggleLoading) return
+
+    await executeProtected(async () => {
+      setStepToggleLoading(true)
+      try {
+        const endpoint = done
+          ? `/api/v1/growth_records/${id}/steps/${stepId}/complete`
+          : `/api/v1/growth_records/${id}/steps/${stepId}/uncomplete`
+
+        const result = await apiClient.patch(endpoint, {})
+
+        if (result.success) {
+          // 成長記録を再取得して表示更新
+          await fetchGrowthRecord()
+        } else {
+          if (process.env.NODE_ENV === 'development') {
+            console.error('ステップ更新エラー:', result.error.message)
+          }
+          setError('ステップの更新に失敗しました')
+        }
+      } catch (err) {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('ステップ更新でエラーが発生しました:', err)
+        }
+        setError('ステップの更新に失敗しました')
+      } finally {
+        setStepToggleLoading(false)
+      }
     })
   }
 
@@ -320,6 +353,8 @@ export default function GrowthRecordDetail({ id }: Props) {
           <GuideStepsDisplay
             stepInfo={growthRecord.guide.guide_step_info}
             recordStatus={growthRecord.status}
+            isOwner={user?.id === growthRecord.user.id}
+            onStepToggle={handleStepToggle}
           />
         </div>
       )}

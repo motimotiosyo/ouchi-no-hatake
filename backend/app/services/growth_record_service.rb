@@ -149,7 +149,7 @@ class GrowthRecordService < ApplicationService
     end
   end
 
-  # 現在のステップ情報を計算
+  # 現在のステップ情報を計算（チェックポイント起算方式）
   def self.calculate_current_step_info(growth_record)
     return nil unless growth_record.guide
 
@@ -161,55 +161,100 @@ class GrowthRecordService < ApplicationService
       # 計画中: 準備ステップ（最初のステップ）を表示
       {
         status: "planning",
-        preparation_step: build_step_info(guide_steps.first, nil),
-        all_steps: guide_steps.map { |step| build_step_info(step, nil) }
+        preparation_step: build_step_info(guide_steps.first, nil, growth_record),
+        all_steps: guide_steps.map { |step| build_step_info(step, nil, growth_record) }
       }
     when "growing"
-      # 育成中: 経過日数から現在・次のステップを判定
-      return nil unless growth_record.started_on
+      # 育成中: チェックポイント起算で現在・次のステップを判定
+      return nil unless growth_record.planting_started_on
 
-      elapsed_days = (Date.today - growth_record.started_on).to_i
-      current_step = guide_steps.reverse.find { |s| s.due_days <= elapsed_days }
-      next_step = guide_steps.find { |s| s.due_days > elapsed_days }
+      # 基準日とステップの決定
+      base_date = determine_base_date(growth_record)
+      base_step_due_days = determine_base_step_due_days(growth_record)
+
+      # 栽培方法による開始ステップフィルタリング
+      visible_steps = filter_steps_by_planting_method(guide_steps, growth_record.planting_method)
+
+      # 経過日数計算
+      elapsed_days = (Date.today - base_date).to_i
+
+      # 現在・次のステップ判定（調整後の日数で比較）
+      current_step = visible_steps.reverse.find { |s| (s.due_days - base_step_due_days) <= elapsed_days }
+      next_step = visible_steps.find { |s| (s.due_days - base_step_due_days) > elapsed_days }
 
       {
         status: "growing",
         elapsed_days: elapsed_days,
-        current_step: current_step ? build_step_info(current_step, elapsed_days) : nil,
-        next_step: next_step ? build_step_info(next_step, elapsed_days) : nil,
-        all_steps: guide_steps.map { |step| build_step_info(step, elapsed_days) }
+        base_date: base_date,
+        current_step: current_step ? build_step_info(current_step, elapsed_days, growth_record, base_step_due_days) : nil,
+        next_step: next_step ? build_step_info(next_step, elapsed_days, growth_record, base_step_due_days) : nil,
+        all_steps: visible_steps.map { |step| build_step_info(step, elapsed_days, growth_record, base_step_due_days) }
       }
     when "completed", "failed"
       # 完了/失敗: 全ステップを振り返りとして表示
-      total_days = if growth_record.ended_on && growth_record.started_on
-        (growth_record.ended_on - growth_record.started_on).to_i
+      total_days = if growth_record.ended_on && growth_record.planting_started_on
+        (growth_record.ended_on - growth_record.planting_started_on).to_i
       end
 
       {
         status: growth_record.status,
         total_days: total_days,
-        all_steps: guide_steps.map { |step| build_step_info(step, total_days) }
+        all_steps: guide_steps.map { |step| build_step_info(step, total_days, growth_record) }
       }
     end
   end
 
-  # ステップ情報を構築
-  def self.build_step_info(step, elapsed_days)
+  # ステップ情報を構築（チェックポイント起算対応）
+  def self.build_step_info(step, elapsed_days, growth_record, base_step_due_days = 0)
+    # 成長記録ステップの取得（完了状態・完了日を取得）
+    growth_record_step = growth_record.growth_record_steps.find_by(guide_step_id: step.id)
+
+    # 調整後の目安日数（チェックポイント起算）
+    adjusted_due_days = step.due_days - base_step_due_days
+
     info = {
       id: step.id,
       title: step.title,
       description: step.description,
       position: step.position,
-      due_days: step.due_days
+      due_days: step.due_days,
+      adjusted_due_days: adjusted_due_days,
+      done: growth_record_step&.done || false,
+      completed_at: growth_record_step&.completed_at
     }
 
     if elapsed_days
-      info[:is_current] = step.due_days <= elapsed_days
-      info[:is_completed] = step.due_days < elapsed_days
-      info[:days_until] = step.due_days - elapsed_days if step.due_days > elapsed_days
+      info[:is_current] = adjusted_due_days <= elapsed_days
+      info[:is_completed] = growth_record_step&.done || false
+      info[:days_until] = adjusted_due_days - elapsed_days if adjusted_due_days > elapsed_days
     end
 
     info
+  end
+
+  # 基準日の決定（最後に完了したステップのcompleted_at or planting_started_on）
+  def self.determine_base_date(growth_record)
+    last_completed = growth_record.growth_record_steps.where(done: true).order(:completed_at).last
+    last_completed&.completed_at || growth_record.planting_started_on
+  end
+
+  # 基準ステップのdue_daysを決定
+  def self.determine_base_step_due_days(growth_record)
+    last_completed = growth_record.growth_record_steps.where(done: true).order(:completed_at).last
+    last_completed&.guide_step&.due_days || 0
+  end
+
+  # 栽培方法による開始ステップフィルタリング
+  def self.filter_steps_by_planting_method(guide_steps, planting_method)
+    # seedの場合、またはplanting_methodがnilの場合は全ステップ表示
+    return guide_steps if planting_method.nil? || planting_method == "seed"
+
+    # seedlingの場合は「植え付け」以降のみ表示
+    # タイトルに「植え付け」「植付け」「定植」が含まれるステップ以降を表示
+    planting_step = guide_steps.find { |s| s.title.match?(/植[え付]?付|定植/) }
+    return guide_steps unless planting_step
+
+    guide_steps.where("position >= ?", planting_step.position)
   end
 
   # ページネーション情報構築

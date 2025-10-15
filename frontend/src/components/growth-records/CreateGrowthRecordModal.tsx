@@ -46,6 +46,8 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
     location: '',
     started_on: '',
     ended_on: '',
+    planting_started_on: '',
+    planting_method: 'seed' as 'seed' | 'seedling',
     status: 'planning' as 'planning' | 'growing' | 'completed' | 'failed'
   })
   
@@ -82,6 +84,8 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
           location: editData.location || '',
           started_on: editData.started_on || '',
           ended_on: editData.ended_on || '',
+          planting_started_on: '',
+          planting_method: 'seed',
           status: editData.status || 'planning'
         })
 
@@ -221,6 +225,8 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
       location: '',
       started_on: '',
       ended_on: '',
+      planting_started_on: '',
+      planting_method: 'seed',
       status: 'planning'
     })
     setSelectedThumbnail(null)
@@ -378,6 +384,60 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 />
+              </div>
+            )}
+
+            {/* 種まき日/植え付け日 - 育成中の場合のみ表示 */}
+            {formData.status === 'growing' && (
+              <div>
+                <label htmlFor="planting_started_on" className="block text-sm font-medium text-gray-700 mb-2">
+                  種まき日/植え付け日
+                </label>
+                <input
+                  type="date"
+                  id="planting_started_on"
+                  name="planting_started_on"
+                  value={formData.planting_started_on}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  実際に種をまいた日、または苗を植え付けた日を入力してください
+                </p>
+              </div>
+            )}
+
+            {/* 栽培方法 - 育成中の場合のみ表示 */}
+            {formData.status === 'growing' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  栽培方法
+                </label>
+                <div className="flex gap-4">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="planting_method"
+                      value="seed"
+                      checked={formData.planting_method === 'seed'}
+                      onChange={handleInputChange}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-gray-700">種から</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="planting_method"
+                      value="seedling"
+                      checked={formData.planting_method === 'seedling'}
+                      onChange={handleInputChange}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-gray-700">苗から</span>
+                  </label>
+                </div>
               </div>
             )}
 

@@ -7,6 +7,11 @@ import { ID, DateTimeString } from './common'
 export type GrowthRecordStatus = 'planning' | 'growing' | 'completed' | 'failed'
 
 /**
+ * 栽培方法
+ */
+export type PlantingMethod = 'seed' | 'seedling'
+
+/**
  * 植物情報
  */
 export interface Plant {
@@ -24,6 +29,9 @@ export interface GuideStep {
   description: string
   position: number
   due_days: number
+  adjusted_due_days?: number
+  done?: boolean
+  completed_at?: string | null
   is_current?: boolean
   is_completed?: boolean
   days_until?: number
@@ -64,6 +72,8 @@ export interface GrowthRecord {
   location: string | null
   started_on: string | null
   ended_on: string | null
+  planting_started_on: string | null
+  planting_method: PlantingMethod | null
   status: GrowthRecordStatus
   created_at: DateTimeString
   updated_at: DateTimeString

@@ -279,6 +279,38 @@ class ApiClient {
   }
 
   /**
+   * PATCHリクエスト（ApiResult型を返す）
+   */
+  async patch<T>(endpoint: string, body?: unknown, token?: string): Promise<ApiResult<T>> {
+    try {
+      const response = token
+        ? await this.authenticatedRequest<T>(endpoint, token, { method: 'PATCH', body })
+        : await this.request<T>(endpoint, { method: 'PATCH', body })
+
+      if (response.success && response.data !== undefined) {
+        return { success: true, data: response.data }
+      } else {
+        return {
+          success: false,
+          error: {
+            message: 'エラーが発生しました'
+          }
+        }
+      }
+    } catch (error) {
+      const apiError = this.handleError(error)
+      return {
+        success: false,
+        error: {
+          message: apiError.message,
+          code: apiError.code,
+          details: apiError.details
+        }
+      }
+    }
+  }
+
+  /**
    * ユーザー情報取得（ApiResult型を返す）
    */
   async getUser(userId: number, token?: string): Promise<ApiResult<{ user: import('@/types').UserProfile }>> {

@@ -5,9 +5,11 @@ import type { GuideStepInfo, GrowthRecordStatus } from '@/types/growthRecord'
 interface Props {
   stepInfo: GuideStepInfo
   recordStatus: GrowthRecordStatus
+  isOwner?: boolean
+  onStepToggle?: (stepId: number, done: boolean) => Promise<void>
 }
 
-export default function GuideStepsDisplay({ stepInfo }: Props) {
+export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepToggle }: Props) {
   // 計画中の表示
   if (stepInfo.status === 'planning' && stepInfo.preparation_step) {
     return (
@@ -127,8 +129,23 @@ export default function GuideStepsDisplay({ stepInfo }: Props) {
                           : 'bg-white border-gray-200'
                       }`}
                     >
-                      <p className="text-sm font-medium text-gray-900">{step.title}</p>
-                      <p className="text-xs text-gray-500 mt-1">目安: {step.due_days}日後</p>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <p className="text-sm font-medium text-gray-900">{step.title}</p>
+                          <p className="text-xs text-gray-500 mt-1">目安: {step.due_days}日後</p>
+                        </div>
+                        {isOwner && onStepToggle && (
+                          <label className="flex items-center ml-3 cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={step.done || false}
+                              onChange={() => onStepToggle(step.id, !step.done)}
+                              className="w-5 h-5 text-green-600 border-gray-300 rounded focus:ring-green-500"
+                            />
+                            <span className="ml-2 text-xs text-gray-600">完了</span>
+                          </label>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
