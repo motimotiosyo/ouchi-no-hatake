@@ -84,6 +84,10 @@ export interface GrowthRecord {
   thumbnail_url: string | null
   favorites_count: number
   favorited_by_current_user: boolean
+  user?: {
+    id: ID
+    name: string
+  }
 }
 
 /**

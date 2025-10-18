@@ -156,75 +156,15 @@ class GrowthRecordService < ApplicationService
 
   # 成長記録更新
   def self.update_growth_record(record, params)
-    # サムネイル削除フラグの処理
-    if params[:remove_thumbnail] == "true"
-      record.thumbnail.purge if record.thumbnail.attached?
-      params = params.except(:remove_thumbnail)
-    end
+    params = handle_thumbnail_removal(record, params)
+    params = handle_record_name_auto_generation(record, params)
 
-    # record_name をクリア（空文字列）した場合も自動生成
-    if params.key?(:record_name) && params[:record_name].blank?
-      params = params.merge(record_name: "成長記録#{record.record_number}")
-    end
-
-    # plant_id の変更を検知
     plant_id_changed = params.key?(:plant_id) && params[:plant_id] != record.plant_id
-
-    # started_on の変更を検知
     started_on_changed = params.key?(:started_on) && params[:started_on] != record.started_on
 
     if record.update(params)
-      # plant_id が変更された場合は GrowthRecordSteps を再生成
-      if plant_id_changed
-        # 古いステップを全削除
-        record.growth_record_steps.destroy_all
-
-        # 新しいガイドを取得して紐付け
-        new_guide = Guide.find_by(plant_id: params[:plant_id])
-        record.update(guide: new_guide) if new_guide
-
-        # 新しいガイドステップを生成
-        if new_guide
-          guide_steps = new_guide.guide_steps.order(:position)
-
-          # 栽培方法に応じたチェックポイントフェーズを特定
-          checkpoint_phase = case record.planting_method
-          when "seed"
-                              1  # Phase 1: 種まき
-          when "seedling"
-                              3  # Phase 3: 植え付け
-          else
-                              nil
-          end
-
-          guide_steps.each do |guide_step|
-            # 育成中でチェックポイントフェーズ以下の場合は自動完了
-            should_complete = record.status == "growing" &&
-                             checkpoint_phase &&
-                             guide_step.phase.present? &&
-                             guide_step.phase <= checkpoint_phase
-
-            record.growth_record_steps.create!(
-              guide_step: guide_step,
-              done: should_complete,
-              completed_at: should_complete ? record.started_on : nil,
-              scheduled_on: nil
-            )
-          end
-        end
-      end
-
-      # started_on が変更された場合の処理（plant_id変更時は既に再生成済みなのでスキップ）
-      if started_on_changed && !plant_id_changed && record.growth_record_steps.exists?
-        # 最初の完了済みステップの completed_at も更新（チェックポイント起算の基準日を更新）
-        first_completed_step = record.growth_record_steps.where(done: true).order(:completed_at).first
-        if first_completed_step
-          first_completed_step.update(completed_at: record.started_on)
-        end
-
-        # 全ステップの scheduled_on を再計算
-        GrowthRecordStepService.send(:recalculate_next_steps, record)
-      end
+      handle_plant_id_change(record, params[:plant_id]) if plant_id_changed
+      handle_started_on_change(record, plant_id_changed) if started_on_changed && !plant_id_changed
 
       ApplicationSerializer.success(
         data: build_growth_record_response(record)
@@ -235,6 +175,80 @@ class GrowthRecordService < ApplicationService
         record.errors.full_messages
       )
     end
+  end
+
+  # サムネイル削除フラグの処理
+  def self.handle_thumbnail_removal(record, params)
+    if params[:remove_thumbnail] == "true"
+      record.thumbnail.purge if record.thumbnail.attached?
+      params = params.except(:remove_thumbnail)
+    end
+    params
+  end
+
+  # record_name 自動生成処理
+  def self.handle_record_name_auto_generation(record, params)
+    if params.key?(:record_name) && params[:record_name].blank?
+      params = params.merge(record_name: "成長記録#{record.record_number}")
+    end
+    params
+  end
+
+  # 品種変更時のステップ再生成処理
+  def self.handle_plant_id_change(record, new_plant_id)
+    record.growth_record_steps.destroy_all
+
+    new_guide = Guide.find_by(plant_id: new_plant_id)
+    record.update(guide: new_guide) if new_guide
+
+    regenerate_growth_record_steps(record, new_guide) if new_guide
+  end
+
+  # GrowthRecordSteps の再生成
+  def self.regenerate_growth_record_steps(record, guide)
+    guide_steps = guide.guide_steps.order(:position)
+    checkpoint_phase = determine_checkpoint_phase(record.planting_method)
+
+    guide_steps.each do |guide_step|
+      should_complete = should_auto_complete_step?(record, guide_step, checkpoint_phase)
+
+      record.growth_record_steps.create!(
+        guide_step: guide_step,
+        done: should_complete,
+        completed_at: should_complete ? record.started_on : nil,
+        scheduled_on: nil
+      )
+    end
+  end
+
+  # チェックポイントフェーズの判定
+  def self.determine_checkpoint_phase(planting_method)
+    case planting_method
+    when "seed"
+      1  # Phase 1: 種まき
+    when "seedling"
+      3  # Phase 3: 植え付け
+    else
+      nil
+    end
+  end
+
+  # ステップ自動完了の判定
+  def self.should_auto_complete_step?(record, guide_step, checkpoint_phase)
+    record.status == "growing" &&
+      checkpoint_phase &&
+      guide_step.phase.present? &&
+      guide_step.phase <= checkpoint_phase
+  end
+
+  # 開始日変更時の処理
+  def self.handle_started_on_change(record, plant_id_changed)
+    return unless record.growth_record_steps.exists?
+
+    first_completed_step = record.growth_record_steps.where(done: true).order(:completed_at).first
+    first_completed_step.update(completed_at: record.started_on) if first_completed_step
+
+    GrowthRecordStepService.send(:recalculate_next_steps, record)
   end
 
   # 現在のステップ情報を計算（チェックポイント起算方式）

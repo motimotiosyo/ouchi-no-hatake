@@ -9,41 +9,9 @@ import DeleteConfirmDialog from './DeleteConfirmDialog'
 import CreatePostModal from '../posts/CreatePostModal'
 import FavoriteButton from './FavoriteButton'
 import GuideStepsDisplay from './GuideStepsDisplay'
+import { getStatusText, getStatusColor, formatDate, formatDateTime } from '@/utils/growthRecordHelpers'
 import type { Post } from '@/types'
-import type { GuideStepInfo } from '@/types/growthRecord'
-
-interface GrowthRecord {
-  id: number
-  record_number: number
-  record_name: string
-  location: string
-  started_on: string
-  ended_on?: string
-  planting_method: 'seed' | 'seedling' | null
-  status: 'planning' | 'growing' | 'completed' | 'failed'
-  created_at: string
-  updated_at: string
-  thumbnail_url?: string
-  plant: {
-    id: number
-    name: string
-    description: string
-  }
-  guide?: {
-    id: number
-    plant: {
-      id: number
-      name: string
-    }
-    guide_step_info?: GuideStepInfo
-  } | null
-  user: {
-    id: number
-    name: string
-  }
-  favorites_count: number
-  favorited_by_current_user: boolean
-}
+import type { GrowthRecord } from '@/types/growthRecord'
 
 interface Props {
   id: string
@@ -113,38 +81,6 @@ export default function GrowthRecordDetail({ id }: Props) {
   const handleCreatePostSuccess = () => {
     // 投稿作成成功時に詳細情報を再取得
     fetchGrowthRecord()
-  }
-
-  const getStatusText = (status: string | null) => {
-    if (!status) return '計画中'
-    switch (status) {
-      case 'planning':
-        return '計画中'
-      case 'growing':
-        return '育成中'
-      case 'completed':
-        return '収穫済み'
-      case 'failed':
-        return '失敗'
-      default:
-        return status
-    }
-  }
-
-  const getStatusColor = (status: string | null) => {
-    if (!status) return 'bg-yellow-100 text-yellow-800'
-    switch (status) {
-      case 'planning':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'growing':
-        return 'bg-green-100 text-green-800'
-      case 'completed':
-        return 'bg-blue-100 text-blue-800'
-      case 'failed':
-        return 'bg-red-100 text-red-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
   }
 
   const handleEditButtonClick = () => {
@@ -233,26 +169,6 @@ export default function GrowthRecordDetail({ id }: Props) {
     })
   }
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('ja-JP', {
-      year: 'numeric',
-      month: 'numeric',
-      day: 'numeric'
-    })
-  }
-
-  const formatDateTime = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleString('ja-JP', {
-      year: 'numeric',
-      month: 'numeric',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
-  }
-
   if (loading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -297,10 +213,10 @@ export default function GrowthRecordDetail({ id }: Props) {
       {/* 戻るボタン */}
       <div>
         <button
-          onClick={() => router.push(user && user.id === growthRecord.user.id ? '/growth-records' : '/')}
+          onClick={() => router.push(user && growthRecord.user && user.id === growthRecord.user.id ? '/growth-records' : '/')}
           className="text-blue-600 hover:text-blue-800 flex items-center"
         >
-          {'< '}{user && user.id === growthRecord.user.id ? '成長記録一覧に戻る' : 'タイムラインに戻る'}
+          {'< '}{user && growthRecord.user && user.id === growthRecord.user.id ? '成長記録一覧に戻る' : 'タイムラインに戻る'}
         </button>
       </div>
 
@@ -336,7 +252,7 @@ export default function GrowthRecordDetail({ id }: Props) {
               </div>
               <div className="flex space-x-2">
                 {/* お気に入りボタン */}
-                {user && user.id !== growthRecord.user.id && (
+                {user && growthRecord.user && user.id !== growthRecord.user.id && (
                   <FavoriteButton
                     growthRecordId={growthRecord.id}
                     initialFavorited={growthRecord.favorited_by_current_user}
@@ -351,7 +267,7 @@ export default function GrowthRecordDetail({ id }: Props) {
                   />
                 )}
                 {/* 編集・削除ボタン（本人のみ） */}
-                {user && user.id === growthRecord.user.id && (
+                {user && growthRecord.user && user.id === growthRecord.user.id && (
                   <>
                     <button
                       onClick={handleEditButtonClick}
@@ -453,7 +369,7 @@ export default function GrowthRecordDetail({ id }: Props) {
                 <GuideStepsDisplay
                   stepInfo={growthRecord.guide.guide_step_info}
                   recordStatus={growthRecord.status}
-                  isOwner={user?.id === growthRecord.user.id}
+                  isOwner={user?.id === growthRecord.user?.id}
                   onStepComplete={handleStepComplete}
                   onStepUncomplete={handleStepUncomplete}
                 />
@@ -469,7 +385,7 @@ export default function GrowthRecordDetail({ id }: Props) {
           <h2 className="text-lg font-semibold text-gray-900">
             成長メモ ({posts.length}件)
           </h2>
-          {user && user.id === growthRecord.user.id && (
+          {user && growthRecord.user && user.id === growthRecord.user.id && (
             <button
               onClick={handleCreatePostButtonClick}
               className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-md transition-colors"
