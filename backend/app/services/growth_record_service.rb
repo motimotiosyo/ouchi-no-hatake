@@ -167,10 +167,53 @@ class GrowthRecordService < ApplicationService
       params = params.merge(record_name: "成長記録#{record.record_number}")
     end
 
+    # plant_id の変更を検知
+    plant_id_changed = params.key?(:plant_id) && params[:plant_id] != record.plant_id
+
     # started_on の変更を検知
     started_on_changed = params.key?(:started_on) && params[:started_on] != record.started_on
 
     if record.update(params)
+      # plant_id が変更された場合は GrowthRecordSteps を再生成
+      if plant_id_changed
+        # 古いステップを全削除
+        record.growth_record_steps.destroy_all
+
+        # 新しいガイドを取得して紐付け
+        new_guide = Guide.find_by(plant_id: params[:plant_id])
+        record.update(guide: new_guide) if new_guide
+
+        # 新しいガイドステップを生成
+        if new_guide
+          guide_steps = new_guide.guide_steps.order(:position)
+
+          # 栽培方法に応じたチェックポイントフェーズを特定
+          checkpoint_phase = case record.planting_method
+          when "seed"
+                              1  # Phase 1: 種まき
+          when "seedling"
+                              3  # Phase 3: 植え付け
+          else
+                              nil
+          end
+
+          guide_steps.each do |guide_step|
+            # 育成中でチェックポイントフェーズ以下の場合は自動完了
+            should_complete = record.status == "growing" &&
+                             checkpoint_phase &&
+                             guide_step.phase.present? &&
+                             guide_step.phase <= checkpoint_phase
+
+            record.growth_record_steps.create!(
+              guide_step: guide_step,
+              done: should_complete,
+              completed_at: should_complete ? record.started_on : nil,
+              scheduled_on: nil
+            )
+          end
+        end
+      end
+
       # started_on が変更された場合の処理
       if started_on_changed && record.growth_record_steps.exists?
         # 最初の完了済みステップの completed_at も更新（チェックポイント起算の基準日を更新）
