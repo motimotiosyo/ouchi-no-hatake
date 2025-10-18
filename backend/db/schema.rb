@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_10_15_051453) do
+ActiveRecord::Schema[7.2].define(version: 2025_10_18_021836) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -148,6 +148,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_15_051453) do
     t.integer "due_days"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "phase", default: 0, null: false
+    t.string "applicable_to", default: "all", null: false
+    t.index ["guide_id", "phase"], name: "index_guide_steps_on_guide_id_and_phase"
     t.index ["guide_id"], name: "index_guide_steps_on_guide_id"
   end
 

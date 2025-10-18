@@ -276,23 +276,52 @@ class GrowthRecordService < ApplicationService
     last_completed&.completed_at || growth_record.started_on
   end
 
-  # 基準ステップのdue_daysを決定
+  # 基準ステップのdue_daysを決定（新フェーズ構造対応）
   def self.determine_base_step_due_days(growth_record)
     last_completed = growth_record.growth_record_steps.where(done: true).order(:completed_at).last
-    last_completed&.guide_step&.due_days || 0
+    return last_completed.guide_step.due_days if last_completed
+
+    # 完了ステップがない場合、planting_methodに応じた基準フェーズのdue_daysを取得
+    guide_steps = growth_record.guide.guide_steps
+    base_phase = case growth_record.planting_method
+    when "seed"
+      1 # Phase 1（種まき）を基準
+    when "seedling"
+      3 # Phase 3（植え付け）を基準
+    else
+      1 # デフォルトはPhase 1
+    end
+
+    base_step = guide_steps.find_by(phase: base_phase)
+    base_step&.due_days || 0
   end
 
-  # 栽培方法による開始ステップフィルタリング
+  # 栽培方法によるフェーズフィルタリング（新フェーズ構造対応）
   def self.filter_steps_by_planting_method(guide_steps, planting_method)
-    # seedの場合、またはplanting_methodがnilの場合は全ステップ表示
-    return guide_steps if planting_method.nil? || planting_method == "seed"
+    return guide_steps if planting_method.nil?
 
-    # seedlingの場合は「植え付け」以降のみ表示
-    # タイトルに「植え付け」「植付け」「定植」が含まれるステップ以降を表示
-    planting_step = guide_steps.find { |s| s.title.match?(/植[え付]?付|定植/) }
-    return guide_steps unless planting_step
-
-    guide_steps.where("position >= ?", planting_step.position)
+    case planting_method
+    when "seed"
+      # 種から: フェーズ0（準備）, 1（種まき）, 2（育苗）, 3（植え付け）, 4（育成）, 5（追肥）, 6（収穫）
+      # applicable_to が 'all', 'seed_only', 'direct_sow' のみ表示
+      guide_steps.where(
+        "applicable_to IN (?) OR (phase IN (?) AND applicable_to = ?)",
+        [ "all", "seed_only", "direct_sow" ],
+        [ 0, 1, 2, 3, 4, 5, 6 ],
+        "all"
+      )
+    when "seedling"
+      # 苗から: フェーズ0（準備）, 3（植え付け）, 4（育成）, 5（追肥）, 6（収穫）
+      # applicable_to が 'all', 'seedling_only' のみ表示
+      guide_steps.where(
+        "(phase IN (?) AND applicable_to IN (?))",
+        [ 0, 3, 4, 5, 6 ],
+        [ "all", "seedling_only" ]
+      )
+    else
+      # その他の場合は全て表示
+      guide_steps
+    end
   end
 
   # ページネーション情報構築
