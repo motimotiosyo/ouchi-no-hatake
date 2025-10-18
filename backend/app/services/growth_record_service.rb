@@ -126,15 +126,16 @@ class GrowthRecordService < ApplicationService
         end
 
         guide_steps.each do |guide_step|
-          # 育成中でチェックポイントフェーズの場合は自動完了
-          is_checkpoint_and_growing = growth_record.status == "growing" &&
-                                      checkpoint_phase &&
-                                      guide_step.phase == checkpoint_phase
+          # 育成中でチェックポイントフェーズ以下の場合は自動完了
+          should_complete = growth_record.status == "growing" &&
+                           checkpoint_phase &&
+                           guide_step.phase.present? &&
+                           guide_step.phase <= checkpoint_phase
 
           growth_record.growth_record_steps.create!(
             guide_step: guide_step,
-            done: is_checkpoint_and_growing,
-            completed_at: is_checkpoint_and_growing ? growth_record.started_on : nil,
+            done: should_complete,
+            completed_at: should_complete ? growth_record.started_on : nil,
             scheduled_on: nil
           )
         end
