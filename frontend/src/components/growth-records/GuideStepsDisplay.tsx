@@ -34,7 +34,10 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
               <div className="ml-3">
                 {!stepInfo.preparation_step.done ? (
                   <button
-                    onClick={() => setShowDateInput(stepInfo.preparation_step?.growth_record_step_id!)}
+                    onClick={() => {
+                      const stepId = stepInfo.preparation_step?.growth_record_step_id
+                      if (stepId) setShowDateInput(stepId)
+                    }}
                     className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
                   >
                     完了を記録
@@ -42,7 +45,10 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
                 ) : (
                   onStepUncomplete && (
                     <button
-                      onClick={() => onStepUncomplete(stepInfo.preparation_step?.growth_record_step_id!)}
+                      onClick={() => {
+                        const stepId = stepInfo.preparation_step?.growth_record_step_id
+                        if (stepId) onStepUncomplete(stepId)
+                      }}
                       className="px-3 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors"
                     >
                       完了を取消
@@ -95,14 +101,21 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
             {stepInfo.all_steps.map((step) => (
               <div
                 key={step.id}
-                className="flex items-center p-3 bg-gray-50 rounded border border-gray-200"
+                className={`flex items-center p-3 rounded border ${
+                  step.done ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
+                }`}
               >
-                <span className="w-8 h-8 flex items-center justify-center bg-gray-300 text-gray-700 rounded-full text-sm font-medium mr-3">
-                  {step.position}
+                <span className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium mr-3 ${
+                  step.done ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-700'
+                }`}>
+                  {step.done ? '✓' : step.position}
                 </span>
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-900">{step.title}</p>
                   <p className="text-xs text-gray-500">目安: {step.due_days}日後</p>
+                  {step.done && step.completed_at && (
+                    <p className="text-xs text-green-600 mt-1">完了日: {step.completed_at}</p>
+                  )}
                 </div>
               </div>
             ))}
