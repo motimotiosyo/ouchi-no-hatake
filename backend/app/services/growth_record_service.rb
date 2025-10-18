@@ -114,20 +114,27 @@ class GrowthRecordService < ApplicationService
       # ガイドが紐づいている場合、全ステップ分のgrowth_record_stepsを自動生成
       if guide
         guide_steps = guide.guide_steps.order(:position)
-        # 栽培方法によるフィルタリング（seedlingの場合は植え付けステップ以降）
-        visible_steps = filter_steps_by_planting_method(guide_steps, growth_record.planting_method)
-        first_visible_step = visible_steps.first
+
+        # 栽培方法に応じたチェックポイントフェーズを特定
+        checkpoint_phase = case growth_record.planting_method
+        when "seed"
+                            1  # Phase 1: 種まき
+        when "seedling"
+                            3  # Phase 3: 植え付け
+        else
+                            nil
+        end
 
         guide_steps.each do |guide_step|
-          # 育成中で最初の表示ステップの場合は自動完了
-          is_first_and_growing = growth_record.status == "growing" &&
-                                  first_visible_step &&
-                                  guide_step.id == first_visible_step.id
+          # 育成中でチェックポイントフェーズの場合は自動完了
+          is_checkpoint_and_growing = growth_record.status == "growing" &&
+                                      checkpoint_phase &&
+                                      guide_step.phase == checkpoint_phase
 
           growth_record.growth_record_steps.create!(
             guide_step: guide_step,
-            done: is_first_and_growing,
-            completed_at: is_first_and_growing ? growth_record.started_on : nil,
+            done: is_checkpoint_and_growing,
+            completed_at: is_checkpoint_and_growing ? growth_record.started_on : nil,
             scheduled_on: nil
           )
         end
