@@ -280,11 +280,46 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
               >
-                <option value="planning">計画中</option>
-                <option value="growing">育成中</option>
-                <option value="completed">収穫済み</option>
-                <option value="failed">失敗</option>
+                {/* 計画中は全て選択可能 */}
+                {(!editData || editData.status === 'planning') && (
+                  <>
+                    <option value="planning">計画中</option>
+                    <option value="growing">育成中</option>
+                    <option value="completed">収穫済み</option>
+                    <option value="failed">失敗</option>
+                  </>
+                )}
+                {/* 育成中は計画中に戻せない */}
+                {editData && editData.status === 'growing' && (
+                  <>
+                    <option value="growing">育成中</option>
+                    <option value="completed">収穫済み</option>
+                    <option value="failed">失敗</option>
+                  </>
+                )}
+                {/* 完了・失敗は変更不可 */}
+                {editData && editData.status === 'completed' && (
+                  <option value="completed">収穫済み</option>
+                )}
+                {editData && editData.status === 'failed' && (
+                  <option value="failed">失敗</option>
+                )}
               </select>
+              {editData && editData.status === 'planning' && formData.status !== 'planning' && (
+                <p className="text-xs text-yellow-600 mt-1">
+                  ⚠️ 育成中・収穫済み・失敗に変更すると、計画中には戻せなくなります
+                </p>
+              )}
+              {editData && editData.status === 'growing' && (
+                <p className="text-xs text-gray-500 mt-1">
+                  育成中から計画中には戻せません
+                </p>
+              )}
+              {editData && (editData.status === 'completed' || editData.status === 'failed') && (
+                <p className="text-xs text-gray-500 mt-1">
+                  {editData.status === 'completed' ? '収穫済み' : '失敗'}のステータスは変更できません
+                </p>
+              )}
             </div>
 
             {/* 品種選択 */}
@@ -298,7 +333,8 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
                 value={formData.plant_id}
                 onChange={handleInputChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                disabled={editData && formData.status !== 'planning'}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
                 <option value="">選択してください</option>
                 {plants.map(plant => (
@@ -307,6 +343,11 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
                   </option>
                 ))}
               </select>
+              {editData && formData.status !== 'planning' && (
+                <p className="text-xs text-gray-500 mt-1">
+                  育成中以降は品種を変更できません
+                </p>
+              )}
             </div>
 
             {/* 記録名 */}

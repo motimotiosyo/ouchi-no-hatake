@@ -306,6 +306,7 @@ class GrowthRecordService < ApplicationService
       title: step.title,
       description: step.description,
       position: step.position,
+      phase: step.phase,
       due_days: step.due_days,
       adjusted_due_days: adjusted_due_days,
       done: growth_record_step&.done || false,

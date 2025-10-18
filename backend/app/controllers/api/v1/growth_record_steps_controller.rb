@@ -7,7 +7,10 @@ module Api
 
       def complete
         unless params[:completed_at]
-          render json: ApplicationSerializer.error("完了日(completed_at)は必須です"), status: :bad_request
+          render json: ApplicationSerializer.error(
+            message: "完了日(completed_at)は必須です",
+            code: "VALIDATION_ERROR"
+          ), status: :bad_request
           return
         end
 
@@ -17,10 +20,16 @@ module Api
         if result[:success]
           render json: ApplicationSerializer.success(data: result[:data]), status: :ok
         else
-          render json: ApplicationSerializer.error(result[:error]), status: :unprocessable_entity
+          render json: ApplicationSerializer.error(
+            message: result[:error],
+            code: "VALIDATION_ERROR"
+          ), status: :unprocessable_entity
         end
       rescue Date::Error
-        render json: ApplicationSerializer.error("completed_atの形式が不正です"), status: :bad_request
+        render json: ApplicationSerializer.error(
+          message: "completed_atの形式が不正です",
+          code: "VALIDATION_ERROR"
+        ), status: :bad_request
       end
 
       def uncomplete
@@ -29,7 +38,10 @@ module Api
         if result[:success]
           render json: ApplicationSerializer.success(data: result[:data]), status: :ok
         else
-          render json: ApplicationSerializer.error(result[:error]), status: :unprocessable_entity
+          render json: ApplicationSerializer.error(
+            message: result[:error],
+            code: "VALIDATION_ERROR"
+          ), status: :unprocessable_entity
         end
       end
 
@@ -45,7 +57,10 @@ module Api
 
       def authorize_owner!
         unless @growth_record.user_id == current_user.id
-          render json: ApplicationSerializer.error("権限がありません"), status: :forbidden
+          render json: ApplicationSerializer.error(
+            message: "権限がありません",
+            code: "FORBIDDEN"
+          ), status: :forbidden
         end
       end
     end

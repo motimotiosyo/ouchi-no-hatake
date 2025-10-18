@@ -53,6 +53,7 @@ export default function GrowthRecordDetail({ id }: Props) {
   const { user, executeProtected } = useAuth()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
   const router = useRouter()
   const [growthRecord, setGrowthRecord] = useState<GrowthRecord | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
@@ -61,6 +62,12 @@ export default function GrowthRecordDetail({ id }: Props) {
   const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false)
   const [stepToggleLoading, setStepToggleLoading] = useState(false)
   const [isGuideExpanded, setIsGuideExpanded] = useState(false)
+
+  // トーストメッセージを表示して3秒後に自動的に消す
+  const showToast = (message: string) => {
+    setToastMessage(message)
+    setTimeout(() => setToastMessage(null), 3000)
+  }
 
   const fetchGrowthRecord = useCallback(async () => {
     try {
@@ -180,13 +187,13 @@ export default function GrowthRecordDetail({ id }: Props) {
           if (process.env.NODE_ENV === 'development') {
             console.error('ステップ完了エラー:', result.error.message)
           }
-          setError('ステップの完了記録に失敗しました')
+          showToast(result.error.message || 'ステップの完了記録に失敗しました')
         }
       } catch (err) {
         if (process.env.NODE_ENV === 'development') {
           console.error('ステップ完了でエラーが発生しました:', err)
         }
-        setError('ステップの完了記録に失敗しました')
+        showToast('ステップの完了記録に失敗しました')
       } finally {
         setStepToggleLoading(false)
       }
@@ -213,13 +220,13 @@ export default function GrowthRecordDetail({ id }: Props) {
           if (process.env.NODE_ENV === 'development') {
             console.error('ステップ完了取消エラー:', result.error.message)
           }
-          setError('ステップの完了取消に失敗しました')
+          showToast(result.error.message || 'ステップの完了取消に失敗しました')
         }
       } catch (err) {
         if (process.env.NODE_ENV === 'development') {
           console.error('ステップ完了取消でエラーが発生しました:', err)
         }
-        setError('ステップの完了取消に失敗しました')
+        showToast('ステップの完了取消に失敗しました')
       } finally {
         setStepToggleLoading(false)
       }
@@ -280,6 +287,13 @@ export default function GrowthRecordDetail({ id }: Props) {
 
   return (
     <div className="space-y-6">
+      {/* トーストメッセージ */}
+      {toastMessage && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg">
+          {toastMessage}
+        </div>
+      )}
+
       {/* 戻るボタン */}
       <div>
         <button
