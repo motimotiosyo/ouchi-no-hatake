@@ -214,8 +214,8 @@ class GrowthRecordService < ApplicationService
         end
       end
 
-      # started_on が変更された場合の処理
-      if started_on_changed && record.growth_record_steps.exists?
+      # started_on が変更された場合の処理（plant_id変更時は既に再生成済みなのでスキップ）
+      if started_on_changed && !plant_id_changed && record.growth_record_steps.exists?
         # 最初の完了済みステップの completed_at も更新（チェックポイント起算の基準日を更新）
         first_completed_step = record.growth_record_steps.where(done: true).order(:completed_at).first
         if first_completed_step
