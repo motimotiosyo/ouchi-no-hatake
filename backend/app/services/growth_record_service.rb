@@ -162,6 +162,14 @@ class GrowthRecordService < ApplicationService
     plant_id_changed = params.key?(:plant_id) && params[:plant_id] != record.plant_id
     started_on_changed = params.key?(:started_on) && params[:started_on] != record.started_on
 
+    # 育成中以降は品種変更を禁止
+    if plant_id_changed && record.status.in?(%w[growing completed failed])
+      raise ValidationError.new(
+        "育成中以降は品種を変更できません",
+        []
+      )
+    end
+
     if record.update(params)
       handle_plant_id_change(record, params[:plant_id]) if plant_id_changed
       handle_started_on_change(record, plant_id_changed) if started_on_changed && !plant_id_changed
