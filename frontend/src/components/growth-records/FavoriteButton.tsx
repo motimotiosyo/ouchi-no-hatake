@@ -58,7 +58,7 @@ export default function FavoriteButton({
       disabled={isProcessing}
       className={`flex items-center gap-2 px-4 py-2 rounded-md transition-colors ${
         favorited
-          ? 'bg-orange-500 text-white hover:bg-orange-600'
+          ? 'bg-orange-100 text-orange-800 hover:bg-orange-200'
           : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
       } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
