@@ -54,7 +54,7 @@ module Api
         total_count = user.favorited_growth_records.count
 
         pagination_info = GrowthRecordService.build_pagination_info(page, per_page, total_count)
-        response_data = GrowthRecordService.build_growth_records_list(favorites, pagination_info)
+        response_data = GrowthRecordService.build_growth_records_list(favorites, pagination_info, current_user)
 
         render json: ApplicationSerializer.success(data: response_data)
       rescue ActiveRecord::RecordNotFound

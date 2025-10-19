@@ -11,8 +11,8 @@ class GrowthRecordService < ApplicationService
   class AuthorizationError < StandardError; end
 
   # 成長記録一覧のレスポンス構築
-  def self.build_growth_records_list(growth_records, pagination_info)
-    growth_records_data = growth_records.map { |record| build_growth_record_response(record) }
+  def self.build_growth_records_list(growth_records, pagination_info, current_user = nil)
+    growth_records_data = growth_records.map { |record| build_growth_record_response(record, current_user) }
 
     {
       growth_records: growth_records_data,
@@ -39,7 +39,11 @@ class GrowthRecordService < ApplicationService
       },
       thumbnail_url: build_thumbnail_url(record),
       favorites_count: record.favorites_count,
-      favorited_by_current_user: current_user ? record.favorited_by?(current_user) : false
+      favorited_by_current_user: current_user ? record.favorited_by?(current_user) : false,
+      user: {
+        id: record.user.id,
+        name: record.user.name
+      }
     }
 
     # ガイド情報を追加（紐づいている場合のみ）

@@ -3,8 +3,10 @@
 import { useState, useMemo, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
+import { useAuthContext as useAuth } from '@/contexts/auth'
 import CreateGrowthRecordModal from './CreateGrowthRecordModal'
 import DeleteConfirmDialog from './DeleteConfirmDialog'
+import FavoriteButton from './FavoriteButton'
 
 interface GrowthRecord {
   id: number
@@ -22,17 +24,27 @@ interface GrowthRecord {
     name: string
     description: string
   }
+  user?: {
+    id: number
+    name: string
+  }
+  favorites_count?: number
+  favorited_by_current_user?: boolean
 }
 
 interface Props {
   record: GrowthRecord
   onUpdate: () => void
+  showFavoriteButton?: boolean
 }
 
-export default function GrowthRecordCard({ record, onUpdate }: Props) {
+export default function GrowthRecordCard({ record, onUpdate, showFavoriteButton = false }: Props) {
+  const { user } = useAuth()
   const [showMenu, setShowMenu] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [favoriteCount, setFavoriteCount] = useState(record.favorites_count ?? 0)
+  const [isFavorited, setIsFavorited] = useState(record.favorited_by_current_user ?? false)
 
   // editDataとgrowthRecordをメモ化して再レンダリングを防ぐ
   const editData = useMemo(() => ({
@@ -59,6 +71,11 @@ export default function GrowthRecordCard({ record, onUpdate }: Props) {
 
   const handleDeleteDialogClose = useCallback(() => {
     setIsDeleteDialogOpen(false)
+  }, [])
+
+  const handleFavoriteUpdate = useCallback((favorited: boolean, count: number) => {
+    setIsFavorited(favorited)
+    setFavoriteCount(count)
   }, [])
 
   const getStatusText = (status: string | null) => {
@@ -102,7 +119,7 @@ export default function GrowthRecordCard({ record, onUpdate }: Props) {
     }).replace(/\//g, ' / ')
   }
 
-  return (
+return (
     <div
       className="bg-white rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 hover:scale-[1.02] border border-gray-200 transition-all duration-200 relative"
       style={{
@@ -136,52 +153,57 @@ export default function GrowthRecordCard({ record, onUpdate }: Props) {
               <div>
                 <h3 className="font-semibold text-gray-900">{record.plant.name}</h3>
                 <p className="text-sm text-gray-600">{record.record_name}</p>
+                {record.user && (
+                  <p className="text-xs text-gray-500">by {record.user.name}</p>
+                )}
               </div>
             </div>
-            <div className="relative pointer-events-auto" style={{ zIndex: 100 }}>
-              <button
-                onClick={() => setShowMenu(!showMenu)}
-                className="p-2 text-gray-400 hover:text-gray-600 cursor-pointer"
-              >
-                <span className="text-lg">⋯</span>
-              </button>
-              {showMenu && (
-                <>
-                  <div 
-                    className="fixed inset-0" 
-                    style={{ zIndex: 999 }}
-                    onClick={() => setShowMenu(false)}
-                  />
-                  <div className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-200" style={{ zIndex: 1000 }}>
-                    <Link href={`/growth-records/${record.id}`} className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-gray-50 block">
-                      詳細
-                    </Link>
-                    <button
-                      onClick={() => {
-                        setShowMenu(false)
-                        setIsEditModalOpen(true)
-                      }}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
-                    >
-                      編集
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowMenu(false)
-                        setIsDeleteDialogOpen(true)
-                      }}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
-                    >
-                      削除
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
+            {!showFavoriteButton && (
+              <div className="relative pointer-events-auto" style={{ zIndex: 100 }}>
+                <button
+                  onClick={() => setShowMenu(!showMenu)}
+                  className="p-2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                >
+                  <span className="text-lg">⋯</span>
+                </button>
+                {showMenu && (
+                  <>
+                    <div
+                      className="fixed inset-0"
+                      style={{ zIndex: 999 }}
+                      onClick={() => setShowMenu(false)}
+                    />
+                    <div className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-200" style={{ zIndex: 1000 }}>
+                      <Link href={`/growth-records/${record.id}`} className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-gray-50 block">
+                        詳細
+                      </Link>
+                      <button
+                        onClick={() => {
+                          setShowMenu(false)
+                          setIsEditModalOpen(true)
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
+                      >
+                        編集
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowMenu(false)
+                          setIsDeleteDialogOpen(true)
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
+                      >
+                        削除
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
           <div className="flex items-center justify-between text-sm text-gray-600">
-            <div 
-              className="pointer-events-auto cursor-default relative" 
+            <div
+              className="pointer-events-auto cursor-default relative"
               style={{ zIndex: 10 }}
               onClick={(e) => e.preventDefault()}
             >
@@ -189,8 +211,20 @@ export default function GrowthRecordCard({ record, onUpdate }: Props) {
                 {getStatusText(record.status)}
               </span>
             </div>
-            <div>
-              {record.started_on ? formatDate(record.started_on) : '---.--.-'} 〜 {record.ended_on ? formatDate(record.ended_on) : '---.--.-'}
+            <div className="flex items-center gap-2">
+              <div>
+                {record.started_on ? formatDate(record.started_on) : '---.--.-'} 〜 {record.ended_on ? formatDate(record.ended_on) : '---.--.-'}
+              </div>
+              {showFavoriteButton && user && (
+                <div className="pointer-events-auto">
+                  <FavoriteButton
+                    growthRecordId={record.id}
+                    initialFavorited={isFavorited}
+                    initialCount={favoriteCount}
+                    onUpdate={handleFavoriteUpdate}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -238,47 +272,64 @@ export default function GrowthRecordCard({ record, onUpdate }: Props) {
                         {getStatusText(record.status)}
                       </span>
                     </div>
-                    <div className="relative pointer-events-auto" style={{ zIndex: 100 }}>
-                      <button
-                        onClick={() => setShowMenu(!showMenu)}
-                        className="px-2 py-1 text-gray-400 hover:text-gray-600 cursor-pointer"
-                      >
-                        <span className="text-2xl">⋯</span>
-                      </button>
-                      {showMenu && (
-                        <>
-                          <div 
-                            className="fixed inset-0" 
-                            style={{ zIndex: 999 }}
-                            onClick={() => setShowMenu(false)}
-                          />
-                          <div className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-200" style={{ zIndex: 1000 }}>
-                            <button
-                              onClick={() => {
-                                setShowMenu(false)
-                                setIsEditModalOpen(true)
-                              }}
-                              className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
-                            >
-                              編集
-                            </button>
-                            <button
-                              onClick={() => {
-                                setShowMenu(false)
-                                setIsDeleteDialogOpen(true)
-                              }}
-                              className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
-                            >
-                              削除
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
+                    {!showFavoriteButton && (
+                      <div className="relative pointer-events-auto" style={{ zIndex: 100 }}>
+                        <button
+                          onClick={() => setShowMenu(!showMenu)}
+                          className="px-2 py-1 text-gray-400 hover:text-gray-600 cursor-pointer"
+                        >
+                          <span className="text-2xl">⋯</span>
+                        </button>
+                        {showMenu && (
+                          <>
+                            <div
+                              className="fixed inset-0"
+                              style={{ zIndex: 999 }}
+                              onClick={() => setShowMenu(false)}
+                            />
+                            <div className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-200" style={{ zIndex: 1000 }}>
+                              <button
+                                onClick={() => {
+                                  setShowMenu(false)
+                                  setIsEditModalOpen(true)
+                                }}
+                                className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
+                              >
+                                編集
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setShowMenu(false)
+                                  setIsDeleteDialogOpen(true)
+                                }}
+                                className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
+                              >
+                                削除
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="text-sm text-gray-600">
-                  <div>栽培期間： {record.started_on ? formatDate(record.started_on) : '---.--.-'} 〜 {record.ended_on ? formatDate(record.ended_on) : '---.--.-'}</div>
+                  <div className="flex items-center justify-between">
+                    <div>栽培期間： {record.started_on ? formatDate(record.started_on) : '---.--.-'} 〜 {record.ended_on ? formatDate(record.ended_on) : '---.--.-'}</div>
+                    {showFavoriteButton && user && (
+                      <div className="pointer-events-auto ml-2">
+                        <FavoriteButton
+                          growthRecordId={record.id}
+                          initialFavorited={isFavorited}
+                          initialCount={favoriteCount}
+                          onUpdate={handleFavoriteUpdate}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  {record.user && (
+                    <div className="text-xs text-gray-500 mt-1">投稿者： {record.user.name}</div>
+                  )}
                 </div>
               </div>
             </div>
