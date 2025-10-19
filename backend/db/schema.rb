@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_10_14_170212) do
+ActiveRecord::Schema[7.2].define(version: 2025_10_18_021836) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -117,6 +117,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_14_170212) do
     t.boolean "done"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.date "completed_at"
     t.index ["growth_record_id"], name: "index_growth_record_steps_on_growth_record_id"
     t.index ["guide_step_id"], name: "index_growth_record_steps_on_guide_step_id"
   end
@@ -133,6 +134,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_14_170212) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.bigint "guide_id"
+    t.integer "planting_method", default: 0
     t.index ["guide_id"], name: "index_growth_records_on_guide_id"
     t.index ["plant_id"], name: "index_growth_records_on_plant_id"
     t.index ["user_id"], name: "index_growth_records_on_user_id"
@@ -146,6 +148,9 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_14_170212) do
     t.integer "due_days"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "phase", default: 0, null: false
+    t.string "applicable_to", default: "all", null: false
+    t.index ["guide_id", "phase"], name: "index_guide_steps_on_guide_id_and_phase"
     t.index ["guide_id"], name: "index_guide_steps_on_guide_id"
   end
 

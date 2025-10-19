@@ -18,6 +18,8 @@ export interface GuideStep {
   description: string
   position: number
   due_days: number
+  phase: number
+  applicable_to: string
 }
 
 /**

@@ -111,6 +111,36 @@ class GrowthRecordService < ApplicationService
     end
 
     if growth_record.save
+      # ガイドが紐づいている場合、全ステップ分のgrowth_record_stepsを自動生成
+      if guide
+        guide_steps = guide.guide_steps.order(:position)
+
+        # 栽培方法に応じたチェックポイントフェーズを特定
+        checkpoint_phase = case growth_record.planting_method
+        when "seed"
+                            1  # Phase 1: 種まき
+        when "seedling"
+                            3  # Phase 3: 植え付け
+        else
+                            nil
+        end
+
+        guide_steps.each do |guide_step|
+          # 育成中でチェックポイントフェーズ以下の場合は自動完了
+          should_complete = growth_record.status == "growing" &&
+                           checkpoint_phase &&
+                           guide_step.phase.present? &&
+                           guide_step.phase <= checkpoint_phase
+
+          growth_record.growth_record_steps.create!(
+            guide_step: guide_step,
+            done: should_complete,
+            completed_at: should_complete ? growth_record.started_on : nil,
+            scheduled_on: nil
+          )
+        end
+      end
+
       ApplicationSerializer.success(
         data: build_growth_record_response(growth_record)
       )
@@ -126,18 +156,24 @@ class GrowthRecordService < ApplicationService
 
   # 成長記録更新
   def self.update_growth_record(record, params)
-    # サムネイル削除フラグの処理
-    if params[:remove_thumbnail] == "true"
-      record.thumbnail.purge if record.thumbnail.attached?
-      params = params.except(:remove_thumbnail)
-    end
+    params = handle_thumbnail_removal(record, params)
+    params = handle_record_name_auto_generation(record, params)
 
-    # record_name をクリア（空文字列）した場合も自動生成
-    if params.key?(:record_name) && params[:record_name].blank?
-      params = params.merge(record_name: "成長記録#{record.record_number}")
+    plant_id_changed = params.key?(:plant_id) && params[:plant_id] != record.plant_id
+    started_on_changed = params.key?(:started_on) && params[:started_on] != record.started_on
+
+    # 育成中以降は品種変更を禁止
+    if plant_id_changed && record.status.in?(%w[growing completed failed])
+      raise ValidationError.new(
+        "育成中以降は品種を変更できません",
+        []
+      )
     end
 
     if record.update(params)
+      handle_plant_id_change(record, params[:plant_id]) if plant_id_changed
+      handle_started_on_change(record, plant_id_changed) if started_on_changed && !plant_id_changed
+
       ApplicationSerializer.success(
         data: build_growth_record_response(record)
       )
@@ -149,7 +185,81 @@ class GrowthRecordService < ApplicationService
     end
   end
 
-  # 現在のステップ情報を計算
+  # サムネイル削除フラグの処理
+  def self.handle_thumbnail_removal(record, params)
+    if params[:remove_thumbnail] == "true"
+      record.thumbnail.purge if record.thumbnail.attached?
+      params = params.except(:remove_thumbnail)
+    end
+    params
+  end
+
+  # record_name 自動生成処理
+  def self.handle_record_name_auto_generation(record, params)
+    if params.key?(:record_name) && params[:record_name].blank?
+      params = params.merge(record_name: "成長記録#{record.record_number}")
+    end
+    params
+  end
+
+  # 品種変更時のステップ再生成処理
+  def self.handle_plant_id_change(record, new_plant_id)
+    record.growth_record_steps.destroy_all
+
+    new_guide = Guide.find_by(plant_id: new_plant_id)
+    record.update(guide: new_guide) if new_guide
+
+    regenerate_growth_record_steps(record, new_guide) if new_guide
+  end
+
+  # GrowthRecordSteps の再生成
+  def self.regenerate_growth_record_steps(record, guide)
+    guide_steps = guide.guide_steps.order(:position)
+    checkpoint_phase = determine_checkpoint_phase(record.planting_method)
+
+    guide_steps.each do |guide_step|
+      should_complete = should_auto_complete_step?(record, guide_step, checkpoint_phase)
+
+      record.growth_record_steps.create!(
+        guide_step: guide_step,
+        done: should_complete,
+        completed_at: should_complete ? record.started_on : nil,
+        scheduled_on: nil
+      )
+    end
+  end
+
+  # チェックポイントフェーズの判定
+  def self.determine_checkpoint_phase(planting_method)
+    case planting_method
+    when "seed"
+      1  # Phase 1: 種まき
+    when "seedling"
+      3  # Phase 3: 植え付け
+    else
+      nil
+    end
+  end
+
+  # ステップ自動完了の判定
+  def self.should_auto_complete_step?(record, guide_step, checkpoint_phase)
+    record.status == "growing" &&
+      checkpoint_phase &&
+      guide_step.phase.present? &&
+      guide_step.phase <= checkpoint_phase
+  end
+
+  # 開始日変更時の処理
+  def self.handle_started_on_change(record, plant_id_changed)
+    return unless record.growth_record_steps.exists?
+
+    first_completed_step = record.growth_record_steps.where(done: true).order(:completed_at).first
+    first_completed_step.update(completed_at: record.started_on) if first_completed_step
+
+    GrowthRecordStepService.send(:recalculate_next_steps, record)
+  end
+
+  # 現在のステップ情報を計算（チェックポイント起算方式）
   def self.calculate_current_step_info(growth_record)
     return nil unless growth_record.guide
 
@@ -161,23 +271,34 @@ class GrowthRecordService < ApplicationService
       # 計画中: 準備ステップ（最初のステップ）を表示
       {
         status: "planning",
-        preparation_step: build_step_info(guide_steps.first, nil),
-        all_steps: guide_steps.map { |step| build_step_info(step, nil) }
+        preparation_step: build_step_info(guide_steps.first, nil, growth_record),
+        all_steps: guide_steps.map { |step| build_step_info(step, nil, growth_record) }
       }
     when "growing"
-      # 育成中: 経過日数から現在・次のステップを判定
+      # 育成中: チェックポイント起算で現在・次のステップを判定
       return nil unless growth_record.started_on
 
-      elapsed_days = (Date.today - growth_record.started_on).to_i
-      current_step = guide_steps.reverse.find { |s| s.due_days <= elapsed_days }
-      next_step = guide_steps.find { |s| s.due_days > elapsed_days }
+      # 基準日とステップの決定
+      base_date = determine_base_date(growth_record)
+      base_step_due_days = determine_base_step_due_days(growth_record)
+
+      # 栽培方法による開始ステップフィルタリング
+      visible_steps = filter_steps_by_planting_method(guide_steps, growth_record.planting_method)
+
+      # 経過日数計算
+      elapsed_days = (Date.today - base_date).to_i
+
+      # 現在・次のステップ判定（調整後の日数で比較）
+      current_step = visible_steps.reverse.find { |s| (s.due_days - base_step_due_days) <= elapsed_days }
+      next_step = visible_steps.find { |s| (s.due_days - base_step_due_days) > elapsed_days }
 
       {
         status: "growing",
         elapsed_days: elapsed_days,
-        current_step: current_step ? build_step_info(current_step, elapsed_days) : nil,
-        next_step: next_step ? build_step_info(next_step, elapsed_days) : nil,
-        all_steps: guide_steps.map { |step| build_step_info(step, elapsed_days) }
+        base_date: base_date,
+        current_step: current_step ? build_step_info(current_step, elapsed_days, growth_record, base_step_due_days) : nil,
+        next_step: next_step ? build_step_info(next_step, elapsed_days, growth_record, base_step_due_days) : nil,
+        all_steps: visible_steps.map { |step| build_step_info(step, elapsed_days, growth_record, base_step_due_days) }
       }
     when "completed", "failed"
       # 完了/失敗: 全ステップを振り返りとして表示
@@ -188,28 +309,93 @@ class GrowthRecordService < ApplicationService
       {
         status: growth_record.status,
         total_days: total_days,
-        all_steps: guide_steps.map { |step| build_step_info(step, total_days) }
+        all_steps: guide_steps.map { |step| build_step_info(step, total_days, growth_record) }
       }
     end
   end
 
-  # ステップ情報を構築
-  def self.build_step_info(step, elapsed_days)
+  # ステップ情報を構築（チェックポイント起算対応）
+  def self.build_step_info(step, elapsed_days, growth_record, base_step_due_days = 0)
+    # 成長記録ステップの取得（完了状態・完了日を取得）
+    growth_record_step = growth_record.growth_record_steps.find_by(guide_step_id: step.id)
+
+    # 調整後の目安日数（チェックポイント起算）
+    adjusted_due_days = step.due_days - base_step_due_days
+
     info = {
       id: step.id,
+      growth_record_step_id: growth_record_step&.id,
       title: step.title,
       description: step.description,
       position: step.position,
-      due_days: step.due_days
+      phase: step.phase,
+      due_days: step.due_days,
+      adjusted_due_days: adjusted_due_days,
+      done: growth_record_step&.done || false,
+      completed_at: growth_record_step&.completed_at
     }
 
     if elapsed_days
-      info[:is_current] = step.due_days <= elapsed_days
-      info[:is_completed] = step.due_days < elapsed_days
-      info[:days_until] = step.due_days - elapsed_days if step.due_days > elapsed_days
+      info[:is_current] = adjusted_due_days <= elapsed_days
+      info[:is_completed] = growth_record_step&.done || false
+      info[:days_until] = adjusted_due_days - elapsed_days if adjusted_due_days > elapsed_days
     end
 
     info
+  end
+
+  # 基準日の決定（最後に完了したステップのcompleted_at or started_on）
+  def self.determine_base_date(growth_record)
+    last_completed = growth_record.growth_record_steps.where(done: true).order(:completed_at).last
+    last_completed&.completed_at || growth_record.started_on
+  end
+
+  # 基準ステップのdue_daysを決定（新フェーズ構造対応）
+  def self.determine_base_step_due_days(growth_record)
+    last_completed = growth_record.growth_record_steps.where(done: true).order(:completed_at).last
+    return last_completed.guide_step.due_days if last_completed
+
+    # 完了ステップがない場合、planting_methodに応じた基準フェーズのdue_daysを取得
+    guide_steps = growth_record.guide.guide_steps
+    base_phase = case growth_record.planting_method
+    when "seed"
+      1 # Phase 1（種まき）を基準
+    when "seedling"
+      3 # Phase 3（植え付け）を基準
+    else
+      1 # デフォルトはPhase 1
+    end
+
+    base_step = guide_steps.find_by(phase: base_phase)
+    base_step&.due_days || 0
+  end
+
+  # 栽培方法によるフェーズフィルタリング（新フェーズ構造対応）
+  def self.filter_steps_by_planting_method(guide_steps, planting_method)
+    return guide_steps if planting_method.nil?
+
+    case planting_method
+    when "seed"
+      # 種から: フェーズ0（準備）, 1（種まき）, 2（育苗）, 3（植え付け）, 4（育成）, 5（追肥）, 6（収穫）
+      # applicable_to が 'all', 'seed_only', 'direct_sow' のみ表示
+      guide_steps.where(
+        "applicable_to IN (?) OR (phase IN (?) AND applicable_to = ?)",
+        [ "all", "seed_only", "direct_sow" ],
+        [ 0, 1, 2, 3, 4, 5, 6 ],
+        "all"
+      )
+    when "seedling"
+      # 苗から: フェーズ0（準備）, 3（植え付け）, 4（育成）, 5（追肥）, 6（収穫）
+      # applicable_to が 'all', 'seedling_only' のみ表示
+      guide_steps.where(
+        "(phase IN (?) AND applicable_to IN (?))",
+        [ 0, 3, 4, 5, 6 ],
+        [ "all", "seedling_only" ]
+      )
+    else
+      # その他の場合は全て表示
+      guide_steps
+    end
   end
 
   # ページネーション情報構築

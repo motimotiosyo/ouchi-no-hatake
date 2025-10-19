@@ -9,40 +9,9 @@ import DeleteConfirmDialog from './DeleteConfirmDialog'
 import CreatePostModal from '../posts/CreatePostModal'
 import FavoriteButton from './FavoriteButton'
 import GuideStepsDisplay from './GuideStepsDisplay'
+import { getStatusText, getStatusColor, formatDate, formatDateTime } from '@/utils/growthRecordHelpers'
 import type { Post } from '@/types'
-import type { GuideStepInfo } from '@/types/growthRecord'
-
-interface GrowthRecord {
-  id: number
-  record_number: number
-  record_name: string
-  location: string
-  started_on: string
-  ended_on?: string
-  status: 'planning' | 'growing' | 'completed' | 'failed'
-  created_at: string
-  updated_at: string
-  thumbnail_url?: string
-  plant: {
-    id: number
-    name: string
-    description: string
-  }
-  guide?: {
-    id: number
-    plant: {
-      id: number
-      name: string
-    }
-    guide_step_info?: GuideStepInfo
-  } | null
-  user: {
-    id: number
-    name: string
-  }
-  favorites_count: number
-  favorited_by_current_user: boolean
-}
+import type { GrowthRecord } from '@/types/growthRecord'
 
 interface Props {
   id: string
@@ -52,12 +21,21 @@ export default function GrowthRecordDetail({ id }: Props) {
   const { user, executeProtected } = useAuth()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [toastMessage, setToastMessage] = useState<string | null>(null)
   const router = useRouter()
   const [growthRecord, setGrowthRecord] = useState<GrowthRecord | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [isCreatePostModalOpen, setIsCreatePostModalOpen] = useState(false)
+  const [stepToggleLoading, setStepToggleLoading] = useState(false)
+  const [isGuideExpanded, setIsGuideExpanded] = useState(false)
+
+  // トーストメッセージを表示して3秒後に自動的に消す
+  const showToast = (message: string) => {
+    setToastMessage(message)
+    setTimeout(() => setToastMessage(null), 3000)
+  }
 
   const fetchGrowthRecord = useCallback(async () => {
     try {
@@ -105,38 +83,6 @@ export default function GrowthRecordDetail({ id }: Props) {
     fetchGrowthRecord()
   }
 
-  const getStatusText = (status: string | null) => {
-    if (!status) return '計画中'
-    switch (status) {
-      case 'planning':
-        return '計画中'
-      case 'growing':
-        return '育成中'
-      case 'completed':
-        return '収穫済み'
-      case 'failed':
-        return '失敗'
-      default:
-        return status
-    }
-  }
-
-  const getStatusColor = (status: string | null) => {
-    if (!status) return 'bg-yellow-100 text-yellow-800'
-    switch (status) {
-      case 'planning':
-        return 'bg-yellow-100 text-yellow-800'
-      case 'growing':
-        return 'bg-green-100 text-green-800'
-      case 'completed':
-        return 'bg-blue-100 text-blue-800'
-      case 'failed':
-        return 'bg-red-100 text-red-800'
-      default:
-        return 'bg-gray-100 text-gray-800'
-    }
-  }
-
   const handleEditButtonClick = () => {
     executeProtected(() => {
       setIsEditModalOpen(true)
@@ -155,23 +101,71 @@ export default function GrowthRecordDetail({ id }: Props) {
     })
   }
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString('ja-JP', {
-      year: 'numeric',
-      month: 'numeric',
-      day: 'numeric'
+  const handleStepComplete = async (stepId: number, completedAt: string) => {
+    if (stepToggleLoading) return
+
+    await executeProtected(async () => {
+      setStepToggleLoading(true)
+      try {
+        const token = localStorage.getItem('auth_token')
+        if (!token) {
+          setError('認証トークンが見つかりません')
+          return
+        }
+
+        const result = await apiClient.patch(`/api/v1/growth_records/${id}/steps/${stepId}/complete`, {
+          completed_at: completedAt
+        }, token)
+
+        if (result.success) {
+          await fetchGrowthRecord()
+        } else {
+          if (process.env.NODE_ENV === 'development') {
+            console.error('ステップ完了エラー:', result.error.message)
+          }
+          showToast(result.error.message || 'ステップの完了記録に失敗しました')
+        }
+      } catch (err) {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('ステップ完了でエラーが発生しました:', err)
+        }
+        showToast('ステップの完了記録に失敗しました')
+      } finally {
+        setStepToggleLoading(false)
+      }
     })
   }
 
-  const formatDateTime = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleString('ja-JP', {
-      year: 'numeric',
-      month: 'numeric',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+  const handleStepUncomplete = async (stepId: number) => {
+    if (stepToggleLoading) return
+
+    await executeProtected(async () => {
+      setStepToggleLoading(true)
+      try {
+        const token = localStorage.getItem('auth_token')
+        if (!token) {
+          setError('認証トークンが見つかりません')
+          return
+        }
+
+        const result = await apiClient.patch(`/api/v1/growth_records/${id}/steps/${stepId}/uncomplete`, {}, token)
+
+        if (result.success) {
+          await fetchGrowthRecord()
+        } else {
+          if (process.env.NODE_ENV === 'development') {
+            console.error('ステップ完了取消エラー:', result.error.message)
+          }
+          showToast(result.error.message || 'ステップの完了取消に失敗しました')
+        }
+      } catch (err) {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('ステップ完了取消でエラーが発生しました:', err)
+        }
+        showToast('ステップの完了取消に失敗しました')
+      } finally {
+        setStepToggleLoading(false)
+      }
     })
   }
 
@@ -209,36 +203,43 @@ export default function GrowthRecordDetail({ id }: Props) {
 
   return (
     <div className="space-y-6">
+      {/* トーストメッセージ */}
+      {toastMessage && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg">
+          {toastMessage}
+        </div>
+      )}
+
       {/* 戻るボタン */}
       <div>
         <button
-          onClick={() => router.push(user && user.id === growthRecord.user.id ? '/growth-records' : '/')}
+          onClick={() => router.push(user && growthRecord.user && user.id === growthRecord.user.id ? '/growth-records' : '/')}
           className="text-blue-600 hover:text-blue-800 flex items-center"
         >
-          {'< '}{user && user.id === growthRecord.user.id ? '成長記録一覧に戻る' : 'タイムラインに戻る'}
+          {'< '}{user && growthRecord.user && user.id === growthRecord.user.id ? '成長記録一覧に戻る' : 'タイムラインに戻る'}
         </button>
       </div>
 
       {/* 成長記録基本情報 */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <div className="flex flex-col md:flex-row gap-6">
-          {/* サムネイル画像 */}
-          <div className="flex-shrink-0">
+        <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-6">
+          {/* 左側：サムネイル画像（全高） */}
+          <div className="flex flex-col">
             {growthRecord.thumbnail_url ? (
               <img
                 src={growthRecord.thumbnail_url}
                 alt={`${growthRecord.plant.name} - ${growthRecord.record_name}`}
-                className="w-full md:w-48 h-48 object-cover rounded-lg"
+                className="w-full h-full min-h-[180px] object-cover rounded-lg"
               />
             ) : (
-              <div className="w-full md:w-48 h-48 bg-gray-100 rounded-lg flex items-center justify-center">
-                <span className="text-6xl">🌱</span>
+              <div className="w-full h-full min-h-[180px] bg-gray-100 rounded-lg flex items-center justify-center">
+                <span className="text-4xl">🌱</span>
               </div>
             )}
           </div>
-          
-          {/* 基本情報 */}
-          <div className="flex-1">
+
+          {/* 右側：基本情報 */}
+          <div className="flex flex-col">
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 mb-2">
@@ -251,7 +252,7 @@ export default function GrowthRecordDetail({ id }: Props) {
               </div>
               <div className="flex space-x-2">
                 {/* お気に入りボタン */}
-                {user && user.id !== growthRecord.user.id && (
+                {user && growthRecord.user && user.id !== growthRecord.user.id && (
                   <FavoriteButton
                     growthRecordId={growthRecord.id}
                     initialFavorited={growthRecord.favorited_by_current_user}
@@ -266,7 +267,7 @@ export default function GrowthRecordDetail({ id }: Props) {
                   />
                 )}
                 {/* 編集・削除ボタン（本人のみ） */}
-                {user && user.id === growthRecord.user.id && (
+                {user && growthRecord.user && user.id === growthRecord.user.id && (
                   <>
                     <button
                       onClick={handleEditButtonClick}
@@ -291,38 +292,92 @@ export default function GrowthRecordDetail({ id }: Props) {
                 <p className="text-gray-900">{growthRecord.location}</p>
               </div>
               <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-1">記録番号</h3>
-                <p className="text-gray-900">#{growthRecord.record_number}</p>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-1">栽培開始日</h3>
+                <h3 className="text-sm font-medium text-gray-500 mb-1">
+                  {growthRecord.planting_method === 'seed'
+                    ? '種まき日'
+                    : growthRecord.planting_method === 'seedling'
+                      ? '植え付け日'
+                      : '栽培開始日'}
+                </h3>
                 <p className="text-gray-900">
                   {growthRecord.started_on ? formatDate(growthRecord.started_on) : '---.--.-'}
                 </p>
               </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-1">栽培終了日</h3>
-                <p className="text-gray-900">
-                  {growthRecord.ended_on ? formatDate(growthRecord.ended_on) : '---.--.-'}
-                </p>
-              </div>
+              {growthRecord.ended_on && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-500 mb-1">栽培終了日</h3>
+                  <p className="text-gray-900">
+                    {formatDate(growthRecord.ended_on)}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
-      </div>
 
-      {/* ガイドステップ表示セクション */}
-      {growthRecord.guide?.guide_step_info && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            栽培ガイド - {growthRecord.guide.plant.name}
-          </h2>
-          <GuideStepsDisplay
-            stepInfo={growthRecord.guide.guide_step_info}
-            recordStatus={growthRecord.status}
-          />
-        </div>
-      )}
+        {/* 下部：栽培ガイド（折りたたみ可能） */}
+        {growthRecord.guide?.guide_step_info && (
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            {/* ガイドヘッダー（常に表示） */}
+            <button
+              onClick={() => setIsGuideExpanded(!isGuideExpanded)}
+              className="w-full text-left hover:bg-gray-50 rounded-lg p-3 transition-colors"
+            >
+              <div className="flex justify-between items-center">
+                <div className="flex-1">
+                  <h3 className="text-sm font-semibold text-gray-900 mb-2">
+                    📖 栽培ガイド - {growthRecord.guide.plant.name}
+                  </h3>
+                  {/* ガイド概要（折りたたみ時） */}
+                  {!isGuideExpanded && growthRecord.status === 'growing' && (
+                    <div className="flex flex-wrap gap-2 text-xs">
+                      {growthRecord.guide.guide_step_info.elapsed_days !== undefined && (
+                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                          経過{growthRecord.guide.guide_step_info.elapsed_days}日
+                        </span>
+                      )}
+                      {growthRecord.guide.guide_step_info.current_step && (
+                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
+                          現在: {growthRecord.guide.guide_step_info.current_step.title}
+                        </span>
+                      )}
+                      {growthRecord.guide.guide_step_info.next_step && (
+                        <span className="bg-orange-100 text-orange-800 px-2 py-1 rounded">
+                          次: {growthRecord.guide.guide_step_info.next_step.title}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+                <div className="ml-4 text-gray-400 flex-shrink-0">
+                  {isGuideExpanded ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  )}
+                </div>
+              </div>
+            </button>
+
+            {/* ガイド詳細（展開時のみ表示） */}
+            {isGuideExpanded && (
+              <div className="mt-3">
+                <GuideStepsDisplay
+                  stepInfo={growthRecord.guide.guide_step_info}
+                  recordStatus={growthRecord.status}
+                  isOwner={user?.id === growthRecord.user?.id}
+                  onStepComplete={handleStepComplete}
+                  onStepUncomplete={handleStepUncomplete}
+                />
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* 成長メモ */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
@@ -330,7 +385,7 @@ export default function GrowthRecordDetail({ id }: Props) {
           <h2 className="text-lg font-semibold text-gray-900">
             成長メモ ({posts.length}件)
           </h2>
-          {user && user.id === growthRecord.user.id && (
+          {user && growthRecord.user && user.id === growthRecord.user.id && (
             <button
               onClick={handleCreatePostButtonClick}
               className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white text-sm rounded-md transition-colors"
@@ -339,7 +394,7 @@ export default function GrowthRecordDetail({ id }: Props) {
             </button>
           )}
         </div>
-        
+
         {posts.length === 0 ? (
           <div className="text-center py-8">
             <div className="text-gray-500">まだ投稿がありません</div>

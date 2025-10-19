@@ -4,6 +4,7 @@ class GrowthRecord < ApplicationRecord
   belongs_to :guide, optional: true
   has_many :posts, dependent: :destroy
   has_many :favorite_growth_records, dependent: :destroy
+  has_many :growth_record_steps, dependent: :destroy
 
   # サムネイル画像添付（1枚のみ）
   has_one_attached :thumbnail
@@ -19,6 +20,11 @@ class GrowthRecord < ApplicationRecord
     growing: 1,
     completed: 2,
     failed: 3
+  }
+
+  enum planting_method: {
+    seed: 0,
+    seedling: 1
   }
 
   # お気に入り数を取得

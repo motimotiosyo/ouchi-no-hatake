@@ -3,22 +3,17 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuthContext as useAuth } from '@/contexts/auth'
 import { apiClient } from '@/services/apiClient'
+import type { Plant } from '@/types/growthRecord'
 
-interface Plant {
-  id: number
-  name: string
-  description: string
-}
-
-interface GrowthRecord {
+interface EditData {
   id: number
   plant_id: number
   record_name: string
-  location: string
-  started_on: string
-  ended_on?: string
+  location: string | null
+  started_on: string | null
+  ended_on?: string | null
   status: 'planning' | 'growing' | 'completed' | 'failed'
-  thumbnail_url?: string
+  thumbnail_url?: string | null
 }
 
 // サムネイル画像アップロード制限
@@ -30,7 +25,7 @@ interface Props {
   isOpen: boolean
   onClose: () => void
   onSuccess: () => void
-  editData?: GrowthRecord
+  editData?: EditData
 }
 
 export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, editData }: Props) {
@@ -46,6 +41,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
     location: '',
     started_on: '',
     ended_on: '',
+    planting_method: 'seed' as 'seed' | 'seedling',
     status: 'planning' as 'planning' | 'growing' | 'completed' | 'failed'
   })
   
@@ -82,6 +78,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
           location: editData.location || '',
           started_on: editData.started_on || '',
           ended_on: editData.ended_on || '',
+          planting_method: 'seed',
           status: editData.status || 'planning'
         })
 
@@ -158,11 +155,10 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
       try {
         setLoading(true)
         const isEditMode = !!editData
-        const endpoint = isEditMode 
+        const endpoint = isEditMode
           ? `/api/v1/growth_records/${editData.id}`
           : '/api/v1/growth_records'
 
-        // FormDataを使用して送信
         const formDataToSend = new FormData()
         formDataToSend.append('growth_record[plant_id]', formData.plant_id)
         formDataToSend.append('growth_record[record_name]', formData.record_name)
@@ -172,24 +168,19 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
           formDataToSend.append('growth_record[ended_on]', formData.ended_on)
         }
         formDataToSend.append('growth_record[status]', formData.status)
-        
-        // サムネイル画像を追加
         if (selectedThumbnail) {
           formDataToSend.append('growth_record[thumbnail]', selectedThumbnail)
         }
-        
-        // 画像削除フラグを追加（編集モードで削除チェックがある場合）
         if (isEditMode && removeThumbnail) {
           formDataToSend.append('growth_record[remove_thumbnail]', 'true')
         }
 
         const token = localStorage.getItem('auth_token')
         const result = isEditMode
-          ? await apiClient.put<{ growth_record: GrowthRecord }>(endpoint, formDataToSend, token || undefined)
-          : await apiClient.post<{ growth_record: GrowthRecord }>(endpoint, formDataToSend, token || undefined)
+          ? await apiClient.put<{ growth_record: EditData }>(endpoint, formDataToSend, token || undefined)
+          : await apiClient.post<{ growth_record: EditData }>(endpoint, formDataToSend, token || undefined)
 
         if (result.success) {
-          // 成功時
           onSuccess()
           handleClose()
         } else {
@@ -221,6 +212,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
       location: '',
       started_on: '',
       ended_on: '',
+      planting_method: 'seed',
       status: 'planning'
     })
     setSelectedThumbnail(null)
@@ -264,7 +256,6 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* ステータス */}
             <div>
               <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
                 ステータス
@@ -277,14 +268,44 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
               >
-                <option value="planning">計画中</option>
-                <option value="growing">育成中</option>
-                <option value="completed">収穫済み</option>
-                <option value="failed">失敗</option>
+                {(!editData || editData.status === 'planning') && (
+                  <>
+                    <option value="planning">計画中</option>
+                    <option value="growing">育成中</option>
+                    <option value="completed">収穫済み</option>
+                    <option value="failed">失敗</option>
+                  </>
+                )}
+                {editData && editData.status === 'growing' && (
+                  <>
+                    <option value="growing">育成中</option>
+                    <option value="completed">収穫済み</option>
+                    <option value="failed">失敗</option>
+                  </>
+                )}
+                {editData && editData.status === 'completed' && (
+                  <option value="completed">収穫済み</option>
+                )}
+                {editData && editData.status === 'failed' && (
+                  <option value="failed">失敗</option>
+                )}
               </select>
+              {editData && editData.status === 'planning' && formData.status !== 'planning' && (
+                <p className="text-xs text-yellow-600 mt-1">
+                  ⚠️ 育成中・収穫済み・失敗に変更すると、計画中には戻せなくなります
+                </p>
+              )}
+              {editData && editData.status === 'growing' && (
+                <p className="text-xs text-gray-500 mt-1">
+                  育成中から計画中には戻せません
+                </p>
+              )}
+              {editData && (editData.status === 'completed' || editData.status === 'failed') && (
+                <p className="text-xs text-gray-500 mt-1">
+                  {editData.status === 'completed' ? '収穫済み' : '失敗'}のステータスは変更できません
+                </p>
+              )}
             </div>
-
-            {/* 品種選択 */}
             <div>
               <label htmlFor="plant_id" className="block text-sm font-medium text-gray-700 mb-2">
                 品種
@@ -295,7 +316,8 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
                 value={formData.plant_id}
                 onChange={handleInputChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                disabled={editData && formData.status !== 'planning'}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
                 <option value="">選択してください</option>
                 {plants.map(plant => (
@@ -304,9 +326,13 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
                   </option>
                 ))}
               </select>
+              {editData && formData.status !== 'planning' && (
+                <p className="text-xs text-gray-500 mt-1">
+                  育成中以降は品種を変更できません
+                </p>
+              )}
             </div>
 
-            {/* 記録名 */}
             <div>
               <label htmlFor="record_name" className="block text-sm font-medium text-gray-700 mb-2">
                 記録名（任意）
@@ -325,7 +351,6 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
               </p>
             </div>
 
-            {/* 栽培場所 */}
             <div>
               <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
                 栽培場所
@@ -347,10 +372,43 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
               </select>
             </div>
 
-            {/* 栽培開始日 */}
+            {formData.status === 'growing' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  栽培方法
+                </label>
+                <div className="flex gap-4">
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="planting_method"
+                      value="seed"
+                      checked={formData.planting_method === 'seed'}
+                      onChange={handleInputChange}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-gray-700">種から</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="radio"
+                      name="planting_method"
+                      value="seedling"
+                      checked={formData.planting_method === 'seedling'}
+                      onChange={handleInputChange}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-gray-700">苗から</span>
+                  </label>
+                </div>
+              </div>
+            )}
+
             <div>
               <label htmlFor="started_on" className="block text-sm font-medium text-gray-700 mb-2">
-                栽培開始日
+                {formData.status === 'growing'
+                  ? (formData.planting_method === 'seed' ? '種まき日' : '植え付け日')
+                  : '栽培開始日'}
               </label>
               <input
                 type="date"
@@ -363,7 +421,6 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
               />
             </div>
 
-            {/* 栽培終了日 - 収穫済み・失敗の場合のみ表示 */}
             {(formData.status === 'completed' || formData.status === 'failed') && (
               <div>
                 <label htmlFor="ended_on" className="block text-sm font-medium text-gray-700 mb-2">
@@ -381,7 +438,6 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
               </div>
             )}
 
-            {/* サムネイル画像アップロード */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 サムネイル画像
@@ -396,14 +452,12 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
               />
               
-              {/* 画像エラーメッセージ */}
               {imageError && (
                 <div className="mt-2 p-2 bg-red-100 border border-red-400 text-red-700 rounded text-sm">
                   {imageError}
                 </div>
               )}
               
-              {/* 画像プレビュー */}
               {thumbnailPreview && (
                 <div className="mt-3">
                   <div className="relative inline-block">
@@ -423,7 +477,6 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
                 </div>
               )}
               
-              {/* 編集モードで既存画像削除のチェックボックス */}
               {editData?.thumbnail_url && !selectedThumbnail && !thumbnailPreview && (
                 <div className="mt-2">
                   <label className="flex items-center">
@@ -439,7 +492,6 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
               )}
             </div>
 
-            {/* ボタン */}
             <div className="flex justify-end space-x-3 pt-4">
               <button
                 type="button"

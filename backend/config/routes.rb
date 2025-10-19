@@ -21,6 +21,12 @@ Rails.application.routes.draw do
       # 成長記録関連API
       resources :growth_records, only: [ :index, :show, :create, :update, :destroy ] do
         resource :favorite, controller: "favorite_growth_records", only: [ :create, :destroy ]
+        resources :steps, controller: "growth_record_steps", only: [] do
+          member do
+            patch :complete
+            patch :uncomplete
+          end
+        end
       end
 
       # 植物関連API
