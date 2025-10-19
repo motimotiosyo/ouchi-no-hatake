@@ -11,8 +11,8 @@ class GrowthRecordService < ApplicationService
   class AuthorizationError < StandardError; end
 
   # 成長記録一覧のレスポンス構築
-  def self.build_growth_records_list(growth_records, pagination_info)
-    growth_records_data = growth_records.map { |record| build_growth_record_response(record) }
+  def self.build_growth_records_list(growth_records, pagination_info, current_user = nil)
+    growth_records_data = growth_records.map { |record| build_growth_record_response(record, current_user) }
 
     {
       growth_records: growth_records_data,
