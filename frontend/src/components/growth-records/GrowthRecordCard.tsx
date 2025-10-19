@@ -3,9 +3,10 @@
 import { useState, useMemo, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
-import { apiClient } from '@/services/apiClient'
+import { useAuthContext as useAuth } from '@/contexts/auth'
 import CreateGrowthRecordModal from './CreateGrowthRecordModal'
 import DeleteConfirmDialog from './DeleteConfirmDialog'
+import FavoriteButton from './FavoriteButton'
 
 interface GrowthRecord {
   id: number
@@ -36,10 +37,12 @@ interface Props {
 }
 
 export default function GrowthRecordCard({ record, onUpdate, showFavoriteButton = false }: Props) {
+  const { user } = useAuth()
   const [showMenu, setShowMenu] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [isUnfavoriting, setIsUnfavoriting] = useState(false)
+  const [favoriteCount, setFavoriteCount] = useState(0)
+  const [isFavorited, setIsFavorited] = useState(true)
 
   // editDataとgrowthRecordをメモ化して再レンダリングを防ぐ
   const editData = useMemo(() => ({
@@ -68,29 +71,13 @@ export default function GrowthRecordCard({ record, onUpdate, showFavoriteButton 
     setIsDeleteDialogOpen(false)
   }, [])
 
-  const handleUnfavorite = useCallback(async () => {
-    if (isUnfavoriting) return
-
-    setIsUnfavoriting(true)
-    try {
-      const token = localStorage.getItem('auth_token')
-      if (!token) {
-        alert('ログインが必要です')
-        return
-      }
-
-      const result = await apiClient.unfavoriteGrowthRecord(record.id, token)
-      if (result.success) {
-        onUpdate()
-      } else {
-        alert(result.error.message || 'お気に入り解除に失敗しました')
-      }
-    } catch {
-      alert('お気に入り解除に失敗しました')
-    } finally {
-      setIsUnfavoriting(false)
+  const handleFavoriteUpdate = useCallback((favorited: boolean, count: number) => {
+    setIsFavorited(favorited)
+    setFavoriteCount(count)
+    if (!favorited) {
+      onUpdate()
     }
-  }, [record.id, onUpdate, isUnfavoriting])
+  }, [onUpdate])
 
   const getStatusText = (status: string | null) => {
     if (!status) return '計画中'
@@ -229,14 +216,17 @@ export default function GrowthRecordCard({ record, onUpdate, showFavoriteButton 
               <div>
                 {record.started_on ? formatDate(record.started_on) : '---.--.-'} 〜 {record.ended_on ? formatDate(record.ended_on) : '---.--.-'}
               </div>
-              {showFavoriteButton && (
-                <button
-                  onClick={handleUnfavorite}
-                  className="pointer-events-auto px-2 py-0.5 text-xs text-red-600 bg-red-50 rounded hover:bg-red-100 transition-colors"
-                  disabled={isUnfavoriting}
-                >
-                  {isUnfavoriting ? '解除中' : '解除'}
-                </button>
+              {showFavoriteButton && user && (
+                <div className="pointer-events-auto">
+                  <FavoriteButton
+                    growthRecordId={record.id}
+                    initialFavorited={isFavorited}
+                    initialCount={favoriteCount}
+                    onUpdate={handleFavoriteUpdate}
+                    variant="compact"
+                    showCount={false}
+                  />
+                </div>
               )}
             </div>
           </div>
@@ -329,14 +319,17 @@ export default function GrowthRecordCard({ record, onUpdate, showFavoriteButton 
                 <div className="text-sm text-gray-600">
                   <div className="flex items-center justify-between">
                     <div>栽培期間： {record.started_on ? formatDate(record.started_on) : '---.--.-'} 〜 {record.ended_on ? formatDate(record.ended_on) : '---.--.-'}</div>
-                    {showFavoriteButton && (
-                      <button
-                        onClick={handleUnfavorite}
-                        className="pointer-events-auto px-2 py-0.5 text-xs text-red-600 bg-red-50 rounded hover:bg-red-100 transition-colors ml-2"
-                        disabled={isUnfavoriting}
-                      >
-                        {isUnfavoriting ? '解除中' : '解除'}
-                      </button>
+                    {showFavoriteButton && user && (
+                      <div className="pointer-events-auto ml-2">
+                        <FavoriteButton
+                          growthRecordId={record.id}
+                          initialFavorited={isFavorited}
+                          initialCount={favoriteCount}
+                          onUpdate={handleFavoriteUpdate}
+                          variant="compact"
+                          showCount={false}
+                        />
+                      </div>
                     )}
                   </div>
                   {record.user && (

@@ -9,13 +9,19 @@ interface FavoriteButtonProps {
   initialFavorited: boolean
   initialCount: number
   onUpdate?: (favorited: boolean, count: number) => void
+  variant?: 'default' | 'compact'
+  showCount?: boolean
+  compactText?: string
 }
 
 export default function FavoriteButton({
   growthRecordId,
   initialFavorited,
   initialCount,
-  onUpdate
+  onUpdate,
+  variant = 'default',
+  showCount = true,
+  compactText = '解除'
 }: FavoriteButtonProps) {
   const { user, token, executeProtected } = useAuth()
   const [favorited, setFavorited] = useState(initialFavorited)
@@ -52,6 +58,20 @@ export default function FavoriteButton({
     return null
   }
 
+  if (variant === 'compact') {
+    return (
+      <button
+        onClick={handleToggleFavorite}
+        disabled={isProcessing || !favorited}
+        className={`px-2 py-0.5 text-xs text-red-600 bg-red-50 rounded hover:bg-red-100 transition-colors ${
+          isProcessing ? 'opacity-50 cursor-not-allowed' : ''
+        }`}
+      >
+        {isProcessing ? '解除中' : compactText}
+      </button>
+    )
+  }
+
   return (
     <button
       onClick={handleToggleFavorite}
@@ -63,7 +83,7 @@ export default function FavoriteButton({
       } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
       <span className="text-lg">{favorited ? '📖' : '📕'}</span>
-      <span>{count}</span>
+      {showCount && <span>{count}</span>}
     </button>
   )
 }
