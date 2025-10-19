@@ -28,6 +28,8 @@ interface GrowthRecord {
     id: number
     name: string
   }
+  favorites_count?: number
+  favorited_by_current_user?: boolean
 }
 
 interface Props {
@@ -41,8 +43,8 @@ export default function GrowthRecordCard({ record, onUpdate, showFavoriteButton 
   const [showMenu, setShowMenu] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
-  const [favoriteCount, setFavoriteCount] = useState(0)
-  const [isFavorited, setIsFavorited] = useState(true)
+  const [favoriteCount, setFavoriteCount] = useState(record.favorites_count ?? 0)
+  const [isFavorited, setIsFavorited] = useState(record.favorited_by_current_user ?? false)
 
   // editDataとgrowthRecordをメモ化して再レンダリングを防ぐ
   const editData = useMemo(() => ({
