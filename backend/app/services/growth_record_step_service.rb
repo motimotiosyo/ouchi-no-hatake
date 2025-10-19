@@ -91,6 +91,9 @@ class GrowthRecordStepService < ApplicationService
     base_date = GrowthRecordService.send(:determine_base_date, growth_record)
     base_step_due_days = GrowthRecordService.send(:determine_base_step_due_days, growth_record)
 
+    # base_dateがnilの場合もスキップ（完了ステップがなく、started_onもない状態）
+    return if base_date.nil?
+
     growth_record.growth_record_steps.each do |step|
       adjusted_due_days = step.guide_step.due_days - base_step_due_days
       step.scheduled_on = base_date + adjusted_due_days.days
