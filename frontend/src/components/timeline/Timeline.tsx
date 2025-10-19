@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import TimelinePost from './TimelinePost'
 import CreatePostModal from '../posts/CreatePostModal'
-import CategoryFilter from '../common/CategoryFilter'
+import CategoryFilterIconMenu from '../common/CategoryFilterIconMenu'
 import { useAuthContext as useAuth } from '@/contexts/auth'
 import { apiClient } from '@/services/apiClient'
 import type { Post } from '@/types'
@@ -27,15 +27,19 @@ export default function Timeline() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null)
+  const [activeTab, setActiveTab] = useState<'all' | 'following'>('all')
   const observer = useRef<IntersectionObserver | null>(null)
 
-  // URLクエリパラメータからカテゴリIDを取得
+  // URLクエリパラメータからタブとカテゴリIDを取得
   useEffect(() => {
+    const tab = searchParams.get('tab') as 'all' | 'following' | null
     const categoryId = searchParams.get('category_id')
+
+    setActiveTab(tab || 'all')
     setSelectedCategoryId(categoryId ? Number(categoryId) : null)
   }, [searchParams])
 
-  const fetchPosts = useCallback(async (page: number = 1, append: boolean = false, categoryId: number | null = null) => {
+  const fetchPosts = useCallback(async (page: number = 1, append: boolean = false, categoryId: number | null = null, tab: 'all' | 'following' = 'all') => {
     try {
       if (page > 1) {
         setLoadingMore(true)
@@ -50,6 +54,9 @@ export default function Timeline() {
       })
       if (categoryId) {
         queryParams.append('category_id', categoryId.toString())
+      }
+      if (tab === 'following') {
+        queryParams.append('following', 'true')
       }
 
       const result = await apiClient.get<{ posts: Post[], pagination: PaginationInfo }>(
@@ -82,26 +89,37 @@ export default function Timeline() {
 
     observer.current = new IntersectionObserver(entries => {
       if (entries[0].isIntersecting && pagination?.has_more) {
-        fetchPosts(pagination.current_page + 1, true, selectedCategoryId)
+        fetchPosts(pagination.current_page + 1, true, selectedCategoryId, activeTab)
       }
     })
 
     if (node) observer.current.observe(node)
-  }, [loading, loadingMore, pagination, fetchPosts, selectedCategoryId])
+  }, [loading, loadingMore, pagination, fetchPosts, selectedCategoryId, activeTab])
 
   useEffect(() => {
-    fetchPosts(1, false, selectedCategoryId)
-  }, [selectedCategoryId])
+    fetchPosts(1, false, selectedCategoryId, activeTab)
+  }, [selectedCategoryId, activeTab])
 
   const handleCreateSuccess = () => {
     // 投稿作成成功時にタイムラインを再取得
-    fetchPosts(1, false, selectedCategoryId)
+    fetchPosts(1, false, selectedCategoryId, activeTab)
   }
 
   const handleCreateButtonClick = () => {
     executeProtected(() => {
       setIsCreateModalOpen(true)
     })
+  }
+
+  const handleTabChange = (tab: 'all' | 'following') => {
+    // URLクエリパラメータを更新
+    const params = new URLSearchParams(searchParams.toString())
+    if (tab === 'following') {
+      params.set('tab', 'following')
+    } else {
+      params.delete('tab')
+    }
+    router.push(`/?${params.toString()}`)
   }
 
   const handleCategoryChange = (categoryId: number | null) => {
@@ -140,12 +158,47 @@ export default function Timeline() {
   return (
     <div className="flex justify-center">
       <div className="w-full max-w-2xl min-w-80 space-y-4">
-        {/* カテゴリフィルター */}
-        <div className="bg-white rounded-lg shadow-md border border-gray-200 px-4 py-4">
-          <CategoryFilter
-            selectedCategoryId={selectedCategoryId}
-            onCategoryChange={handleCategoryChange}
-          />
+        {/* タブバー風ヘッダー */}
+        <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
+          <div className="flex items-center justify-between max-w-2xl mx-auto">
+            {/* タブエリア */}
+            <div className="flex items-center flex-1">
+              <button
+                onClick={() => handleTabChange('all')}
+                className={`flex-1 text-center py-4 font-semibold transition-colors relative ${
+                  activeTab === 'all'
+                    ? 'text-gray-900'
+                    : 'text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                全体
+                {activeTab === 'all' && (
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-500 rounded-t-full"></div>
+                )}
+              </button>
+              <button
+                onClick={() => handleTabChange('following')}
+                className={`flex-1 text-center py-4 font-semibold transition-colors relative ${
+                  activeTab === 'following'
+                    ? 'text-gray-900'
+                    : 'text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                フォロー中
+                {activeTab === 'following' && (
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-500 rounded-t-full"></div>
+                )}
+              </button>
+            </div>
+
+            {/* フィルターアイコン */}
+            <div className="px-4">
+              <CategoryFilterIconMenu
+                selectedCategoryId={selectedCategoryId}
+                onCategoryChange={handleCategoryChange}
+              />
+            </div>
+          </div>
         </div>
 
         {/* 投稿一覧 */}
