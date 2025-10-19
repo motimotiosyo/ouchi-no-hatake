@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import TimelinePost from './TimelinePost'
 import CreatePostModal from '../posts/CreatePostModal'
+import CategoryFilter from '../common/CategoryFilter'
 import { useAuthContext as useAuth } from '@/contexts/auth'
 import { apiClient } from '@/services/apiClient'
 import type { Post } from '@/types'
@@ -16,15 +18,24 @@ interface PaginationInfo {
 
 export default function Timeline() {
   const { user, executeProtected } = useAuth()
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [posts, setPosts] = useState<Post[]>([])
   const [loadingMore, setLoadingMore] = useState(false)
   const [pagination, setPagination] = useState<PaginationInfo | null>(null)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null)
   const observer = useRef<IntersectionObserver | null>(null)
 
-  const fetchPosts = useCallback(async (page: number = 1, append: boolean = false) => {
+  // URLクエリパラメータからカテゴリIDを取得
+  useEffect(() => {
+    const categoryId = searchParams.get('category_id')
+    setSelectedCategoryId(categoryId ? Number(categoryId) : null)
+  }, [searchParams])
+
+  const fetchPosts = useCallback(async (page: number = 1, append: boolean = false, categoryId: number | null = null) => {
     try {
       if (page > 1) {
         setLoadingMore(true)
@@ -33,8 +44,16 @@ export default function Timeline() {
       }
 
       const token = localStorage.getItem('auth_token')
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        per_page: '10'
+      })
+      if (categoryId) {
+        queryParams.append('category_id', categoryId.toString())
+      }
+
       const result = await apiClient.get<{ posts: Post[], pagination: PaginationInfo }>(
-        `/api/v1/posts?page=${page}&per_page=10`,
+        `/api/v1/posts?${queryParams.toString()}`,
         token || undefined
       )
 
@@ -60,29 +79,40 @@ export default function Timeline() {
   const lastPostElementRef = useCallback((node: HTMLDivElement | null) => {
     if (loading || loadingMore) return
     if (observer.current) observer.current.disconnect()
-    
+
     observer.current = new IntersectionObserver(entries => {
       if (entries[0].isIntersecting && pagination?.has_more) {
-        fetchPosts(pagination.current_page + 1, true)
+        fetchPosts(pagination.current_page + 1, true, selectedCategoryId)
       }
     })
-    
+
     if (node) observer.current.observe(node)
-  }, [loading, loadingMore, pagination, fetchPosts])
+  }, [loading, loadingMore, pagination, fetchPosts, selectedCategoryId])
 
   useEffect(() => {
-    fetchPosts()
-  }, [fetchPosts])
+    fetchPosts(1, false, selectedCategoryId)
+  }, [selectedCategoryId])
 
   const handleCreateSuccess = () => {
     // 投稿作成成功時にタイムラインを再取得
-    fetchPosts()
+    fetchPosts(1, false, selectedCategoryId)
   }
 
   const handleCreateButtonClick = () => {
     executeProtected(() => {
       setIsCreateModalOpen(true)
     })
+  }
+
+  const handleCategoryChange = (categoryId: number | null) => {
+    // URLクエリパラメータを更新
+    const params = new URLSearchParams(searchParams.toString())
+    if (categoryId) {
+      params.set('category_id', categoryId.toString())
+    } else {
+      params.delete('category_id')
+    }
+    router.push(`/?${params.toString()}`)
   }
 
   if (loading) {
@@ -110,6 +140,14 @@ export default function Timeline() {
   return (
     <div className="flex justify-center">
       <div className="w-full max-w-2xl min-w-80 space-y-4">
+        {/* カテゴリフィルター */}
+        <div className="bg-white rounded-lg shadow-md border border-gray-200 px-4 py-4">
+          <CategoryFilter
+            selectedCategoryId={selectedCategoryId}
+            onCategoryChange={handleCategoryChange}
+          />
+        </div>
+
         {/* 投稿一覧 */}
         <div>
         {posts.length === 0 ? (

@@ -16,6 +16,7 @@ class Api::V1::PostsController < ApplicationController
       posts_query = Post.all
       posts_query = posts_query.where(user_id: params[:user_id]) if params[:user_id]
       posts_query = posts_query.where(post_type: params[:post_type]) if params[:post_type]
+      posts_query = posts_query.where(category_id: params[:category_id]) if params[:category_id]
 
       posts = posts_query.timeline.limit(per_page).offset(offset)
       total_count = posts_query.count
