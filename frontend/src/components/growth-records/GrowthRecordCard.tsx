@@ -176,11 +176,10 @@ export default function GrowthRecordCard({ record, onUpdate, showFavoriteButton 
               <div className="pointer-events-auto">
                 <button
                   onClick={handleUnfavorite}
-                  className="p-2 text-2xl hover:opacity-70 cursor-pointer"
+                  className="px-3 py-1 text-xs text-red-600 bg-red-50 rounded hover:bg-red-100 transition-colors"
                   disabled={isUnfavoriting}
-                  aria-label="お気に入り解除"
                 >
-                  {isUnfavoriting ? '⏳' : '📖'}
+                  {isUnfavoriting ? '解除中...' : 'お気に入り解除'}
                 </button>
               </div>
             ) : (
@@ -289,11 +288,10 @@ export default function GrowthRecordCard({ record, onUpdate, showFavoriteButton 
                       <div className="pointer-events-auto">
                         <button
                           onClick={handleUnfavorite}
-                          className="px-2 py-1 text-2xl hover:opacity-70 cursor-pointer"
+                          className="px-3 py-1 text-sm text-red-600 bg-red-50 rounded hover:bg-red-100 transition-colors"
                           disabled={isUnfavoriting}
-                          aria-label="お気に入り解除"
                         >
-                          {isUnfavoriting ? '⏳' : '📖'}
+                          {isUnfavoriting ? '解除中...' : 'お気に入り解除'}
                         </button>
                       </div>
                     ) : (
