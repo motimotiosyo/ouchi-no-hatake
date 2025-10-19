@@ -172,17 +172,7 @@ export default function GrowthRecordCard({ record, onUpdate, showFavoriteButton 
                 )}
               </div>
             </div>
-            {showFavoriteButton ? (
-              <div className="pointer-events-auto">
-                <button
-                  onClick={handleUnfavorite}
-                  className="px-3 py-1 text-xs text-red-600 bg-red-50 rounded hover:bg-red-100 transition-colors"
-                  disabled={isUnfavoriting}
-                >
-                  {isUnfavoriting ? '解除中...' : 'お気に入り解除'}
-                </button>
-              </div>
-            ) : (
+            {!showFavoriteButton && (
               <div className="relative pointer-events-auto" style={{ zIndex: 100 }}>
                 <button
                   onClick={() => setShowMenu(!showMenu)}
@@ -226,8 +216,8 @@ export default function GrowthRecordCard({ record, onUpdate, showFavoriteButton 
             )}
           </div>
           <div className="flex items-center justify-between text-sm text-gray-600">
-            <div 
-              className="pointer-events-auto cursor-default relative" 
+            <div
+              className="pointer-events-auto cursor-default relative"
               style={{ zIndex: 10 }}
               onClick={(e) => e.preventDefault()}
             >
@@ -235,8 +225,19 @@ export default function GrowthRecordCard({ record, onUpdate, showFavoriteButton 
                 {getStatusText(record.status)}
               </span>
             </div>
-            <div>
-              {record.started_on ? formatDate(record.started_on) : '---.--.-'} 〜 {record.ended_on ? formatDate(record.ended_on) : '---.--.-'}
+            <div className="flex items-center gap-2">
+              <div>
+                {record.started_on ? formatDate(record.started_on) : '---.--.-'} 〜 {record.ended_on ? formatDate(record.ended_on) : '---.--.-'}
+              </div>
+              {showFavoriteButton && (
+                <button
+                  onClick={handleUnfavorite}
+                  className="pointer-events-auto px-2 py-0.5 text-xs text-red-600 bg-red-50 rounded hover:bg-red-100 transition-colors"
+                  disabled={isUnfavoriting}
+                >
+                  {isUnfavoriting ? '解除中' : '解除'}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -284,17 +285,7 @@ export default function GrowthRecordCard({ record, onUpdate, showFavoriteButton 
                         {getStatusText(record.status)}
                       </span>
                     </div>
-                    {showFavoriteButton ? (
-                      <div className="pointer-events-auto">
-                        <button
-                          onClick={handleUnfavorite}
-                          className="px-3 py-1 text-sm text-red-600 bg-red-50 rounded hover:bg-red-100 transition-colors"
-                          disabled={isUnfavoriting}
-                        >
-                          {isUnfavoriting ? '解除中...' : 'お気に入り解除'}
-                        </button>
-                      </div>
-                    ) : (
+                    {!showFavoriteButton && (
                       <div className="relative pointer-events-auto" style={{ zIndex: 100 }}>
                         <button
                           onClick={() => setShowMenu(!showMenu)}
@@ -336,7 +327,18 @@ export default function GrowthRecordCard({ record, onUpdate, showFavoriteButton 
                   </div>
                 </div>
                 <div className="text-sm text-gray-600">
-                  <div>栽培期間： {record.started_on ? formatDate(record.started_on) : '---.--.-'} 〜 {record.ended_on ? formatDate(record.ended_on) : '---.--.-'}</div>
+                  <div className="flex items-center justify-between">
+                    <div>栽培期間： {record.started_on ? formatDate(record.started_on) : '---.--.-'} 〜 {record.ended_on ? formatDate(record.ended_on) : '---.--.-'}</div>
+                    {showFavoriteButton && (
+                      <button
+                        onClick={handleUnfavorite}
+                        className="pointer-events-auto px-2 py-0.5 text-xs text-red-600 bg-red-50 rounded hover:bg-red-100 transition-colors ml-2"
+                        disabled={isUnfavoriting}
+                      >
+                        {isUnfavoriting ? '解除中' : '解除'}
+                      </button>
+                    )}
+                  </div>
                   {record.user && (
                     <div className="text-xs text-gray-500 mt-1">投稿者： {record.user.name}</div>
                   )}
