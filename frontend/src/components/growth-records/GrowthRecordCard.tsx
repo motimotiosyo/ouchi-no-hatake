@@ -199,7 +199,7 @@ export default function GrowthRecordCard({ record, onUpdate, showFavoriteButton 
                         className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50"
                         disabled={isUnfavoriting}
                       >
-                        {isUnfavoriting ? '解除中...' : 'お気に入り解除'}
+                        {isUnfavoriting ? '解除中...' : '📖 お気に入り解除'}
                       </button>
                     ) : (
                       <>
@@ -311,7 +311,7 @@ export default function GrowthRecordCard({ record, onUpdate, showFavoriteButton 
                                 className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50"
                                 disabled={isUnfavoriting}
                               >
-                                {isUnfavoriting ? '解除中...' : 'お気に入り解除'}
+                                {isUnfavoriting ? '解除中...' : '📖 お気に入り解除'}
                               </button>
                             ) : (
                               <>
