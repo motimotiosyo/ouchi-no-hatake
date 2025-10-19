@@ -3,6 +3,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
+import { apiClient } from '@/services/apiClient'
 import CreateGrowthRecordModal from './CreateGrowthRecordModal'
 import DeleteConfirmDialog from './DeleteConfirmDialog'
 
@@ -22,17 +23,23 @@ interface GrowthRecord {
     name: string
     description: string
   }
+  user?: {
+    id: number
+    name: string
+  }
 }
 
 interface Props {
   record: GrowthRecord
   onUpdate: () => void
+  showFavoriteButton?: boolean
 }
 
-export default function GrowthRecordCard({ record, onUpdate }: Props) {
+export default function GrowthRecordCard({ record, onUpdate, showFavoriteButton = false }: Props) {
   const [showMenu, setShowMenu] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [isUnfavoriting, setIsUnfavoriting] = useState(false)
 
   // editDataとgrowthRecordをメモ化して再レンダリングを防ぐ
   const editData = useMemo(() => ({
@@ -60,6 +67,30 @@ export default function GrowthRecordCard({ record, onUpdate }: Props) {
   const handleDeleteDialogClose = useCallback(() => {
     setIsDeleteDialogOpen(false)
   }, [])
+
+  const handleUnfavorite = useCallback(async () => {
+    if (isUnfavoriting) return
+
+    setIsUnfavoriting(true)
+    try {
+      const token = localStorage.getItem('auth_token')
+      if (!token) {
+        alert('ログインが必要です')
+        return
+      }
+
+      const result = await apiClient.unfavoriteGrowthRecord(record.id, token)
+      if (result.success) {
+        onUpdate()
+      } else {
+        alert(result.error.message || 'お気に入り解除に失敗しました')
+      }
+    } catch {
+      alert('お気に入り解除に失敗しました')
+    } finally {
+      setIsUnfavoriting(false)
+    }
+  }, [record.id, onUpdate, isUnfavoriting])
 
   const getStatusText = (status: string | null) => {
     if (!status) return '計画中'
@@ -136,6 +167,9 @@ export default function GrowthRecordCard({ record, onUpdate }: Props) {
               <div>
                 <h3 className="font-semibold text-gray-900">{record.plant.name}</h3>
                 <p className="text-sm text-gray-600">{record.record_name}</p>
+                {record.user && (
+                  <p className="text-xs text-gray-500">by {record.user.name}</p>
+                )}
               </div>
             </div>
             <div className="relative pointer-events-auto" style={{ zIndex: 100 }}>
@@ -156,24 +190,39 @@ export default function GrowthRecordCard({ record, onUpdate }: Props) {
                     <Link href={`/growth-records/${record.id}`} className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-gray-50 block">
                       詳細
                     </Link>
-                    <button
-                      onClick={() => {
-                        setShowMenu(false)
-                        setIsEditModalOpen(true)
-                      }}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
-                    >
-                      編集
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowMenu(false)
-                        setIsDeleteDialogOpen(true)
-                      }}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
-                    >
-                      削除
-                    </button>
+                    {showFavoriteButton ? (
+                      <button
+                        onClick={() => {
+                          setShowMenu(false)
+                          handleUnfavorite()
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50"
+                        disabled={isUnfavoriting}
+                      >
+                        {isUnfavoriting ? '解除中...' : 'お気に入り解除'}
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => {
+                            setShowMenu(false)
+                            setIsEditModalOpen(true)
+                          }}
+                          className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
+                        >
+                          編集
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowMenu(false)
+                            setIsDeleteDialogOpen(true)
+                          }}
+                          className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
+                        >
+                          削除
+                        </button>
+                      </>
+                    )}
                   </div>
                 </>
               )}
@@ -253,24 +302,39 @@ export default function GrowthRecordCard({ record, onUpdate }: Props) {
                             onClick={() => setShowMenu(false)}
                           />
                           <div className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-200" style={{ zIndex: 1000 }}>
-                            <button
-                              onClick={() => {
-                                setShowMenu(false)
-                                setIsEditModalOpen(true)
-                              }}
-                              className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
-                            >
-                              編集
-                            </button>
-                            <button
-                              onClick={() => {
-                                setShowMenu(false)
-                                setIsDeleteDialogOpen(true)
-                              }}
-                              className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
-                            >
-                              削除
-                            </button>
+                            {showFavoriteButton ? (
+                              <button
+                                onClick={() => {
+                                  setShowMenu(false)
+                                  handleUnfavorite()
+                                }}
+                                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50"
+                                disabled={isUnfavoriting}
+                              >
+                                {isUnfavoriting ? '解除中...' : 'お気に入り解除'}
+                              </button>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    setShowMenu(false)
+                                    setIsEditModalOpen(true)
+                                  }}
+                                  className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
+                                >
+                                  編集
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setShowMenu(false)
+                                    setIsDeleteDialogOpen(true)
+                                  }}
+                                  className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
+                                >
+                                  削除
+                                </button>
+                              </>
+                            )}
                           </div>
                         </>
                       )}
@@ -279,6 +343,9 @@ export default function GrowthRecordCard({ record, onUpdate }: Props) {
                 </div>
                 <div className="text-sm text-gray-600">
                   <div>栽培期間： {record.started_on ? formatDate(record.started_on) : '---.--.-'} 〜 {record.ended_on ? formatDate(record.ended_on) : '---.--.-'}</div>
+                  {record.user && (
+                    <div className="text-xs text-gray-500 mt-1">投稿者： {record.user.name}</div>
+                  )}
                 </div>
               </div>
             </div>

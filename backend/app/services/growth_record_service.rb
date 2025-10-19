@@ -39,7 +39,11 @@ class GrowthRecordService < ApplicationService
       },
       thumbnail_url: build_thumbnail_url(record),
       favorites_count: record.favorites_count,
-      favorited_by_current_user: current_user ? record.favorited_by?(current_user) : false
+      favorited_by_current_user: current_user ? record.favorited_by?(current_user) : false,
+      user: {
+        id: record.user.id,
+        name: record.user.name
+      }
     }
 
     # ガイド情報を追加（紐づいている場合のみ）

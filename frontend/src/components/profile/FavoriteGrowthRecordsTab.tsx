@@ -112,7 +112,7 @@ export default function FavoriteGrowthRecordsTab({ userId, onCountChange }: Favo
           key={record.id}
           ref={index === growthRecords.length - 1 ? lastGrowthRecordElementRef : null}
         >
-          <GrowthRecordCard record={record} onUpdate={() => fetchFavoriteGrowthRecords()} />
+          <GrowthRecordCard record={record} onUpdate={() => fetchFavoriteGrowthRecords()} showFavoriteButton={true} />
         </div>
       ))}
       {loadingMore && (
