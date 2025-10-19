@@ -74,10 +74,11 @@ export default function GrowthRecordCard({ record, onUpdate, showFavoriteButton 
   const handleFavoriteUpdate = useCallback((favorited: boolean, count: number) => {
     setIsFavorited(favorited)
     setFavoriteCount(count)
-    if (!favorited) {
+    // お気に入り解除時は一覧から削除
+    if (!favorited && showFavoriteButton) {
       onUpdate()
     }
-  }, [onUpdate])
+  }, [onUpdate, showFavoriteButton])
 
   const getStatusText = (status: string | null) => {
     if (!status) return '計画中'
@@ -118,6 +119,11 @@ export default function GrowthRecordCard({ record, onUpdate, showFavoriteButton 
       month: 'numeric',
       day: 'numeric'
     }).replace(/\//g, ' / ')
+  }
+
+  // お気に入り一覧でお気に入り解除されたカードは表示しない
+  if (showFavoriteButton && !isFavorited) {
+    return null
   }
 
   return (
@@ -223,8 +229,6 @@ export default function GrowthRecordCard({ record, onUpdate, showFavoriteButton 
                     initialFavorited={isFavorited}
                     initialCount={favoriteCount}
                     onUpdate={handleFavoriteUpdate}
-                    variant="compact"
-                    showCount={false}
                   />
                 </div>
               )}
@@ -326,8 +330,6 @@ export default function GrowthRecordCard({ record, onUpdate, showFavoriteButton 
                           initialFavorited={isFavorited}
                           initialCount={favoriteCount}
                           onUpdate={handleFavoriteUpdate}
-                          variant="compact"
-                          showCount={false}
                         />
                       </div>
                     )}
