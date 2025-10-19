@@ -45,7 +45,7 @@ module Api
       end
 
       def favorite_growth_records
-        user = User.find(params[:id])
+        user = User.find(params[:user_id])
         page = params[:page]&.to_i || 1
         per_page = params[:per_page]&.to_i || 10
         offset = (page - 1) * per_page
