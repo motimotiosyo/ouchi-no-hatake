@@ -10,13 +10,13 @@ interface GrowthRecord {
   id: number
   record_number: number
   record_name: string
-  location: string
-  started_on: string
-  ended_on?: string
+  location: string | null
+  started_on: string | null
+  ended_on?: string | null
   status: 'planning' | 'growing' | 'completed' | 'failed'
   created_at: string
   updated_at: string
-  thumbnail_url?: string
+  thumbnail_url?: string | null
   plant: {
     id: number
     name: string

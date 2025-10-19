@@ -4,15 +4,16 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthContext as useAuth } from '@/contexts/auth'
 import PostsTab from './PostsTab'
+import FavoriteGrowthRecordsTab from './FavoriteGrowthRecordsTab'
 import EditProfileModal from './EditProfileModal'
 
-type PostTypeFilter = 'all' | 'growth_record_post' | 'general_post'
+type TabType = 'posts_all' | 'posts_growth_record' | 'posts_general' | 'favorites'
 
 export default function ProfilePage() {
   const { user } = useAuth()
   const router = useRouter()
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [activeTab, setActiveTab] = useState<PostTypeFilter>('all')
+  const [activeTab, setActiveTab] = useState<TabType>('posts_all')
 
   const handleEditSuccess = () => {
     // モーダル閉じた後、ユーザー情報は自動的に更新される（AuthContextが再取得）
@@ -95,9 +96,9 @@ export default function ProfilePage() {
       <div className="mb-6">
         <div className="flex rounded-lg border border-gray-300 p-1 bg-gray-100">
           <button
-            onClick={() => setActiveTab('all')}
+            onClick={() => setActiveTab('posts_all')}
             className={`flex-1 py-2 rounded-md font-medium text-sm transition-all ${
-              activeTab === 'all'
+              activeTab === 'posts_all'
                 ? 'bg-white text-green-600 shadow'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
@@ -105,9 +106,9 @@ export default function ProfilePage() {
             投稿全て
           </button>
           <button
-            onClick={() => setActiveTab('growth_record_post')}
+            onClick={() => setActiveTab('posts_growth_record')}
             className={`flex-1 py-2 rounded-md font-medium text-sm transition-all ${
-              activeTab === 'growth_record_post'
+              activeTab === 'posts_growth_record'
                 ? 'bg-white text-green-600 shadow'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
@@ -115,21 +116,42 @@ export default function ProfilePage() {
             成長メモ
           </button>
           <button
-            onClick={() => setActiveTab('general_post')}
+            onClick={() => setActiveTab('posts_general')}
             className={`flex-1 py-2 rounded-md font-medium text-sm transition-all ${
-              activeTab === 'general_post'
+              activeTab === 'posts_general'
                 ? 'bg-white text-green-600 shadow'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
             雑談
           </button>
+          <button
+            onClick={() => setActiveTab('favorites')}
+            className={`flex-1 py-2 rounded-md font-medium text-sm transition-all ${
+              activeTab === 'favorites'
+                ? 'bg-white text-green-600 shadow'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            お気に入り
+          </button>
         </div>
       </div>
 
-      {/* 投稿一覧 */}
+      {/* タブコンテンツ */}
       <div className="mb-6">
-        <PostsTab userId={user.id} postType={activeTab} />
+        {activeTab === 'favorites' ? (
+          <FavoriteGrowthRecordsTab userId={user.id} />
+        ) : (
+          <PostsTab
+            userId={user.id}
+            postType={
+              activeTab === 'posts_all' ? 'all' :
+              activeTab === 'posts_growth_record' ? 'growth_record_post' :
+              'general_post'
+            }
+          />
+        )}
       </div>
 
       {/* 編集モーダル */}
