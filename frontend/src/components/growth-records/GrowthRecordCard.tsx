@@ -172,61 +172,59 @@ export default function GrowthRecordCard({ record, onUpdate, showFavoriteButton 
                 )}
               </div>
             </div>
-            <div className="relative pointer-events-auto" style={{ zIndex: 100 }}>
-              <button
-                onClick={() => setShowMenu(!showMenu)}
-                className="p-2 text-gray-400 hover:text-gray-600 cursor-pointer"
-              >
-                <span className="text-lg">⋯</span>
-              </button>
-              {showMenu && (
-                <>
-                  <div 
-                    className="fixed inset-0" 
-                    style={{ zIndex: 999 }}
-                    onClick={() => setShowMenu(false)}
-                  />
-                  <div className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-200" style={{ zIndex: 1000 }}>
-                    <Link href={`/growth-records/${record.id}`} className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-gray-50 block">
-                      詳細
-                    </Link>
-                    {showFavoriteButton ? (
+            {showFavoriteButton ? (
+              <div className="pointer-events-auto">
+                <button
+                  onClick={handleUnfavorite}
+                  className="p-2 text-2xl hover:opacity-70 cursor-pointer"
+                  disabled={isUnfavoriting}
+                  aria-label="お気に入り解除"
+                >
+                  {isUnfavoriting ? '⏳' : '📖'}
+                </button>
+              </div>
+            ) : (
+              <div className="relative pointer-events-auto" style={{ zIndex: 100 }}>
+                <button
+                  onClick={() => setShowMenu(!showMenu)}
+                  className="p-2 text-gray-400 hover:text-gray-600 cursor-pointer"
+                >
+                  <span className="text-lg">⋯</span>
+                </button>
+                {showMenu && (
+                  <>
+                    <div
+                      className="fixed inset-0"
+                      style={{ zIndex: 999 }}
+                      onClick={() => setShowMenu(false)}
+                    />
+                    <div className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-200" style={{ zIndex: 1000 }}>
+                      <Link href={`/growth-records/${record.id}`} className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-gray-50 block">
+                        詳細
+                      </Link>
                       <button
                         onClick={() => {
                           setShowMenu(false)
-                          handleUnfavorite()
+                          setIsEditModalOpen(true)
                         }}
-                        className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50"
-                        disabled={isUnfavoriting}
+                        className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
                       >
-                        {isUnfavoriting ? '解除中...' : '📖 お気に入り解除'}
+                        編集
                       </button>
-                    ) : (
-                      <>
-                        <button
-                          onClick={() => {
-                            setShowMenu(false)
-                            setIsEditModalOpen(true)
-                          }}
-                          className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
-                        >
-                          編集
-                        </button>
-                        <button
-                          onClick={() => {
-                            setShowMenu(false)
-                            setIsDeleteDialogOpen(true)
-                          }}
-                          className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
-                        >
-                          削除
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </>
-              )}
-            </div>
+                      <button
+                        onClick={() => {
+                          setShowMenu(false)
+                          setIsDeleteDialogOpen(true)
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
+                      >
+                        削除
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
           </div>
           <div className="flex items-center justify-between text-sm text-gray-600">
             <div 
@@ -287,58 +285,56 @@ export default function GrowthRecordCard({ record, onUpdate, showFavoriteButton 
                         {getStatusText(record.status)}
                       </span>
                     </div>
-                    <div className="relative pointer-events-auto" style={{ zIndex: 100 }}>
-                      <button
-                        onClick={() => setShowMenu(!showMenu)}
-                        className="px-2 py-1 text-gray-400 hover:text-gray-600 cursor-pointer"
-                      >
-                        <span className="text-2xl">⋯</span>
-                      </button>
-                      {showMenu && (
-                        <>
-                          <div 
-                            className="fixed inset-0" 
-                            style={{ zIndex: 999 }}
-                            onClick={() => setShowMenu(false)}
-                          />
-                          <div className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-200" style={{ zIndex: 1000 }}>
-                            {showFavoriteButton ? (
+                    {showFavoriteButton ? (
+                      <div className="pointer-events-auto">
+                        <button
+                          onClick={handleUnfavorite}
+                          className="px-2 py-1 text-2xl hover:opacity-70 cursor-pointer"
+                          disabled={isUnfavoriting}
+                          aria-label="お気に入り解除"
+                        >
+                          {isUnfavoriting ? '⏳' : '📖'}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="relative pointer-events-auto" style={{ zIndex: 100 }}>
+                        <button
+                          onClick={() => setShowMenu(!showMenu)}
+                          className="px-2 py-1 text-gray-400 hover:text-gray-600 cursor-pointer"
+                        >
+                          <span className="text-2xl">⋯</span>
+                        </button>
+                        {showMenu && (
+                          <>
+                            <div
+                              className="fixed inset-0"
+                              style={{ zIndex: 999 }}
+                              onClick={() => setShowMenu(false)}
+                            />
+                            <div className="absolute right-0 mt-2 w-32 bg-white rounded-lg shadow-lg border border-gray-200" style={{ zIndex: 1000 }}>
                               <button
                                 onClick={() => {
                                   setShowMenu(false)
-                                  handleUnfavorite()
+                                  setIsEditModalOpen(true)
                                 }}
-                                className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-50"
-                                disabled={isUnfavoriting}
+                                className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
                               >
-                                {isUnfavoriting ? '解除中...' : '📖 お気に入り解除'}
+                                編集
                               </button>
-                            ) : (
-                              <>
-                                <button
-                                  onClick={() => {
-                                    setShowMenu(false)
-                                    setIsEditModalOpen(true)
-                                  }}
-                                  className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
-                                >
-                                  編集
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    setShowMenu(false)
-                                    setIsDeleteDialogOpen(true)
-                                  }}
-                                  className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
-                                >
-                                  削除
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </>
-                      )}
-                    </div>
+                              <button
+                                onClick={() => {
+                                  setShowMenu(false)
+                                  setIsDeleteDialogOpen(true)
+                                }}
+                                className="w-full px-4 py-2 text-left text-sm text-gray-900 hover:bg-gray-50"
+                              >
+                                削除
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="text-sm text-gray-600">
