@@ -19,7 +19,7 @@ interface Props {
   activeTab: 'all' | 'following'
   selectedPostTypes: PostType[]
   selectedCategoryIds: number[]
-  onApplyFilter: (postTypes: PostType[], categoryIds: number[], tab: 'all' | 'following') => void
+  onApplyFilter: (postTypes: PostType[], categoryIds: number[]) => void
 }
 
 export default function CategoryFilterSidebar({
@@ -33,7 +33,7 @@ export default function CategoryFilterSidebar({
   const [categories, setCategories] = useState<Category[]>([])
   const [tempSelectedPostTypes, setTempSelectedPostTypes] = useState<PostType[]>(selectedPostTypes)
   const [tempSelectedIds, setTempSelectedIds] = useState<number[]>(selectedCategoryIds)
-  const [tempActiveTab, setTempActiveTab] = useState<'all' | 'following'>(activeTab)
+
   const [isGrowthRecordExpanded, setIsGrowthRecordExpanded] = useState(false)
   const growthRecordCheckboxRef = useRef<HTMLInputElement>(null)
 
@@ -55,8 +55,7 @@ export default function CategoryFilterSidebar({
   useEffect(() => {
     setTempSelectedPostTypes(selectedPostTypes)
     setTempSelectedIds(selectedCategoryIds)
-    setTempActiveTab(activeTab)
-  }, [selectedPostTypes, selectedCategoryIds, activeTab, isOpen])
+  }, [selectedPostTypes, selectedCategoryIds, isOpen])
 
   // indeterminate状態の制御
   useEffect(() => {
@@ -111,14 +110,13 @@ export default function CategoryFilterSidebar({
   }
 
   const handleApply = () => {
-    onApplyFilter(tempSelectedPostTypes, tempSelectedIds, tempActiveTab)
+    onApplyFilter(tempSelectedPostTypes, tempSelectedIds)
     onClose()
   }
 
   const handleClearAll = () => {
     setTempSelectedPostTypes([])
     setTempSelectedIds([])
-    setTempActiveTab('all')
   }
 
   if (!isOpen) return null
@@ -150,34 +148,7 @@ export default function CategoryFilterSidebar({
           </button>
         </div>
 
-        {/* タブ選択セクション */}
-        <div className="p-4 border-b border-gray-200">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3">表示範囲</h3>
-          <div className="space-y-2">
-            <label className="flex items-center p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
-              <input
-                type="radio"
-                name="activeTab"
-                checked={tempActiveTab === 'all'}
-                onChange={() => setTempActiveTab('all')}
-                className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-              />
-              <span className="ml-3 text-sm text-gray-700">全体</span>
-            </label>
-            <label className="flex items-center p-3 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
-              <input
-                type="radio"
-                name="activeTab"
-                checked={tempActiveTab === 'following'}
-                onChange={() => setTempActiveTab('following')}
-                className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-              />
-              <span className="ml-3 text-sm text-gray-700">フォロー中</span>
-            </label>
-          </div>
-        </div>
-
-        {/* 投稿タイプ選択セクション */}
+{/* 投稿タイプ選択セクション */}
         <div className="p-4 border-b border-gray-200">
           <h3 className="text-sm font-semibold text-gray-700 mb-3">投稿タイプ</h3>
           <div className="space-y-2">

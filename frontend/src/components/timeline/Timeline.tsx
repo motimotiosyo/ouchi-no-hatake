@@ -118,11 +118,12 @@ export default function Timeline() {
     })
   }
 
-  const handleApplyFilter = (postTypes: string[], categoryIds: number[], tab: 'all' | 'following') => {
-    // URLクエリパラメータを更新（タブ・投稿タイプ・カテゴリを同時に反映）
+  const handleApplyFilter = (postTypes: string[], categoryIds: number[]) => {
+    // URLクエリパラメータを更新（投稿タイプ・カテゴリを反映）
     const params = new URLSearchParams()
 
-    if (tab === 'following') {
+    // 現在のタブ状態を保持
+    if (activeTab === 'following') {
       params.set('tab', 'following')
     }
 
@@ -160,10 +161,13 @@ export default function Timeline() {
   )
 
   return (
-    <div className="flex justify-center">
-      <div className="w-full max-w-2xl min-w-80 space-y-4">
+    <>
+
+      <div className="flex justify-center">
+        <div className="w-full max-w-2xl min-w-80">
+
         {/* 投稿一覧 */}
-        <div>
+        <div className="pt-4">
         {posts.length === 0 ? (
           renderEmptyState()
         ) : (
@@ -201,18 +205,21 @@ export default function Timeline() {
             <button
               onClick={() => setIsFilterSidebarOpen(true)}
               className={`w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center pointer-events-auto ${
-                selectedPostTypes.length > 0 || selectedCategoryIds.length > 0 || activeTab === 'following'
+                selectedPostTypes.length > 0 || selectedCategoryIds.length > 0
                   ? 'bg-blue-500 hover:bg-blue-600 text-white'
                   : 'bg-white hover:bg-gray-50 text-blue-600 border-2 border-blue-500'
               }`}
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <circle cx="8" cy="6" r="2" fill="currentColor" />
+                <circle cx="14" cy="12" r="2" fill="currentColor" />
+                <circle cx="10" cy="18" r="2" fill="currentColor" />
               </svg>
             </button>
-            {(selectedPostTypes.length > 0 || selectedCategoryIds.length > 0 || activeTab === 'following') && (
+            {(selectedPostTypes.length > 0 || selectedCategoryIds.length > 0) && (
               <span className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 text-white text-xs rounded-full flex items-center justify-center border-2 border-white font-semibold">
-                {selectedPostTypes.length + selectedCategoryIds.length + (activeTab === 'following' ? 1 : 0)}
+                {selectedPostTypes.length + selectedCategoryIds.length}
               </span>
             )}
           </div>
@@ -249,5 +256,6 @@ export default function Timeline() {
       />
       </div>
     </div>
+    </>
   )
 }
