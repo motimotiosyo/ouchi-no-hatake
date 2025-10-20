@@ -16,7 +16,6 @@ type PostType = 'growth_record_post' | 'general_post'
 interface Props {
   isOpen: boolean
   onClose: () => void
-  activeTab: 'all' | 'following'
   selectedPostTypes: PostType[]
   selectedCategoryIds: number[]
   onApplyFilter: (postTypes: PostType[], categoryIds: number[]) => void
@@ -25,7 +24,6 @@ interface Props {
 export default function CategoryFilterSidebar({
   isOpen,
   onClose,
-  activeTab,
   selectedPostTypes,
   selectedCategoryIds,
   onApplyFilter

@@ -9,6 +9,8 @@ import { useAuthContext as useAuth } from '@/contexts/auth'
 import { apiClient } from '@/services/apiClient'
 import type { Post } from '@/types'
 
+type PostType = 'growth_record_post' | 'general_post'
+
 interface PaginationInfo {
   current_page: number
   per_page: number
@@ -27,7 +29,7 @@ export default function Timeline() {
   const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [selectedPostTypes, setSelectedPostTypes] = useState<string[]>([])
+  const [selectedPostTypes, setSelectedPostTypes] = useState<PostType[]>([])
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([])
   const [activeTab, setActiveTab] = useState<'all' | 'following'>('all')
   const observer = useRef<IntersectionObserver | null>(null)
@@ -39,11 +41,11 @@ export default function Timeline() {
     const categoryIdsParam = searchParams.get('category_ids')
 
     setActiveTab(tab || 'all')
-    setSelectedPostTypes(postTypesParam ? postTypesParam.split(',') : [])
+    setSelectedPostTypes(postTypesParam ? postTypesParam.split(',') as PostType[] : [])
     setSelectedCategoryIds(categoryIdsParam ? categoryIdsParam.split(',').map(Number) : [])
   }, [searchParams])
 
-  const fetchPosts = useCallback(async (page: number = 1, append: boolean = false, postTypes: string[] = [], categoryIds: number[] = [], tab: 'all' | 'following' = 'all') => {
+  const fetchPosts = useCallback(async (page: number = 1, append: boolean = false, postTypes: PostType[] = [], categoryIds: number[] = [], tab: 'all' | 'following' = 'all') => {
     try {
       if (page > 1) {
         setLoadingMore(true)
@@ -118,7 +120,7 @@ export default function Timeline() {
     })
   }
 
-  const handleApplyFilter = (postTypes: string[], categoryIds: number[]) => {
+  const handleApplyFilter = (postTypes: PostType[], categoryIds: number[]) => {
     // URLクエリパラメータを更新（投稿タイプ・カテゴリを反映）
     const params = new URLSearchParams()
 
@@ -242,7 +244,6 @@ export default function Timeline() {
       <CategoryFilterSidebar
         isOpen={isFilterSidebarOpen}
         onClose={() => setIsFilterSidebarOpen(false)}
-        activeTab={activeTab}
         selectedPostTypes={selectedPostTypes}
         selectedCategoryIds={selectedCategoryIds}
         onApplyFilter={handleApplyFilter}
