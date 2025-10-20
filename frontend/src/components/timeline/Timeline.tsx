@@ -169,7 +169,7 @@ export default function Timeline() {
         <div className="w-full max-w-2xl min-w-80">
 
         {/* 投稿一覧 */}
-        <div className="pt-4">
+        <div className="pt-0">
         {posts.length === 0 ? (
           renderEmptyState()
         ) : (
