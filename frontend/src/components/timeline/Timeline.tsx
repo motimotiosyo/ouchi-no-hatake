@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import TimelinePost from './TimelinePost'
 import CreatePostModal from '../posts/CreatePostModal'
-import CategoryFilterIconMenu from '../common/CategoryFilterIconMenu'
+import CategoryFilterSidebar from '../common/CategoryFilterSidebar'
 import { useAuthContext as useAuth } from '@/contexts/auth'
 import { apiClient } from '@/services/apiClient'
 import type { Post } from '@/types'
@@ -24,22 +24,23 @@ export default function Timeline() {
   const [loadingMore, setLoadingMore] = useState(false)
   const [pagination, setPagination] = useState<PaginationInfo | null>(null)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null)
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([])
   const [activeTab, setActiveTab] = useState<'all' | 'following'>('all')
   const observer = useRef<IntersectionObserver | null>(null)
 
   // URLクエリパラメータからタブとカテゴリIDを取得
   useEffect(() => {
     const tab = searchParams.get('tab') as 'all' | 'following' | null
-    const categoryId = searchParams.get('category_id')
+    const categoryIdsParam = searchParams.get('category_ids')
 
     setActiveTab(tab || 'all')
-    setSelectedCategoryId(categoryId ? Number(categoryId) : null)
+    setSelectedCategoryIds(categoryIdsParam ? categoryIdsParam.split(',').map(Number) : [])
   }, [searchParams])
 
-  const fetchPosts = useCallback(async (page: number = 1, append: boolean = false, categoryId: number | null = null, tab: 'all' | 'following' = 'all') => {
+  const fetchPosts = useCallback(async (page: number = 1, append: boolean = false, categoryIds: number[] = [], tab: 'all' | 'following' = 'all') => {
     try {
       if (page > 1) {
         setLoadingMore(true)
@@ -52,8 +53,8 @@ export default function Timeline() {
         page: page.toString(),
         per_page: '10'
       })
-      if (categoryId) {
-        queryParams.append('category_id', categoryId.toString())
+      if (categoryIds.length > 0) {
+        queryParams.append('category_ids', categoryIds.join(','))
       }
       if (tab === 'following') {
         queryParams.append('following', 'true')
@@ -89,20 +90,20 @@ export default function Timeline() {
 
     observer.current = new IntersectionObserver(entries => {
       if (entries[0].isIntersecting && pagination?.has_more) {
-        fetchPosts(pagination.current_page + 1, true, selectedCategoryId, activeTab)
+        fetchPosts(pagination.current_page + 1, true, selectedCategoryIds, activeTab)
       }
     })
 
     if (node) observer.current.observe(node)
-  }, [loading, loadingMore, pagination, fetchPosts, selectedCategoryId, activeTab])
+  }, [loading, loadingMore, pagination, fetchPosts, selectedCategoryIds, activeTab])
 
   useEffect(() => {
-    fetchPosts(1, false, selectedCategoryId, activeTab)
-  }, [selectedCategoryId, activeTab])
+    fetchPosts(1, false, selectedCategoryIds, activeTab)
+  }, [selectedCategoryIds, activeTab])
 
   const handleCreateSuccess = () => {
     // 投稿作成成功時にタイムラインを再取得
-    fetchPosts(1, false, selectedCategoryId, activeTab)
+    fetchPosts(1, false, selectedCategoryIds, activeTab)
   }
 
   const handleCreateButtonClick = () => {
@@ -111,25 +112,18 @@ export default function Timeline() {
     })
   }
 
-  const handleTabChange = (tab: 'all' | 'following') => {
-    // URLクエリパラメータを更新
-    const params = new URLSearchParams(searchParams.toString())
+  const handleApplyFilter = (categoryIds: number[], tab: 'all' | 'following') => {
+    // URLクエリパラメータを更新（タブとカテゴリを同時に反映）
+    const params = new URLSearchParams()
+
     if (tab === 'following') {
       params.set('tab', 'following')
-    } else {
-      params.delete('tab')
     }
-    router.push(`/?${params.toString()}`)
-  }
 
-  const handleCategoryChange = (categoryId: number | null) => {
-    // URLクエリパラメータを更新
-    const params = new URLSearchParams(searchParams.toString())
-    if (categoryId) {
-      params.set('category_id', categoryId.toString())
-    } else {
-      params.delete('category_id')
+    if (categoryIds.length > 0) {
+      params.set('category_ids', categoryIds.join(','))
     }
+
     router.push(`/?${params.toString()}`)
   }
 
@@ -158,49 +152,6 @@ export default function Timeline() {
   return (
     <div className="flex justify-center">
       <div className="w-full max-w-2xl min-w-80 space-y-4">
-        {/* タブバー風ヘッダー */}
-        <div className="bg-white border-b border-gray-200 sticky top-0 z-10">
-          <div className="flex items-center justify-between max-w-2xl mx-auto">
-            {/* タブエリア */}
-            <div className="flex items-center flex-1">
-              <button
-                onClick={() => handleTabChange('all')}
-                className={`flex-1 text-center py-4 font-semibold transition-colors relative ${
-                  activeTab === 'all'
-                    ? 'text-gray-900'
-                    : 'text-gray-500 hover:bg-gray-50'
-                }`}
-              >
-                全体
-                {activeTab === 'all' && (
-                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-500 rounded-t-full"></div>
-                )}
-              </button>
-              <button
-                onClick={() => handleTabChange('following')}
-                className={`flex-1 text-center py-4 font-semibold transition-colors relative ${
-                  activeTab === 'following'
-                    ? 'text-gray-900'
-                    : 'text-gray-500 hover:bg-gray-50'
-                }`}
-              >
-                フォロー中
-                {activeTab === 'following' && (
-                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-500 rounded-t-full"></div>
-                )}
-              </button>
-            </div>
-
-            {/* フィルターアイコン */}
-            <div className="px-4">
-              <CategoryFilterIconMenu
-                selectedCategoryId={selectedCategoryId}
-                onCategoryChange={handleCategoryChange}
-              />
-            </div>
-          </div>
-        </div>
-
         {/* 投稿一覧 */}
         <div>
         {posts.length === 0 ? (
@@ -232,10 +183,32 @@ export default function Timeline() {
         )}
         </div>
 
-      {/* Floating Action Button（ログインユーザーのみ表示） */}
-      {user && (
-        <div className="fixed bottom-28 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4 pointer-events-none z-40">
-          <div className="flex justify-end">
+      {/* Floating Action Buttons */}
+      <div className="fixed bottom-28 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4 pointer-events-none z-40">
+        <div className="flex justify-between items-center">
+          {/* フィルターFAB（左） */}
+          <div className="relative">
+            <button
+              onClick={() => setIsFilterSidebarOpen(true)}
+              className={`w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center pointer-events-auto ${
+                selectedCategoryIds.length > 0 || activeTab === 'following'
+                  ? 'bg-blue-500 hover:bg-blue-600 text-white'
+                  : 'bg-white hover:bg-gray-50 text-blue-600 border-2 border-blue-500'
+              }`}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+            </button>
+            {(selectedCategoryIds.length > 0 || activeTab === 'following') && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 text-white text-xs rounded-full flex items-center justify-center border-2 border-white font-semibold">
+                {selectedCategoryIds.length > 0 ? selectedCategoryIds.length : '1'}
+              </span>
+            )}
+          </div>
+
+          {/* 投稿作成FAB（右）- ログインユーザーのみ表示 */}
+          {user && (
             <button
               onClick={handleCreateButtonClick}
               className="w-14 h-14 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center pointer-events-auto"
@@ -244,9 +217,18 @@ export default function Timeline() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
             </button>
-          </div>
+          )}
         </div>
-      )}
+      </div>
+
+      {/* フィルターサイドバー */}
+      <CategoryFilterSidebar
+        isOpen={isFilterSidebarOpen}
+        onClose={() => setIsFilterSidebarOpen(false)}
+        activeTab={activeTab}
+        selectedCategoryIds={selectedCategoryIds}
+        onApplyFilter={handleApplyFilter}
+      />
 
       {/* 投稿作成モーダル */}
       <CreatePostModal
