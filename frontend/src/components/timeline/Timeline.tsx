@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import TimelinePost from './TimelinePost'
+import TimelinePostList from './TimelinePostList'
+import TimelineFloatingButtons from './TimelineFloatingButtons'
 import CreatePostModal from '../posts/CreatePostModal'
 import CategoryFilterSidebar from '../common/CategoryFilterSidebar'
 import { useAuthContext as useAuth } from '@/contexts/auth'
@@ -155,90 +156,28 @@ export default function Timeline() {
       </div>
     )
   }
-
-  const renderEmptyState = () => (
-    <div className="text-center py-8">
-      <div className="text-gray-500">投稿がありません</div>
-    </div>
-  )
-
   return (
     <>
-
       <div className="flex justify-center">
         <div className="w-full max-w-2xl min-w-80">
-
-        {/* 投稿一覧 */}
-        <div className="pt-0">
-        {posts.length === 0 ? (
-          renderEmptyState()
-        ) : (
-          <>
-            {posts.map((post, index) => (
-              <div
-                key={post.id}
-                ref={index === posts.length - 1 ? lastPostElementRef : undefined}
-                className="bg-white rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 border border-gray-200 transition-all duration-200 px-4 py-4 mb-4"
-              >
-                <TimelinePost post={post} />
-              </div>
-            ))}
-            
-            {loadingMore && (
-              <div className="flex justify-center items-center py-4">
-                <div className="text-gray-600">さらに読み込み中...</div>
-              </div>
-            )}
-            
-            {pagination && !pagination.has_more && posts.length > 0 && (
-              <div className="text-center py-8">
-                <div className="text-gray-500">すべての投稿を表示しました</div>
-              </div>
-            )}
-          </>
-        )}
-        </div>
-
-      {/* Floating Action Buttons */}
-      <div className="fixed bottom-28 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4 pointer-events-none z-40">
-        <div className="flex justify-between items-center">
-          {/* フィルターFAB（左） */}
-          <div className="relative">
-            <button
-              onClick={() => setIsFilterSidebarOpen(true)}
-              className={`w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center pointer-events-auto ${
-                selectedPostTypes.length > 0 || selectedCategoryIds.length > 0
-                  ? 'bg-blue-500 hover:bg-blue-600 text-white'
-                  : 'bg-white hover:bg-gray-50 text-blue-600 border-2 border-blue-500'
-              }`}
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                <circle cx="8" cy="6" r="2" fill="currentColor" />
-                <circle cx="14" cy="12" r="2" fill="currentColor" />
-                <circle cx="10" cy="18" r="2" fill="currentColor" />
-              </svg>
-            </button>
-            {(selectedPostTypes.length > 0 || selectedCategoryIds.length > 0) && (
-              <span className="absolute -top-1 -right-1 w-5 h-5 bg-blue-600 text-white text-xs rounded-full flex items-center justify-center border-2 border-white font-semibold">
-                {selectedPostTypes.length + selectedCategoryIds.length}
-              </span>
-            )}
+          {/* 投稿一覧 */}
+          <div className="pt-0">
+            <TimelinePostList
+              posts={posts}
+              loadingMore={loadingMore}
+              pagination={pagination}
+              lastPostElementRef={lastPostElementRef}
+            />
           </div>
 
-          {/* 投稿作成FAB（右）- ログインユーザーのみ表示 */}
-          {user && (
-            <button
-              onClick={handleCreateButtonClick}
-              className="w-14 h-14 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center pointer-events-auto"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-            </button>
-          )}
-        </div>
-      </div>
+      {/* Floating Action Buttons */}
+      <TimelineFloatingButtons
+        user={user}
+        selectedPostTypes={selectedPostTypes}
+        selectedCategoryIds={selectedCategoryIds}
+        onFilterClick={() => setIsFilterSidebarOpen(true)}
+        onCreateClick={handleCreateButtonClick}
+      />
 
       {/* フィルターサイドバー */}
       <CategoryFilterSidebar
