@@ -17,6 +17,26 @@ class Api::V1::PostsController < ApplicationController
       posts_query = posts_query.where(user_id: params[:user_id]) if params[:user_id]
       posts_query = posts_query.where(post_type: params[:post_type]) if params[:post_type]
 
+      # 投稿タイプフィルター（複数）
+      if params[:post_types].present?
+        post_types = params[:post_types].split(",")
+        posts_query = posts_query.where(post_type: post_types)
+      end
+
+      # カテゴリフィルター（単一または複数）
+      if params[:category_ids].present?
+        category_ids = params[:category_ids].split(",").map(&:to_i)
+        posts_query = posts_query.where(category_id: category_ids)
+      elsif params[:category_id]
+        posts_query = posts_query.where(category_id: params[:category_id])
+      end
+
+      # フォロー中フィルター
+      if params[:following] == "true" && current_user
+        following_user_ids = current_user.following.pluck(:id)
+        posts_query = posts_query.where(user_id: following_user_ids)
+      end
+
       posts = posts_query.timeline.limit(per_page).offset(offset)
       total_count = posts_query.count
 

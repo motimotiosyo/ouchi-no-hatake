@@ -18,6 +18,9 @@ Rails.application.routes.draw do
         resources :comments, only: [ :index, :create, :destroy ]
       end
 
+      # カテゴリ関連API
+      resources :categories, only: [ :index ]
+
       # 成長記録関連API
       resources :growth_records, only: [ :index, :show, :create, :update, :destroy ] do
         resource :favorite, controller: "favorite_growth_records", only: [ :create, :destroy ]

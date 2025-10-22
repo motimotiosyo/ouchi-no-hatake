@@ -395,6 +395,13 @@ class ApiClient {
   }
 
   /**
+   * カテゴリ一覧取得（ApiResult型を返す）
+   */
+  async getCategories(): Promise<ApiResult<{ categories: import('@/types').PostCategory[] }>> {
+    return this.get<{ categories: import('@/types').PostCategory[] }>('/api/v1/categories')
+  }
+
+  /**
    * DELETEリクエスト（ApiResult型を返す）
    */
   async delete<T>(endpoint: string, token?: string): Promise<ApiResult<T>> {

@@ -1,11 +1,15 @@
 'use client'
-
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
 import TimelinePost from './TimelinePost'
 import CreatePostModal from '../posts/CreatePostModal'
+import CategoryFilterSidebar from '../common/CategoryFilterSidebar'
+import TimelineFloatingButtons from './TimelineFloatingButtons'
 import { useAuthContext as useAuth } from '@/contexts/auth'
 import { apiClient } from '@/services/apiClient'
 import type { Post } from '@/types'
+
+type PostType = 'growth_record_post' | 'general_post'
 
 interface PaginationInfo {
   current_page: number
@@ -16,15 +20,31 @@ interface PaginationInfo {
 
 export default function Timeline() {
   const { user, executeProtected } = useAuth()
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [posts, setPosts] = useState<Post[]>([])
   const [loadingMore, setLoadingMore] = useState(false)
   const [pagination, setPagination] = useState<PaginationInfo | null>(null)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
+  const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [selectedPostTypes, setSelectedPostTypes] = useState<PostType[]>([])
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([])
+  const [activeTab, setActiveTab] = useState<'all' | 'following'>('all')
   const observer = useRef<IntersectionObserver | null>(null)
 
-  const fetchPosts = useCallback(async (page: number = 1, append: boolean = false) => {
+  useEffect(() => {
+    const tab = searchParams.get('tab') as 'all' | 'following' | null
+    const postTypesParam = searchParams.get('post_types')
+    const categoryIdsParam = searchParams.get('category_ids')
+
+    setActiveTab(tab || 'all')
+    setSelectedPostTypes(postTypesParam ? postTypesParam.split(',') as PostType[] : [])
+    setSelectedCategoryIds(categoryIdsParam ? categoryIdsParam.split(',').map(Number) : [])
+  }, [searchParams])
+
+  const fetchPosts = useCallback(async (page: number = 1, append: boolean = false, postTypes: PostType[] = [], categoryIds: number[] = [], tab: 'all' | 'following' = 'all') => {
     try {
       if (page > 1) {
         setLoadingMore(true)
@@ -33,8 +53,22 @@ export default function Timeline() {
       }
 
       const token = localStorage.getItem('auth_token')
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        per_page: '10'
+      })
+      if (postTypes.length > 0) {
+        queryParams.append('post_types', postTypes.join(','))
+      }
+      if (categoryIds.length > 0) {
+        queryParams.append('category_ids', categoryIds.join(','))
+      }
+      if (tab === 'following') {
+        queryParams.append('following', 'true')
+      }
+
       const result = await apiClient.get<{ posts: Post[], pagination: PaginationInfo }>(
-        `/api/v1/posts?page=${page}&per_page=10`,
+        `/api/v1/posts?${queryParams.toString()}`,
         token || undefined
       )
 
@@ -60,23 +94,22 @@ export default function Timeline() {
   const lastPostElementRef = useCallback((node: HTMLDivElement | null) => {
     if (loading || loadingMore) return
     if (observer.current) observer.current.disconnect()
-    
+
     observer.current = new IntersectionObserver(entries => {
       if (entries[0].isIntersecting && pagination?.has_more) {
-        fetchPosts(pagination.current_page + 1, true)
+        fetchPosts(pagination.current_page + 1, true, selectedPostTypes, selectedCategoryIds, activeTab)
       }
     })
-    
+
     if (node) observer.current.observe(node)
-  }, [loading, loadingMore, pagination, fetchPosts])
+  }, [loading, loadingMore, pagination, fetchPosts, selectedPostTypes, selectedCategoryIds, activeTab])
 
   useEffect(() => {
-    fetchPosts()
-  }, [fetchPosts])
+    fetchPosts(1, false, selectedPostTypes, selectedCategoryIds, activeTab)
+  }, [selectedPostTypes, selectedCategoryIds, activeTab])
 
   const handleCreateSuccess = () => {
-    // 投稿作成成功時にタイムラインを再取得
-    fetchPosts()
+    fetchPosts(1, false, selectedPostTypes, selectedCategoryIds, activeTab)
   }
 
   const handleCreateButtonClick = () => {
@@ -85,35 +118,32 @@ export default function Timeline() {
     })
   }
 
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <div className="text-gray-600">読み込み中...</div>
-      </div>
-    )
+  const handleApplyFilter = (postTypes: PostType[], categoryIds: number[]) => {
+    const params = new URLSearchParams()
+    if (activeTab === 'following') {
+      params.set('tab', 'following')
+    }
+    if (postTypes.length > 0) {
+      params.set('post_types', postTypes.join(','))
+    }
+    if (categoryIds.length > 0) {
+      params.set('category_ids', categoryIds.join(','))
+    }
+    router.push(`/?${params.toString()}`)
   }
 
-  if (error) {
-    return (
-      <div className="flex justify-center items-center py-8">
-        <div className="text-red-600">{error}</div>
-      </div>
-    )
-  }
-
-  const renderEmptyState = () => (
-    <div className="text-center py-8">
-      <div className="text-gray-500">投稿がありません</div>
-    </div>
-  )
+  if (loading) return <div className="flex justify-center items-center py-8"><div className="text-gray-600">読み込み中...</div></div>
+  if (error) return <div className="flex justify-center items-center py-8"><div className="text-red-600">{error}</div></div>
 
   return (
-    <div className="flex justify-center">
-      <div className="w-full max-w-2xl min-w-80 space-y-4">
-        {/* 投稿一覧 */}
-        <div>
+    <>
+      <div className="flex justify-center">
+        <div className="w-full max-w-2xl min-w-80">
+        <div className="pt-0">
         {posts.length === 0 ? (
-          renderEmptyState()
+          <div className="text-center py-8">
+            <div className="text-gray-500">投稿がありません</div>
+          </div>
         ) : (
           <>
             {posts.map((post, index) => (
@@ -140,24 +170,20 @@ export default function Timeline() {
           </>
         )}
         </div>
-
-      {/* Floating Action Button（ログインユーザーのみ表示） */}
-      {user && (
-        <div className="fixed bottom-28 left-1/2 transform -translate-x-1/2 w-full max-w-2xl px-4 pointer-events-none z-40">
-          <div className="flex justify-end">
-            <button
-              onClick={handleCreateButtonClick}
-              className="w-14 h-14 bg-green-500 hover:bg-green-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center pointer-events-auto"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* 投稿作成モーダル */}
+      <TimelineFloatingButtons
+        user={user}
+        selectedPostTypes={selectedPostTypes}
+        selectedCategoryIds={selectedCategoryIds}
+        onFilterClick={() => setIsFilterSidebarOpen(true)}
+        onCreateClick={handleCreateButtonClick}
+      />
+      <CategoryFilterSidebar
+        isOpen={isFilterSidebarOpen}
+        onClose={() => setIsFilterSidebarOpen(false)}
+        selectedPostTypes={selectedPostTypes}
+        selectedCategoryIds={selectedCategoryIds}
+        onApplyFilter={handleApplyFilter}
+      />
       <CreatePostModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
@@ -165,5 +191,6 @@ export default function Timeline() {
       />
       </div>
     </div>
+    </>
   )
 }
