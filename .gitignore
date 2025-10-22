@@ -87,3 +87,6 @@ backend/.bundle/
 # IDE
 .vscode/
 .idea/
+
+# Backups
+backups/
