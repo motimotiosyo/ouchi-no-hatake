@@ -26,6 +26,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
+  // ユーザー情報を再取得する関数
+  const refreshUser = async () => {
+    const currentToken = token || localStorage.getItem('auth_token')
+    if (!currentToken) return
+
+    const freshUser = await fetchCurrentUser(currentToken)
+    if (freshUser) {
+      setUser(freshUser)
+      localStorage.setItem('auth_user', JSON.stringify(freshUser))
+    }
+  }
+
   // ページ読み込み時にlocalStorageからトークンを復元
   useEffect(() => {
     const initializeAuth = async () => {
@@ -120,6 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     token,
     isAuthenticated: !!user && !!token,
     isLoading,
+    refreshUser,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -57,6 +57,7 @@ export interface AuthState {
   token: string | null
   isAuthenticated: boolean
   isLoading: boolean
+  refreshUser: () => Promise<void>
 }
 
 // 認証アクションの型定義

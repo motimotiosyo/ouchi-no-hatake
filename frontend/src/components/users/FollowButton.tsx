@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { apiClient } from '@/services/apiClient'
+import { useAuthContext as useAuth } from '@/contexts/auth'
 
 interface FollowButtonProps {
   userId: number
@@ -12,6 +13,7 @@ interface FollowButtonProps {
 
 export default function FollowButton({ userId, isFollowing, isOwnProfile, onFollowChange }: FollowButtonProps) {
   const [loading, setLoading] = useState(false)
+  const { refreshUser } = useAuth()
 
   // 自分のプロフィールの場合は非表示
   if (isOwnProfile) {
@@ -35,6 +37,7 @@ export default function FollowButton({ userId, isFollowing, isOwnProfile, onFoll
 
       if (result.success) {
         onFollowChange()
+        await refreshUser()
       } else {
         alert(result.error.message)
       }
