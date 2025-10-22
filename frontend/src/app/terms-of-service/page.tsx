@@ -1,3 +1,21 @@
+import { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: '利用規約 | おうちの畑',
+  description: 'おうちの畑の利用規約をご確認ください。',
+  openGraph: {
+    title: '利用規約 | おうちの畑',
+    description: 'おうちの畑の利用規約をご確認ください。',
+    type: 'website',
+    locale: 'ja_JP',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '利用規約 | おうちの畑',
+    description: 'おうちの畑の利用規約をご確認ください。',
+  },
+}
+
 export default function TermsOfService() {
   return (
     <div className="max-w-4xl mx-auto p-6">

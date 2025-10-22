@@ -7,8 +7,27 @@ import FlashMessages from '@/components/ui/FlashMessages'
 import AutoLogoutModalContainer from '@/components/ui/AutoLogoutModalContainer'
 import RedirectMessageHandler from '@/components/ui/RedirectMessageHandler'
 
-export const metadata = {
-  title: 'おうちの畑',
+import type { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: {
+    default: 'おうちの畑',
+    template: '%s | おうちの畑',
+  },
+  description: '初心者が気軽に家庭菜園を始められる掲示板型サービス。野菜診断で育てやすい野菜を提案し、育て方指南で栽培をサポート。成長記録を共有して楽しく野菜を育てよう。',
+  openGraph: {
+    title: 'おうちの畑',
+    description: '初心者が気軽に家庭菜園を始められる掲示板型サービス。野菜診断で育てやすい野菜を提案し、育て方指南で栽培をサポート。成長記録を共有して楽しく野菜を育てよう。',
+    url: 'https://ouchi-no-hatake.vercel.app',
+    siteName: 'おうちの畑',
+    locale: 'ja_JP',
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'おうちの畑',
+    description: '初心者が気軽に家庭菜園を始められる掲示板型サービス。野菜診断で育てやすい野菜を提案し、育て方指南で栽培をサポート。成長記録を共有して楽しく野菜を育てよう。',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

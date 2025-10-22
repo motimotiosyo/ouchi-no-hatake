@@ -1,3 +1,21 @@
+import { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'プライバシーポリシー | おうちの畑',
+  description: 'おうちの畑のプライバシーポリシーをご確認ください。個人情報の取り扱いについて説明しています。',
+  openGraph: {
+    title: 'プライバシーポリシー | おうちの畑',
+    description: 'おうちの畑のプライバシーポリシーをご確認ください。個人情報の取り扱いについて説明しています。',
+    type: 'website',
+    locale: 'ja_JP',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'プライバシーポリシー | おうちの畑',
+    description: 'おうちの畑のプライバシーポリシーをご確認ください。個人情報の取り扱いについて説明しています。',
+  },
+}
+
 export default function PrivacyPolicy() {
   return (
     <div className="max-w-4xl mx-auto p-6">
