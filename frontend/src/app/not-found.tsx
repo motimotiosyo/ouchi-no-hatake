@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#E8FEE9]">
+    <div className="min-h-screen flex items-start justify-center bg-[#E8FEE9] pt-32">
       <div className="max-w-md w-full mx-4">
         <div className="bg-white rounded-lg shadow-md p-8 text-center">
           <h1 className="text-6xl font-bold text-green-600 mb-4">404</h1>
