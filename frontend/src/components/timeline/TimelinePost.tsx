@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { API_BASE_URL } from '@/lib/api'
 import { apiClient } from '@/services/apiClient'
+import { sharePost } from '@/utils/sharePost'
 
 interface TimelinePostProps {
   post: {
@@ -43,13 +44,8 @@ export default function TimelinePost({ post }: TimelinePostProps) {
   const [likesCount, setLikesCount] = useState(post.likes_count)
   const [isLiked, setIsLiked] = useState(post.liked_by_current_user)
   const [isLikeLoading, setIsLikeLoading] = useState(false)
+  const [isSharing, setIsSharing] = useState(false)
   const router = useRouter()
-
-  const handleInteractionClick = () => {
-    if (!isAuthenticated) {
-      setShowLoginModal(true)
-    }
-  }
 
   const handleCommentClick = () => {
     // 投稿詳細画面に遷移
@@ -104,6 +100,23 @@ export default function TimelinePost({ post }: TimelinePostProps) {
       console.error('いいね処理でエラーが発生しました:', error)
     } finally {
       setIsLikeLoading(false)
+    }
+  }
+
+  const handleShareClick = async () => {
+    setIsSharing(true)
+    try {
+      await sharePost({
+        title: '投稿',
+        content: post.content,
+        url: `${typeof window !== 'undefined' ? window.location.origin : ''}/posts/${post.id}`
+      })
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Share failed:', error)
+      }
+    } finally {
+      setIsSharing(false)
     }
   }
 
@@ -257,12 +270,10 @@ export default function TimelinePost({ post }: TimelinePostProps) {
         </div>
         
         <div className="flex-1 flex justify-center">
-          <button 
-            onClick={handleInteractionClick}
-            className={`flex items-center justify-center w-8 h-8 ${
-              isAuthenticated ? 'text-gray-500 hover:text-gray-700' : 'text-gray-300 cursor-not-allowed'
-            }`}
-            disabled={!isAuthenticated}
+          <button
+            onClick={handleShareClick}
+            className="flex items-center justify-center w-8 h-8 text-gray-500 hover:text-blue-500 transition-colors"
+            disabled={isSharing}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
