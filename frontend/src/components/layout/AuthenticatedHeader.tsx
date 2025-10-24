@@ -1,12 +1,16 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import HamburgerMenu from './HamburgerMenu'
+import NotificationDropdown from '../notifications/NotificationDropdown'
+import { notificationApi } from '@/lib/api/notifications'
 
 export default function AuthenticatedHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
   const router = useRouter()
   const searchParams = useSearchParams()
   const pathname = usePathname()
@@ -16,16 +20,35 @@ export default function AuthenticatedHeader() {
   
   // タブ状態を取得
   const activeTab = searchParams.get('tab') || 'all'
-  
+
+  // 未読通知数を取得
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const count = await notificationApi.getUnreadCount()
+        setUnreadCount(count)
+      } catch (error) {
+        console.error('Failed to fetch unread count:', error)
+      }
+    }
+
+    fetchUnreadCount()
+
+    // 30秒ごとに未読数を更新
+    const interval = setInterval(fetchUnreadCount, 30000)
+
+    return () => clearInterval(interval)
+  }, [])
+
   const handleTabChange = (tab: 'all' | 'following') => {
     const params = new URLSearchParams(searchParams.toString())
-    
+
     if (tab === 'following') {
       params.set('tab', 'following')
     } else {
       params.delete('tab')
     }
-    
+
     router.push(`/?${params.toString()}`)
   }
   
@@ -39,9 +62,24 @@ export default function AuthenticatedHeader() {
         
         <div className="flex items-center space-x-3">
           {/* 通知 */}
-          <button className="p-1 hover:bg-green-300 rounded font-medium">
-            通知
-          </button>
+          <div className="relative">
+            <button
+              onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+              className="p-1 hover:bg-green-300 rounded font-medium relative"
+            >
+              通知
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
+              )}
+            </button>
+            <NotificationDropdown
+              isOpen={isNotificationOpen}
+              onClose={() => setIsNotificationOpen(false)}
+              onUnreadCountChange={setUnreadCount}
+            />
+          </div>
           
           {/* ハンバーガーアイコン */}
           <button 
