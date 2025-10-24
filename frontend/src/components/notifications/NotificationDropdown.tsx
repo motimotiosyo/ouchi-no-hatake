@@ -9,12 +9,14 @@ interface NotificationDropdownProps {
   isOpen: boolean
   onClose: () => void
   onUnreadCountChange: (count: number) => void
+  token: string | null
 }
 
 export default function NotificationDropdown({
   isOpen,
   onClose,
   onUnreadCountChange,
+  token,
 }: NotificationDropdownProps) {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -37,12 +39,12 @@ export default function NotificationDropdown({
 
   // 通知一覧を取得
   useEffect(() => {
-    if (!isOpen) return
+    if (!isOpen || !token) return
 
     const fetchNotifications = async () => {
       setIsLoading(true)
       try {
-        const response = await notificationApi.getNotifications(1)
+        const response = await notificationApi.getNotifications(1, token)
         setNotifications(response.notifications)
       } catch (error) {
         console.error('Failed to fetch notifications:', error)
@@ -52,14 +54,16 @@ export default function NotificationDropdown({
     }
 
     fetchNotifications()
-  }, [isOpen])
+  }, [isOpen, token])
 
   // 通知をクリックした時の処理
   const handleNotificationClick = async (notification: Notification) => {
+    if (!token) return
+
     try {
       // 未読なら既読にする
       if (!notification.read) {
-        await notificationApi.markAsRead(notification.id)
+        await notificationApi.markAsRead(notification.id, token)
 
         // ローカル状態を更新
         setNotifications((prev) =>
@@ -67,7 +71,7 @@ export default function NotificationDropdown({
         )
 
         // 未読数を更新
-        const newCount = await notificationApi.getUnreadCount()
+        const newCount = await notificationApi.getUnreadCount(token)
         onUnreadCountChange(newCount)
       }
 
@@ -96,8 +100,10 @@ export default function NotificationDropdown({
 
   // 全て既読にする
   const handleMarkAllAsRead = async () => {
+    if (!token) return
+
     try {
-      await notificationApi.markAllAsRead()
+      await notificationApi.markAllAsRead(token)
 
       // ローカル状態を更新
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))

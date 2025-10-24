@@ -6,11 +6,13 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import HamburgerMenu from './HamburgerMenu'
 import NotificationDropdown from '../notifications/NotificationDropdown'
 import { notificationApi } from '@/lib/api/notifications'
+import { useAuthContext as useAuth } from '@/contexts/auth'
 
 export default function AuthenticatedHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isNotificationOpen, setIsNotificationOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
+  const { token } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
   const pathname = usePathname()
@@ -23,9 +25,11 @@ export default function AuthenticatedHeader() {
 
   // 未読通知数を取得
   useEffect(() => {
+    if (!token) return
+
     const fetchUnreadCount = async () => {
       try {
-        const count = await notificationApi.getUnreadCount()
+        const count = await notificationApi.getUnreadCount(token)
         setUnreadCount(count)
       } catch (error) {
         console.error('Failed to fetch unread count:', error)
@@ -38,7 +42,7 @@ export default function AuthenticatedHeader() {
     const interval = setInterval(fetchUnreadCount, 30000)
 
     return () => clearInterval(interval)
-  }, [])
+  }, [token])
 
   const handleTabChange = (tab: 'all' | 'following') => {
     const params = new URLSearchParams(searchParams.toString())
@@ -78,6 +82,7 @@ export default function AuthenticatedHeader() {
               isOpen={isNotificationOpen}
               onClose={() => setIsNotificationOpen(false)}
               onUnreadCountChange={setUnreadCount}
+              token={token}
             />
           </div>
           
