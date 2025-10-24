@@ -8,6 +8,7 @@ import Link from 'next/link'
 import { API_BASE_URL } from '@/lib/api'
 import { apiClient } from '@/services/apiClient'
 import type { Post, Comment } from '@/types'
+import { sharePost } from '@/utils/sharePost'
 
 export default function PostDetailPage() {
   const params = useParams()
@@ -24,6 +25,7 @@ export default function PostDetailPage() {
   const [likesCount, setLikesCount] = useState(0)
   const [isLiked, setIsLiked] = useState(false)
   const [isLikeLoading, setIsLikeLoading] = useState(false)
+  const [isSharing, setIsSharing] = useState(false)
   const [replyingTo, setReplyingTo] = useState<number | null>(null)
   const [deleteCommentId, setDeleteCommentId] = useState<number | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
@@ -118,6 +120,26 @@ export default function PostDetailPage() {
       console.error('いいね処理でエラーが発生しました:', error)
     } finally {
       setIsLikeLoading(false)
+    }
+  }
+
+  // シェア処理
+  const handleShareClick = async () => {
+    if (!post) return
+
+    setIsSharing(true)
+    try {
+      await sharePost({
+        title: '投稿',
+        content: post.content,
+        url: typeof window !== 'undefined' ? window.location.href : ''
+      })
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error('Share failed:', error)
+      }
+    } finally {
+      setIsSharing(false)
     }
   }
 
@@ -512,7 +534,11 @@ export default function PostDetailPage() {
           </div>
           
           <div className="flex-1 flex justify-center">
-            <button className="flex items-center text-gray-500">
+            <button
+              onClick={handleShareClick}
+              className="flex items-center text-gray-500 hover:text-blue-500 transition-colors"
+              disabled={isSharing}
+            >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
               </svg>
