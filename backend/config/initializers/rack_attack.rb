@@ -5,7 +5,12 @@
 
 class Rack::Attack
   # Configure cache store
-  Rack::Attack.cache.store = ActiveSupport::Cache::MemoryStore.new
+  # Use Redis in production for distributed rate limiting
+  Rack::Attack.cache.store = if Rails.env.production?
+    ActiveSupport::Cache::RedisCacheStore.new(url: ENV.fetch("REDIS_URL", "redis://redis:6379/1"))
+  else
+    ActiveSupport::Cache::MemoryStore.new
+  end
 
   # Disable in development environment
   Rack::Attack.enabled = !Rails.env.development?
