@@ -4,27 +4,26 @@
 # https://github.com/rack/rack-attack
 
 class Rack::Attack
+  # Configure cache store
+  Rack::Attack.cache.store = ActiveSupport::Cache::MemoryStore.new
+
   # Disable in development environment
   Rack::Attack.enabled = !Rails.env.development?
 
-  # Throttle login attempts by email address
-  # Allow 5 requests per minute per email
-  throttle("login/email", limit: 5, period: 60) do |req|
-    if req.path == "/api/v1/login" && req.post?
-      # Return the email from request body for tracking
-      req.params["email"].presence
+  # Throttle login attempts by IP address
+  # Allow 5 requests per minute per IP
+  throttle("login/ip", limit: 5, period: 60) do |req|
+    if req.path == "/api/v1/auth/login" && req.post?
+      # Track by IP address
+      req.ip
     end
   end
 
   # Custom response for throttled requests
-  self.throttled_responder = lambda do |env|
-    retry_after = env["rack.attack.match_data"][:period]
+  self.throttled_responder = lambda do |request|
     [
       429,
-      {
-        "Content-Type" => "application/json",
-        "Retry-After" => retry_after.to_s
-      },
+      { "Content-Type" => "application/json" },
       [ { error: "Too many requests. Please try again later." }.to_json ]
     ]
   end
