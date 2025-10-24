@@ -1,12 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import HamburgerMenu from './HamburgerMenu'
 import NotificationDropdown from '../notifications/NotificationDropdown'
 import { notificationApi } from '@/lib/api/notifications'
 import { useAuthContext as useAuth } from '@/contexts/auth'
+import Logger from '@/utils/logger'
 
 export default function AuthenticatedHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -16,6 +17,7 @@ export default function AuthenticatedHeader() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const pathname = usePathname()
+  const notificationButtonRef = useRef<HTMLButtonElement>(null)
   
   // タイムラインページかどうかを判定
   const isTimelinePage = pathname === '/'
@@ -32,7 +34,7 @@ export default function AuthenticatedHeader() {
         const count = await notificationApi.getUnreadCount(token)
         setUnreadCount(count)
       } catch (error) {
-        console.error('Failed to fetch unread count:', error)
+        Logger.error('Failed to fetch unread count', error instanceof Error ? error : undefined)
       }
     }
 
@@ -68,6 +70,7 @@ export default function AuthenticatedHeader() {
           {/* 通知 */}
           <div className="relative">
             <button
+              ref={notificationButtonRef}
               onClick={() => setIsNotificationOpen(!isNotificationOpen)}
               className="p-2 hover:bg-green-300 rounded relative"
               aria-label="通知"
@@ -86,6 +89,7 @@ export default function AuthenticatedHeader() {
               onClose={() => setIsNotificationOpen(false)}
               onUnreadCountChange={setUnreadCount}
               token={token}
+              buttonRef={notificationButtonRef}
             />
           </div>
           

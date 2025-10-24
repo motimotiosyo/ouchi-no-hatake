@@ -4,12 +4,14 @@ import { useState, useEffect, useRef } from 'react'
 import { notificationApi } from '@/lib/api/notifications'
 import type { Notification } from '@/types/notification'
 import { useRouter } from 'next/navigation'
+import Logger from '@/utils/logger'
 
 interface NotificationDropdownProps {
   isOpen: boolean
   onClose: () => void
   onUnreadCountChange: (count: number) => void
   token: string | null
+  buttonRef: React.RefObject<HTMLButtonElement>
 }
 
 export default function NotificationDropdown({
@@ -17,6 +19,7 @@ export default function NotificationDropdown({
   onClose,
   onUnreadCountChange,
   token,
+  buttonRef,
 }: NotificationDropdownProps) {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -28,14 +31,22 @@ export default function NotificationDropdown({
     if (!isOpen) return
 
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        onClose()
+      const target = event.target as Node
+
+      // ドロップダウン内またはボタン内のクリックは無視
+      if (
+        (dropdownRef.current && dropdownRef.current.contains(target)) ||
+        (buttonRef.current && buttonRef.current.contains(target))
+      ) {
+        return
       }
+
+      onClose()
     }
 
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [isOpen, onClose])
+  }, [isOpen, onClose, buttonRef])
 
   // 通知一覧を取得
   useEffect(() => {
@@ -47,7 +58,7 @@ export default function NotificationDropdown({
         const response = await notificationApi.getNotifications(1, token)
         setNotifications(response.notifications)
       } catch (error) {
-        console.error('Failed to fetch notifications:', error)
+        Logger.error('Failed to fetch notifications', error instanceof Error ? error : undefined)
       } finally {
         setIsLoading(false)
       }
@@ -94,7 +105,7 @@ export default function NotificationDropdown({
       router.push(targetPath)
       onClose()
     } catch (error) {
-      console.error('Failed to handle notification click:', error)
+      Logger.error('Failed to handle notification click', error instanceof Error ? error : undefined)
     }
   }
 
@@ -111,7 +122,7 @@ export default function NotificationDropdown({
       // 未読数を0にする
       onUnreadCountChange(0)
     } catch (error) {
-      console.error('Failed to mark all as read:', error)
+      Logger.error('Failed to mark all as read', error instanceof Error ? error : undefined)
     }
   }
 
