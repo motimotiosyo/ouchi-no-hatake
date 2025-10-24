@@ -11,7 +11,7 @@ interface NotificationDropdownProps {
   onClose: () => void
   onUnreadCountChange: (count: number) => void
   token: string | null
-  buttonRef: React.RefObject<HTMLButtonElement>
+  buttonRef: React.RefObject<HTMLButtonElement | null>
 }
 
 export default function NotificationDropdown({
