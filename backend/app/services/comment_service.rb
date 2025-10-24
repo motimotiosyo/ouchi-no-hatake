@@ -16,6 +16,15 @@ class CommentService < ApplicationService
     comment.user = user
 
     if comment.save
+      # 通知を作成
+      if comment.parent_comment_id.present?
+        # リプライの場合: コメント元のユーザーに通知
+        NotificationService.create_reply_notification(comment.parent_comment, user)
+      else
+        # トップレベルコメントの場合: 投稿者に通知
+        NotificationService.create_comment_notification(post, user)
+      end
+
       ApplicationSerializer.success(
         data: { comment: build_comment_response(comment) }
       )
