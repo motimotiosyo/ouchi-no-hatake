@@ -21,6 +21,9 @@ class FavoriteGrowthRecordService < ApplicationService
     favorite = growth_record.favorite_growth_records.build(user: user)
 
     if favorite.save
+      # 通知を作成
+      NotificationService.create_favorite_notification(growth_record, user)
+
       ApplicationSerializer.success(
         data: build_favorite_response(growth_record, true)
       )

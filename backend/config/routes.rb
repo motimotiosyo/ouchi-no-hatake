@@ -50,6 +50,17 @@ Rails.application.routes.draw do
         get "favorite_growth_records", to: "users#favorite_growth_records"
       end
       put "/users/profile", to: "users#update_profile"
+
+      # 通知関連API
+      resources :notifications, only: [ :index ] do
+        collection do
+          get :unread_count
+          patch :mark_all_as_read
+        end
+        member do
+          patch :mark_as_read
+        end
+      end
     end
 
     get "health_check", to: "health_check#index"

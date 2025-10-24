@@ -16,6 +16,9 @@ class LikeService < ApplicationService
     like = post.likes.build(user: user)
 
     if like.save
+      # 通知を作成
+      NotificationService.create_like_notification(post, user)
+
       ApplicationSerializer.success(
         data: build_like_response(post, true)
       )
