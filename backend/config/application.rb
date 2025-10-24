@@ -33,6 +33,9 @@ module Backend
     config.middleware.use ActionDispatch::Cookies
     config.middleware.use ActionDispatch::Session::CookieStore
 
+    # Rack::Attack for rate limiting
+    config.middleware.use Rack::Attack
+
     # 日本語をデフォルト言語に設定
     config.i18n.default_locale = :ja
   end

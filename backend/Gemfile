@@ -33,6 +33,9 @@ gem "dotenv-rails", groups: [ :development, :test ]
 
 gem "jwt"
 
+# Rate limiting for API security
+gem "rack-attack"
+
 # AWS S3 for Active Storage
 gem "aws-sdk-s3", require: false
 
