@@ -21,7 +21,9 @@ export default function HamburgerMenu({ isOpen, onClose }: HamburgerMenuProps) {
       await logout()
       onClose() // ログアウト成功後にサイドバーを閉じる
     } catch (error) {
-      console.error('ログアウトエラー:', error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error('ログアウトエラー:', error)
+      }
       setIsLoggingOut(false)
     }
   }
