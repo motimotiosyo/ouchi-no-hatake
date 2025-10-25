@@ -7,7 +7,7 @@ import { apiClient } from '@/services/apiClient'
 import type { Plant } from '@/types/growthRecord'
 import CustomSelect from '@/components/ui/CustomSelect'
 import DatePicker, { registerLocale } from 'react-datepicker'
-import ja from 'date-fns/locale/ja'
+import { ja } from 'date-fns/locale/ja'
 import 'react-datepicker/dist/react-datepicker.css'
 
 registerLocale('ja', ja)
