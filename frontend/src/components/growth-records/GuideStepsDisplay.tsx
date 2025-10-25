@@ -172,7 +172,10 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
                             <button
                               onClick={async () => {
                                 if (step.growth_record_step_id && selectedDate) {
-                                  await onStepComplete(step.growth_record_step_id, selectedDate.toISOString().split('T')[0])
+                                  const dateStr = selectedDate instanceof Date 
+                                    ? selectedDate.toISOString().split('T')[0]
+                                    : selectedDate
+                                  await onStepComplete(step.growth_record_step_id, dateStr)
                                   setShowDateInput(null)
                                 }
                               }}
@@ -344,7 +347,10 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
                                 <button
                                   onClick={async () => {
                                     if (step.growth_record_step_id && selectedDate) {
-                                      await onStepComplete(step.growth_record_step_id, selectedDate.toISOString().split('T')[0])
+                                      const dateStr = selectedDate instanceof Date 
+                                        ? selectedDate.toISOString().split('T')[0]
+                                        : selectedDate
+                                      await onStepComplete(step.growth_record_step_id, dateStr)
                                       setShowDateInput(null)
                                     }
                                   }}
