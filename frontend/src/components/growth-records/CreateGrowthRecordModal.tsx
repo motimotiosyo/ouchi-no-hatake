@@ -13,7 +13,11 @@ import 'react-datepicker/dist/react-datepicker.css'
 registerLocale('ja', ja)
 
 // カレンダーアイコン付き入力欄
-const DateInputWithIcon = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
+interface DateInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onClick'> {
+  onClick?: () => void
+}
+
+const DateInputWithIcon = forwardRef<HTMLInputElement, DateInputProps>(
   ({ value, onClick, onChange, placeholder, ...props }, ref) => {
     return (
       <div className="relative w-full">
