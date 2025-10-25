@@ -103,7 +103,7 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
                             <button
                               onClick={() => {
                                 if (step.growth_record_step_id) {
-                                  setSelectedDate(new Date().toISOString().split('T')[0])
+                                  setSelectedDate(new Date())
                                   setShowDateInput(step.growth_record_step_id)
                                 }
                               }}
