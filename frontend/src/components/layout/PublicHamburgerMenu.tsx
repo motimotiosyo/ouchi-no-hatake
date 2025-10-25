@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { createPortal } from 'react-dom'
 
 interface PublicHamburgerMenuProps {
   isOpen: boolean
@@ -10,7 +11,7 @@ interface PublicHamburgerMenuProps {
 export default function PublicHamburgerMenu({ isOpen, onClose }: PublicHamburgerMenuProps) {
   if (!isOpen) return null
 
-  return (
+  const menuContent = (
     <>
       {/* 薄暗いオーバーレイ - メニュー外クリックで閉じる */}
       <div
@@ -88,4 +89,6 @@ export default function PublicHamburgerMenu({ isOpen, onClose }: PublicHamburger
       </div>
     </>
   )
+
+  return typeof document !== 'undefined' ? createPortal(menuContent, document.body) : null
 }

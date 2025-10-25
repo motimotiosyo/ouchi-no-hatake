@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import { useAuthContext as useAuth, useAuthActions } from '@/contexts/auth'
 
 interface HamburgerMenuProps {
@@ -27,7 +28,7 @@ export default function HamburgerMenu({ isOpen, onClose }: HamburgerMenuProps) {
 
   if (!isOpen) return null
 
-  return (
+  const menuContent = (
     <>
       {/* 薄暗いオーバーレイ - メニュー外クリックで閉じる */}
       <div 
@@ -174,4 +175,6 @@ export default function HamburgerMenu({ isOpen, onClose }: HamburgerMenuProps) {
       </div>
     </>
   )
+
+  return typeof document !== 'undefined' ? createPortal(menuContent, document.body) : null
 }
