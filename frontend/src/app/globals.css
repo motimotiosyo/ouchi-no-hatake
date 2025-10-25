@@ -35,6 +35,26 @@ html {
   background: #89FD8B33;
 }
 
+/* セレクトボックスのフォントサイズ統一 */
+select {
+  font-size: 18px !important;
+  -webkit-text-size-adjust: 100% !important;
+  -webkit-appearance: menulist;
+}
+
+select option {
+  font-size: 18px !important;
+  min-height: 1.5em !important;
+  padding: 8px !important;
+}
+
+/* モバイル対応の追加スタイル */
+@media screen and (max-width: 768px) {
+  select, select option {
+    font-size: 20px !important;
+  }
+}
+
 /* 認証フォーム用の統一スタイル */
 .auth-container {
   min-height: 100vh;

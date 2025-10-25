@@ -20,7 +20,7 @@ export default function GrowthRecordsPage() {
 
   return (
     <div className="flex justify-center" style={{ minWidth: '360px' }}>
-      <div className="w-full max-w-2xl px-4 py-6" style={{ minWidth: '360px' }}>
+      <div className="w-full max-w-2xl px-4 pb-6 -mt-4" style={{ minWidth: '360px' }}>
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">成長記録</h1>
           <p className="text-gray-600">あなたの成長記録一覧</p>

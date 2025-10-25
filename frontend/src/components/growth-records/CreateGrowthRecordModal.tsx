@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAuthContext as useAuth } from '@/contexts/auth'
 import { apiClient } from '@/services/apiClient'
 import type { Plant } from '@/types/growthRecord'
+import CustomSelect from '@/components/ui/CustomSelect'
 
 interface EditData {
   id: number
@@ -160,7 +161,10 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
           : '/api/v1/growth_records'
 
         const formDataToSend = new FormData()
-        formDataToSend.append('growth_record[plant_id]', formData.plant_id)
+        // 新規作成、または計画中の場合のみplant_idを送信（育成中以降は変更不可）
+        if (!isEditMode || formData.status === 'planning') {
+          formDataToSend.append('growth_record[plant_id]', formData.plant_id)
+        }
         formDataToSend.append('growth_record[record_name]', formData.record_name)
         formDataToSend.append('growth_record[location]', formData.location)
         formDataToSend.append('growth_record[started_on]', formData.started_on)
@@ -184,6 +188,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
           onSuccess()
           handleClose()
         } else {
+          console.error('422エラーの詳細:', result.error)
           setError(result.error.message)
         }
       } catch (err) {
@@ -234,6 +239,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
     >
       <div 
         className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto"
+        style={{ fontSize: '16px' }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-6">
@@ -260,36 +266,32 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
               <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
                 ステータス
               </label>
-              <select
+              <CustomSelect
                 id="status"
                 name="status"
                 value={formData.status}
-                onChange={handleInputChange}
+                onChange={(value) => setFormData(prev => ({ ...prev, status: value as 'planning' | 'growing' | 'completed' | 'failed' }))}
+                options={
+                  (!editData || editData.status === 'planning')
+                    ? [
+                        { value: 'planning', label: '計画中' },
+                        { value: 'growing', label: '育成中' },
+                        { value: 'completed', label: '収穫済み' },
+                        { value: 'failed', label: '失敗' }
+                      ]
+                    : editData.status === 'growing'
+                    ? [
+                        { value: 'growing', label: '育成中' },
+                        { value: 'completed', label: '収穫済み' },
+                        { value: 'failed', label: '失敗' }
+                      ]
+                    : editData.status === 'completed'
+                    ? [{ value: 'completed', label: '収穫済み' }]
+                    : [{ value: 'failed', label: '失敗' }]
+                }
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              >
-                {(!editData || editData.status === 'planning') && (
-                  <>
-                    <option value="planning">計画中</option>
-                    <option value="growing">育成中</option>
-                    <option value="completed">収穫済み</option>
-                    <option value="failed">失敗</option>
-                  </>
-                )}
-                {editData && editData.status === 'growing' && (
-                  <>
-                    <option value="growing">育成中</option>
-                    <option value="completed">収穫済み</option>
-                    <option value="failed">失敗</option>
-                  </>
-                )}
-                {editData && editData.status === 'completed' && (
-                  <option value="completed">収穫済み</option>
-                )}
-                {editData && editData.status === 'failed' && (
-                  <option value="failed">失敗</option>
-                )}
-              </select>
+                disabled={editData && (editData.status === 'completed' || editData.status === 'failed')}
+              />
               {editData && editData.status === 'planning' && formData.status !== 'planning' && (
                 <p className="text-xs text-yellow-600 mt-1">
                   ⚠️ 育成中・収穫済み・失敗に変更すると、計画中には戻せなくなります
@@ -310,22 +312,18 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
               <label htmlFor="plant_id" className="block text-sm font-medium text-gray-700 mb-2">
                 品種
               </label>
-              <select
+              <CustomSelect
                 id="plant_id"
                 name="plant_id"
                 value={formData.plant_id}
-                onChange={handleInputChange}
+                onChange={(value) => setFormData(prev => ({ ...prev, plant_id: value }))}
+                options={[
+                  { value: '', label: '選択してください' },
+                  ...plants.map(plant => ({ value: plant.id.toString(), label: plant.name }))
+                ]}
                 required
                 disabled={editData && formData.status !== 'planning'}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-              >
-                <option value="">選択してください</option>
-                {plants.map(plant => (
-                  <option key={plant.id} value={plant.id}>
-                    {plant.name}
-                  </option>
-                ))}
-              </select>
+              />
               {editData && formData.status !== 'planning' && (
                 <p className="text-xs text-gray-500 mt-1">
                   育成中以降は品種を変更できません
@@ -355,21 +353,21 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
               <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
                 栽培場所
               </label>
-              <select
+              <CustomSelect
                 id="location"
                 name="location"
                 value={formData.location}
-                onChange={handleInputChange}
+                onChange={(value) => setFormData(prev => ({ ...prev, location: value }))}
+                options={[
+                  { value: '', label: '選択してください' },
+                  { value: '室内', label: '室内' },
+                  { value: 'ベランダ', label: 'ベランダ' },
+                  { value: '庭', label: '庭' },
+                  { value: '畑', label: '畑' },
+                  { value: 'その他', label: 'その他' }
+                ]}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              >
-                <option value="">選択してください</option>
-                <option value="室内">室内</option>
-                <option value="ベランダ">ベランダ</option>
-                <option value="庭">庭</option>
-                <option value="畑">畑</option>
-                <option value="その他">その他</option>
-              </select>
+              />
             </div>
 
             {formData.status === 'growing' && (

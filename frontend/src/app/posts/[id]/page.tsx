@@ -437,7 +437,7 @@ export default function PostDetailPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 pb-6 -mt-8">
+    <div className="max-w-2xl mx-auto px-4 pb-6 -mt-4">
       {/* 戻るボタン */}
       <div className="mb-4">
         <button

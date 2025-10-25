@@ -7,7 +7,14 @@ import FlashMessages from '@/components/ui/FlashMessages'
 import AutoLogoutModalContainer from '@/components/ui/AutoLogoutModalContainer'
 import RedirectMessageHandler from '@/components/ui/RedirectMessageHandler'
 
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+}
 
 export const metadata: Metadata = {
   title: {

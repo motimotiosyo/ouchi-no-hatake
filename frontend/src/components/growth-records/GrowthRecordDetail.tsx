@@ -184,7 +184,7 @@ export default function GrowthRecordDetail({ id }: Props) {
           <div className="text-red-600 mb-4">{error}</div>
           <button
             onClick={() => router.push('/growth-records')}
-            className="text-blue-600 hover:text-blue-800"
+            className="text-gray-600 hover:text-gray-800"
           >
             {'< '}成長記録一覧に戻る
           </button>
@@ -214,7 +214,7 @@ export default function GrowthRecordDetail({ id }: Props) {
       <div>
         <button
           onClick={() => router.push(user && growthRecord.user && user.id === growthRecord.user.id ? '/growth-records' : '/')}
-          className="text-blue-600 hover:text-blue-800 flex items-center"
+          className="text-gray-600 hover:text-gray-800 flex items-center"
         >
           {'< '}{user && growthRecord.user && user.id === growthRecord.user.id ? '成長記録一覧に戻る' : 'タイムラインに戻る'}
         </button>
