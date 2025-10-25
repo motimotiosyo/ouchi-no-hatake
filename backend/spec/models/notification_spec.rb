@@ -4,7 +4,7 @@ RSpec.describe Notification, type: :model do
   describe 'バリデーション' do
     it { should validate_presence_of(:notification_type) }
     it { should validate_presence_of(:message) }
-    it { should validate_inclusion_of(:read).in_array([true, false]) }
+    it { should validate_inclusion_of(:read).in_array([ true, false ]) }
   end
 
   describe 'アソシエーション' do

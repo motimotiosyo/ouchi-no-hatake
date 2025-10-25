@@ -18,7 +18,7 @@ RSpec.describe Guide, type: :model do
       step1 = create(:guide_step, guide: guide, position: 1)
       step2 = create(:guide_step, guide: guide, position: 2)
 
-      expect(guide.guide_steps).to eq([step1, step2, step3])
+      expect(guide.guide_steps).to eq([ step1, step2, step3 ])
     end
   end
 end

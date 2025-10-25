@@ -23,7 +23,7 @@ RSpec.describe "Api::V1::Checker", type: :request do
 
   describe "POST /api/v1/checker/diagnose" do
     it "診断を実行できる" do
-      post "/api/v1/checker/diagnose", params: { choice_ids: [choices.first.id] }
+      post "/api/v1/checker/diagnose", params: { choice_ids: [ choices.first.id ] }
 
       expect(response).to have_http_status(:ok)
       json = json_response
