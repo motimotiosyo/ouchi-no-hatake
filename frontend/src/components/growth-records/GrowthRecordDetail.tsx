@@ -292,6 +292,10 @@ export default function GrowthRecordDetail({ id }: Props) {
                 <p className="text-gray-900">{growthRecord.location}</p>
               </div>
               <div>
+                <h3 className="text-sm font-medium text-gray-500 mb-1">記録作成日</h3>
+                <p className="text-gray-900">{formatDate(growthRecord.created_at)}</p>
+              </div>
+              <div>
                 <h3 className="text-sm font-medium text-gray-500 mb-1">
                   {growthRecord.planting_method === 'seed'
                     ? '種まき日'
@@ -300,17 +304,15 @@ export default function GrowthRecordDetail({ id }: Props) {
                       : '栽培開始日'}
                 </h3>
                 <p className="text-gray-900">
-                  {growthRecord.started_on ? formatDate(growthRecord.started_on) : '---.--.-'}
+                  {growthRecord.started_on ? formatDate(growthRecord.started_on) : '--/--'}
                 </p>
               </div>
-              {growthRecord.ended_on && (
-                <div>
-                  <h3 className="text-sm font-medium text-gray-500 mb-1">栽培終了日</h3>
-                  <p className="text-gray-900">
-                    {formatDate(growthRecord.ended_on)}
-                  </p>
-                </div>
-              )}
+              <div>
+                <h3 className="text-sm font-medium text-gray-500 mb-1">栽培終了日</h3>
+                <p className="text-gray-900">
+                  {growthRecord.ended_on ? formatDate(growthRecord.ended_on) : '--/--'}
+                </p>
+              </div>
             </div>
           </div>
         </div>
