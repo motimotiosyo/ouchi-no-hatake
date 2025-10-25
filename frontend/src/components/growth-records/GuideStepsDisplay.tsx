@@ -122,6 +122,11 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
                             type="date"
                             value={selectedDate}
                             onChange={(e) => setSelectedDate(e.target.value)}
+                            onFocus={(e) => {
+                              setTimeout(() => {
+                                e.target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                              }, 100)
+                            }}
                             className="w-full md:flex-1 px-3 py-2 text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
                             style={{ fontSize: '16px' }}
                           />
@@ -290,6 +295,11 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
                                 type="date"
                                 value={selectedDate}
                                 onChange={(e) => setSelectedDate(e.target.value)}
+                                onFocus={(e) => {
+                                  setTimeout(() => {
+                                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                                  }, 100)
+                                }}
                                 className="w-full md:flex-1 px-3 py-2 text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
                                 style={{ fontSize: '16px' }}
                               />
