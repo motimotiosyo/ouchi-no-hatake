@@ -107,7 +107,7 @@ export default function GuideDetailPage() {
 
   return (
     <div className="flex justify-center">
-      <div className="w-full max-w-2xl min-w-80 px-4 py-6">
+      <div className="w-full max-w-2xl min-w-80 px-4 pb-6 -mt-4">
         {/* 戻るボタン */}
         <div className="mb-6">
           <Link
