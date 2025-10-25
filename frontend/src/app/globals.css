@@ -228,3 +228,24 @@ select option {
   animation: slide-in-from-right 1s ease-out forwards;
   opacity: 0;
 }
+
+/* react-datepickerのアイコンを右側に配置 */
+.react-datepicker__input-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+}
+
+.react-datepicker__input-container input {
+  flex: 1;
+  padding-right: 40px !important;
+}
+
+.react-datepicker__calendar-icon {
+  position: absolute;
+  right: 10px;
+  pointer-events: auto;
+  cursor: pointer;
+  z-index: 1;
+}

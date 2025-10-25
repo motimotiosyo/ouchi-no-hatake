@@ -1,10 +1,43 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, forwardRef } from 'react'
 import { useAuthContext as useAuth } from '@/contexts/auth'
 import { apiClient } from '@/services/apiClient'
 import type { Plant } from '@/types/growthRecord'
 import CustomSelect from '@/components/ui/CustomSelect'
+import DatePicker, { registerLocale } from 'react-datepicker'
+import ja from 'date-fns/locale/ja'
+import 'react-datepicker/dist/react-datepicker.css'
+
+registerLocale('ja', ja)
+
+// カレンダーアイコン付き入力欄
+const DateInputWithIcon = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
+  ({ value, onClick, onChange, placeholder, ...props }, ref) => {
+    return (
+      <div className="relative w-full">
+        <input
+          {...props}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder || "yyyy/MM/dd"}
+          ref={ref}
+          className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+        />
+        <button
+          type="button"
+          onClick={onClick}
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 z-10"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </button>
+      </div>
+    )
+  }
+)
+DateInputWithIcon.displayName = 'DateInputWithIcon'
 
 interface EditData {
   id: number
@@ -405,42 +438,44 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
             )}
 
             <div>
-              <label htmlFor="started_on" className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 {formData.status === 'growing'
                   ? (formData.planting_method === 'seed' ? '種まき日' : '植え付け日')
                   : '栽培開始日'}
               </label>
-              <input
-                type="date"
-                id="started_on"
-                name="started_on"
-                value={formData.started_on}
-                onChange={handleInputChange}
+              <DatePicker
+                selected={formData.started_on ? new Date(formData.started_on) : null}
+                onChange={(date) => setFormData(prev => ({ ...prev, started_on: date ? date.toISOString().split('T')[0] : '' }))}
+                dateFormat="yyyy年MM月dd日"
+                locale="ja"
+                placeholderText="日付を選択してください"
+                customInput={<DateInputWithIcon />}
+                wrapperClassName="w-full"
+                calendarClassName="z-[10001]"
+                preventOpenOnFocus
+                shouldCloseOnSelect
                 required={formData.status !== 'planning'}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                style={{ fontSize: '16px' }}
               />
-              {/* カレンダーピッカー表示スペース確保 */}
-              <div className="h-[300px]"></div>
             </div>
 
             {(formData.status === 'completed' || formData.status === 'failed') && (
               <div>
-                <label htmlFor="ended_on" className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   栽培終了日
                 </label>
-                <input
-                  type="date"
-                  id="ended_on"
-                  name="ended_on"
-                  value={formData.ended_on}
-                  onChange={handleInputChange}
+                <DatePicker
+                  selected={formData.ended_on ? new Date(formData.ended_on) : null}
+                  onChange={(date) => setFormData(prev => ({ ...prev, ended_on: date ? date.toISOString().split('T')[0] : '' }))}
+                  dateFormat="yyyy年MM月dd日"
+                  locale="ja"
+                  placeholderText="日付を選択してください"
+                  customInput={<DateInputWithIcon />}
+                  wrapperClassName="w-full"
+                  calendarClassName="z-[10001]"
+                  preventOpenOnFocus
+                  shouldCloseOnSelect
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                  style={{ fontSize: '16px' }}
                 />
-                {/* カレンダーピッカー表示スペース確保 */}
-                <div className="h-[300px]"></div>
               </div>
             )}
 

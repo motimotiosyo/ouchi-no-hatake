@@ -1,7 +1,40 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, forwardRef } from 'react'
 import type { GuideStepInfo, GrowthRecordStatus } from '@/types/growthRecord'
+import DatePicker, { registerLocale } from 'react-datepicker'
+import ja from 'date-fns/locale/ja'
+import 'react-datepicker/dist/react-datepicker.css'
+
+registerLocale('ja', ja)
+
+// カレンダーアイコン付き入力欄
+const DateInputWithIcon = forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(
+  ({ value, onClick, onChange, ...props }, ref) => {
+    return (
+      <div className="relative w-full">
+        <input
+          {...props}
+          value={value}
+          onChange={onChange}
+          ref={ref}
+          placeholder="yyyy/MM/dd"
+          className="w-full px-3 py-2 pr-10 text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+        />
+        <button
+          type="button"
+          onClick={onClick}
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 z-10"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </button>
+      </div>
+    )
+  }
+)
+DateInputWithIcon.displayName = 'DateInputWithIcon'
 
 interface Props {
   stepInfo: GuideStepInfo
@@ -13,7 +46,7 @@ interface Props {
 
 export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepComplete, onStepUncomplete }: Props) {
   const [showDateInput, setShowDateInput] = useState<number | null>(null)
-  const [selectedDate, setSelectedDate] = useState<string>(new Date().toISOString().split('T')[0])
+  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date())
   // 計画中の表示
   if (stepInfo.status === 'planning' && stepInfo.preparation_step) {
     return (
@@ -105,7 +138,7 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
 
                     {/* 日付入力UI */}
                     {showDateInput === step.growth_record_step_id && onStepComplete && (
-                      <div className="mt-3 ml-0 md:ml-11 p-3 bg-blue-50 border border-blue-200 rounded relative z-[10001]">
+                      <div className="mt-3 ml-0 md:ml-11 p-3 bg-blue-50 border border-blue-200 rounded">
                         {/* Phase 1（種まき）またはPhase 3（植え付け）の未完了時の警告 */}
                         {!step.done && (step.phase === 1 || step.phase === 3) && (
                           <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
@@ -118,12 +151,16 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
                           完了日を入力してください
                         </label>
                         <div className="flex flex-col md:flex-row gap-2">
-                          <input
-                            type="date"
-                            value={selectedDate}
-                            onChange={(e) => setSelectedDate(e.target.value)}
-                            className="w-full md:flex-1 px-3 py-2 text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                            style={{ fontSize: '16px' }}
+                          <DatePicker
+                            selected={selectedDate}
+                            onChange={(date) => setSelectedDate(date)}
+                            dateFormat="yyyy年MM月dd日"
+                            locale="ja"
+                            customInput={<DateInputWithIcon />}
+                            wrapperClassName="w-full md:flex-1"
+                            popperClassName="z-[10001]"
+                            preventOpenOnFocus
+                            shouldCloseOnSelect
                           />
                           <div className="flex gap-2">
                             <button
@@ -134,8 +171,8 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
                             </button>
                             <button
                               onClick={async () => {
-                                if (step.growth_record_step_id) {
-                                  await onStepComplete(step.growth_record_step_id, selectedDate)
+                                if (step.growth_record_step_id && selectedDate) {
+                                  await onStepComplete(step.growth_record_step_id, selectedDate.toISOString().split('T')[0])
                                   setShowDateInput(null)
                                 }
                               }}
@@ -281,17 +318,21 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
 
                         {/* 日付入力UI */}
                         {showDateInput === step.growth_record_step_id && onStepComplete && (
-                          <div className="mt-3 p-3 bg-white border border-gray-300 rounded relative z-[10001]">
+                          <div className="mt-3 p-3 bg-white border border-gray-300 rounded">
                             <label className="block text-xs font-medium text-gray-700 mb-2">
                               完了日を入力してください
                             </label>
                             <div className="flex flex-col md:flex-row gap-2">
-                              <input
-                                type="date"
-                                value={selectedDate}
-                                onChange={(e) => setSelectedDate(e.target.value)}
-                                className="w-full md:flex-1 px-3 py-2 text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                                style={{ fontSize: '16px' }}
+                              <DatePicker
+                                selected={selectedDate}
+                                onChange={(date) => setSelectedDate(date)}
+                                dateFormat="yyyy年MM月dd日"
+                                locale="ja"
+                                customInput={<DateInputWithIcon />}
+                                wrapperClassName="w-full md:flex-1"
+                                popperClassName="z-[10001]"
+                                preventOpenOnFocus
+                                shouldCloseOnSelect
                               />
                               <div className="flex gap-2">
                                 <button
@@ -302,8 +343,8 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
                                 </button>
                                 <button
                                   onClick={async () => {
-                                    if (step.growth_record_step_id) {
-                                      await onStepComplete(step.growth_record_step_id, selectedDate)
+                                    if (step.growth_record_step_id && selectedDate) {
+                                      await onStepComplete(step.growth_record_step_id, selectedDate.toISOString().split('T')[0])
                                       setShowDateInput(null)
                                     }
                                   }}
