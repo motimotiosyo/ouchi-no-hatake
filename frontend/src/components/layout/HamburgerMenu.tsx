@@ -31,7 +31,7 @@ export default function HamburgerMenu({ isOpen, onClose }: HamburgerMenuProps) {
     <>
       {/* 薄暗いオーバーレイ - メニュー外クリックで閉じる */}
       <div 
-        className="fixed inset-0 z-40"
+        className="fixed inset-0 z-[9998]"
         style={{
           backgroundColor: 'rgba(0, 0, 0, 0.3)',
           backdropFilter: 'brightness(0.7)'
@@ -40,7 +40,7 @@ export default function HamburgerMenu({ isOpen, onClose }: HamburgerMenuProps) {
       />
       
       {/* メニュー */}
-      <div className="fixed top-0 right-0 h-full w-80 bg-white shadow-lg z-50 transform transition-transform duration-300 ease-in-out">
+      <div className="fixed top-0 right-0 h-full w-80 bg-white shadow-lg z-[9999] transform transition-transform duration-300 ease-in-out">
         {/* ヘッダー */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold">メニュー</h2>
