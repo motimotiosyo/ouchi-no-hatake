@@ -360,8 +360,9 @@ export default function PostDetailPage() {
 
   // 全ての子孫コメントを再帰的に表示する関数（フラット表示）
   const renderAllReplies = (replies: Comment[], parentDepth: number = 0) => {
-    return replies.map((reply) => (
-      <div key={reply.id} className="space-y-3">
+    return replies.map((reply, index) => (
+      <div key={reply.id}>
+        <div className="border-t border-gray-200 my-3"></div>
         {renderComment(reply, parentDepth + 1)}
         {reply.replies && reply.replies.length > 0 && renderAllReplies(reply.replies, parentDepth + 1)}
       </div>
@@ -562,7 +563,7 @@ export default function PostDetailPage() {
                   <textarea
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="返信をポスト"
+                    placeholder="コメントを入力"
                     className="w-full p-3 rounded-lg resize-none focus:outline-none border-0 transition-all"
                     rows={1}
                     maxLength={255}
@@ -674,7 +675,7 @@ export default function PostDetailPage() {
                   <textarea
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="返信をポスト"
+                    placeholder="コメントを入力"
                     className="w-full p-3 rounded-lg resize-none focus:outline-none border-0 transition-all duration-300"
                     rows={1}
                     maxLength={255}
