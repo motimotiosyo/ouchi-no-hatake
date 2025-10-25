@@ -27,7 +27,7 @@ export default function CheckerQuestionPage({
   const isLastQuestion = currentQuestionIndex === totalQuestions - 1
 
   return (
-    <div className="px-4 py-6">
+    <div className="px-4 pb-6 -mt-4">
       {/* タイトルと説明（最初の質問のみ） */}
       {isFirstQuestion && (
         <div className="mb-8 text-center">

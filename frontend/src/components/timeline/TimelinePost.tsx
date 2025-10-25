@@ -1,6 +1,7 @@
 import { useAuthContext as useAuth } from '@/contexts/auth'
 import { useImageModal } from '@/contexts/ImageModalContext'
 import { useState } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { API_BASE_URL } from '@/lib/api'
@@ -104,6 +105,11 @@ export default function TimelinePost({ post }: TimelinePostProps) {
   }
 
   const handleShareClick = async () => {
+    if (!isAuthenticated) {
+      setShowLoginModal(true)
+      return
+    }
+
     setIsSharing(true)
     try {
       await sharePost({
@@ -131,12 +137,67 @@ export default function TimelinePost({ post }: TimelinePostProps) {
     })
   }
 
-  return (
+  const loginModal = showLoginModal && typeof document !== 'undefined' ? createPortal(
     <div 
-      className="cursor-pointer"
-      onClick={handlePostClick}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backdropFilter: 'blur(4px)'
+      }}
+      onClick={() => setShowLoginModal(false)}
     >
-      {/* ヘッダー部分 */}
+      <div className="bg-white rounded-lg shadow-xl max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
+        <div className="p-6">
+          {/* アイコン */}
+          <div className="flex justify-center mb-4">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+          </div>
+
+          {/* メッセージ */}
+          <div className="text-center mb-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              ログインが必要です
+            </h2>
+            <p className="text-gray-600 text-sm">
+              投稿へのいいね、コメント、シェアを行うにはログインが必要です。
+            </p>
+          </div>
+
+          {/* ボタン */}
+          <div className="flex space-x-3">
+            <button
+              onClick={() => setShowLoginModal(false)}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              キャンセル
+            </button>
+            <button
+              onClick={() => {
+                setShowLoginModal(false)
+                window.location.href = '/login'
+              }}
+              className="flex-1 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
+            >
+              ログイン
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body
+  ) : null
+
+  return (
+    <>
+      <div 
+        className="cursor-pointer"
+        onClick={handlePostClick}
+      >
+        {/* ヘッダー部分 */}
       <div className="mb-3">
         {/* 1行目: ユーザー名（左）+ 日時・メニュー（右） */}
         <div className="flex items-center justify-between mb-2">
@@ -152,16 +213,9 @@ export default function TimelinePost({ post }: TimelinePostProps) {
             </div>
             <span className="font-medium text-gray-900">{post.user.name || '不明なユーザー'}</span>
           </Link>
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-500">
-              {formatDateTime(post.created_at)}
-            </span>
-            <button className="text-gray-400">
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-              </svg>
-            </button>
-          </div>
+          <span className="text-sm text-gray-500">
+            {formatDateTime(post.created_at)}
+          </span>
         </div>
         
         {/* 2行目: 成長記録・カテゴリ（左寄せ） */}
@@ -191,7 +245,7 @@ export default function TimelinePost({ post }: TimelinePostProps) {
       </div>
 
       {/* 投稿内容 */}
-      <div className="mb-4">
+      <div className="mb-1">
         <p className="text-gray-900 text-base leading-relaxed">
           {post.content}
         </p>
@@ -199,7 +253,7 @@ export default function TimelinePost({ post }: TimelinePostProps) {
 
       {/* 投稿画像 */}
       {post.images && post.images.length > 0 && (
-        <div className="mb-4">
+        <div className="mb-1">
           <div className={`grid gap-2 max-h-80 overflow-hidden ${
             post.images.length === 1 ? 'grid-cols-1' :
             'grid-cols-2'
@@ -223,13 +277,13 @@ export default function TimelinePost({ post }: TimelinePostProps) {
       )}
 
       {/* アクションボタン */}
-      <div className="flex items-center py-2 h-10">
+      <div className="flex items-center">
         <div className="flex-1 flex justify-center">
-          <button 
+          <button
             onClick={handleCommentClick}
             className="flex items-center justify-center transition-colors w-12 h-8 text-gray-500 hover:text-gray-700"
           >
-            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.965 8.965 0 01-4.126-1.004L5 21l1.996-3.874A8.965 8.965 0 013 12c0-4.418 3.582-8 8-8s8 3.582 8 8z" />
             </svg>
             <span className="text-sm ml-1 w-4 text-left transition-all duration-150">
@@ -237,30 +291,30 @@ export default function TimelinePost({ post }: TimelinePostProps) {
             </span>
           </button>
         </div>
-        
+
         <div className="flex-1 flex justify-center">
-          <button 
+          <button
             onClick={handleLikeClick}
             className={`flex items-center justify-center transition-colors w-12 h-8 ${
-              isLiked 
-                ? 'text-red-500' 
-                : isAuthenticated 
-                  ? 'text-gray-500 hover:text-red-500' 
-                  : 'text-gray-300 cursor-not-allowed'
+              isLiked
+                ? 'text-red-500'
+                : isAuthenticated
+                  ? 'text-gray-500 hover:text-red-500'
+                  : 'text-gray-400 hover:text-gray-600'
             }`}
-            disabled={!isAuthenticated || isLikeLoading}
+            disabled={isLikeLoading}
           >
-            <svg 
-              className="w-5 h-5 flex-shrink-0" 
-              fill={isLiked ? "currentColor" : "none"} 
-              stroke="currentColor" 
+            <svg
+              className="w-6 h-6 flex-shrink-0"
+              fill={isLiked ? "currentColor" : "none"}
+              stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" 
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
               />
             </svg>
             <span className="text-sm ml-1 w-4 text-left">
@@ -268,55 +322,21 @@ export default function TimelinePost({ post }: TimelinePostProps) {
             </span>
           </button>
         </div>
-        
+
         <div className="flex-1 flex justify-center">
           <button
             onClick={handleShareClick}
             className="flex items-center justify-center w-8 h-8 text-gray-500 hover:text-blue-500 transition-colors"
             disabled={isSharing}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
             </svg>
           </button>
         </div>
       </div>
-
-      {/* ログインモーダル */}
-      {showLoginModal && (
-        <div 
-          className="fixed inset-0 flex items-center justify-center z-50"
-          style={{
-            backgroundColor: 'rgba(0, 0, 0, 0.3)',
-            backdropFilter: 'brightness(0.7)'
-          }}
-          onClick={() => setShowLoginModal(false)}
-        >
-          <div className="bg-white rounded-lg p-6 m-4 max-w-sm w-full" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-semibold mb-4 text-center">ログインが必要です</h2>
-            <p className="text-gray-600 mb-6 text-center">
-              投稿へのいいね、コメント、シェアを行うにはログインが必要です。
-            </p>
-            <div className="flex space-x-3">
-              <button
-                onClick={() => setShowLoginModal(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-              >
-                キャンセル
-              </button>
-              <button
-                onClick={() => {
-                  setShowLoginModal(false)
-                  window.location.href = '/login'
-                }}
-                className="flex-1 px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
-              >
-                ログイン
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
+    {loginModal}
+    </>
   )
 }

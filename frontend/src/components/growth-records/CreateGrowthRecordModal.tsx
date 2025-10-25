@@ -1,9 +1,48 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, forwardRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useAuthContext as useAuth } from '@/contexts/auth'
 import { apiClient } from '@/services/apiClient'
 import type { Plant } from '@/types/growthRecord'
+import CustomSelect from '@/components/ui/CustomSelect'
+import DatePicker, { registerLocale } from 'react-datepicker'
+import { ja } from 'date-fns/locale/ja'
+import 'react-datepicker/dist/react-datepicker.css'
+
+registerLocale('ja', ja)
+
+// カレンダーアイコン付き入力欄
+interface DateInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onClick'> {
+  onClick?: () => void
+}
+
+const DateInputWithIcon = forwardRef<HTMLInputElement, DateInputProps>(
+  ({ value, onClick, onChange, placeholder, ...props }, ref) => {
+    return (
+      <div className="relative w-full">
+        <input
+          {...props}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder || "yyyy/MM/dd"}
+          ref={ref}
+          className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+        />
+        <button
+          type="button"
+          onClick={onClick}
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 z-10"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </button>
+      </div>
+    )
+  }
+)
+DateInputWithIcon.displayName = 'DateInputWithIcon'
 
 interface EditData {
   id: number
@@ -160,7 +199,10 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
           : '/api/v1/growth_records'
 
         const formDataToSend = new FormData()
-        formDataToSend.append('growth_record[plant_id]', formData.plant_id)
+        // 新規作成、または計画中の場合のみplant_idを送信（育成中以降は変更不可）
+        if (!isEditMode || formData.status === 'planning') {
+          formDataToSend.append('growth_record[plant_id]', formData.plant_id)
+        }
         formDataToSend.append('growth_record[record_name]', formData.record_name)
         formDataToSend.append('growth_record[location]', formData.location)
         formDataToSend.append('growth_record[started_on]', formData.started_on)
@@ -184,6 +226,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
           onSuccess()
           handleClose()
         } else {
+          console.error('422エラーの詳細:', result.error)
           setError(result.error.message)
         }
       } catch (err) {
@@ -223,7 +266,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
 
   if (!isOpen) return null
 
-  return (
+  const modalContent = (
     <div
       className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
       style={{
@@ -232,12 +275,13 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
       }}
       onClick={handleClose}
     >
-      <div 
-        className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto"
+      <div
+        className="bg-white rounded-lg max-w-md w-full max-h-[90vh] flex flex-col"
+        style={{ fontSize: '16px' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
+        <div className="p-6 border-b border-gray-200 flex-shrink-0">
+          <div className="flex justify-between items-center">
             <h2 className="text-xl font-bold text-gray-900">
               {editData ? '成長記録を編集' : '成長記録を登録'}
             </h2>
@@ -248,7 +292,9 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
               ×
             </button>
           </div>
+        </div>
 
+        <div className="p-6 overflow-y-auto flex-1">
           {error && (
             <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-md">
               <p className="text-red-700 text-sm">{error}</p>
@@ -260,36 +306,32 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
               <label htmlFor="status" className="block text-sm font-medium text-gray-700 mb-2">
                 ステータス
               </label>
-              <select
+              <CustomSelect
                 id="status"
                 name="status"
                 value={formData.status}
-                onChange={handleInputChange}
+                onChange={(value) => setFormData(prev => ({ ...prev, status: value as 'planning' | 'growing' | 'completed' | 'failed' }))}
+                options={
+                  (!editData || editData.status === 'planning')
+                    ? [
+                        { value: 'planning', label: '計画中' },
+                        { value: 'growing', label: '育成中' },
+                        { value: 'completed', label: '収穫済み' },
+                        { value: 'failed', label: '失敗' }
+                      ]
+                    : editData.status === 'growing'
+                    ? [
+                        { value: 'growing', label: '育成中' },
+                        { value: 'completed', label: '収穫済み' },
+                        { value: 'failed', label: '失敗' }
+                      ]
+                    : editData.status === 'completed'
+                    ? [{ value: 'completed', label: '収穫済み' }]
+                    : [{ value: 'failed', label: '失敗' }]
+                }
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              >
-                {(!editData || editData.status === 'planning') && (
-                  <>
-                    <option value="planning">計画中</option>
-                    <option value="growing">育成中</option>
-                    <option value="completed">収穫済み</option>
-                    <option value="failed">失敗</option>
-                  </>
-                )}
-                {editData && editData.status === 'growing' && (
-                  <>
-                    <option value="growing">育成中</option>
-                    <option value="completed">収穫済み</option>
-                    <option value="failed">失敗</option>
-                  </>
-                )}
-                {editData && editData.status === 'completed' && (
-                  <option value="completed">収穫済み</option>
-                )}
-                {editData && editData.status === 'failed' && (
-                  <option value="failed">失敗</option>
-                )}
-              </select>
+                disabled={editData && (editData.status === 'completed' || editData.status === 'failed')}
+              />
               {editData && editData.status === 'planning' && formData.status !== 'planning' && (
                 <p className="text-xs text-yellow-600 mt-1">
                   ⚠️ 育成中・収穫済み・失敗に変更すると、計画中には戻せなくなります
@@ -310,22 +352,18 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
               <label htmlFor="plant_id" className="block text-sm font-medium text-gray-700 mb-2">
                 品種
               </label>
-              <select
+              <CustomSelect
                 id="plant_id"
                 name="plant_id"
                 value={formData.plant_id}
-                onChange={handleInputChange}
+                onChange={(value) => setFormData(prev => ({ ...prev, plant_id: value }))}
+                options={[
+                  { value: '', label: '選択してください' },
+                  ...plants.map(plant => ({ value: plant.id.toString(), label: plant.name }))
+                ]}
                 required
                 disabled={editData && formData.status !== 'planning'}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
-              >
-                <option value="">選択してください</option>
-                {plants.map(plant => (
-                  <option key={plant.id} value={plant.id}>
-                    {plant.name}
-                  </option>
-                ))}
-              </select>
+              />
               {editData && formData.status !== 'planning' && (
                 <p className="text-xs text-gray-500 mt-1">
                   育成中以降は品種を変更できません
@@ -355,21 +393,21 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
               <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
                 栽培場所
               </label>
-              <select
+              <CustomSelect
                 id="location"
                 name="location"
                 value={formData.location}
-                onChange={handleInputChange}
+                onChange={(value) => setFormData(prev => ({ ...prev, location: value }))}
+                options={[
+                  { value: '', label: '選択してください' },
+                  { value: '室内', label: '室内' },
+                  { value: 'ベランダ', label: 'ベランダ' },
+                  { value: '庭', label: '庭' },
+                  { value: '畑', label: '畑' },
+                  { value: 'その他', label: 'その他' }
+                ]}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              >
-                <option value="">選択してください</option>
-                <option value="室内">室内</option>
-                <option value="ベランダ">ベランダ</option>
-                <option value="庭">庭</option>
-                <option value="畑">畑</option>
-                <option value="その他">その他</option>
-              </select>
+              />
             </div>
 
             {formData.status === 'growing' && (
@@ -405,35 +443,43 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
             )}
 
             <div>
-              <label htmlFor="started_on" className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
                 {formData.status === 'growing'
                   ? (formData.planting_method === 'seed' ? '種まき日' : '植え付け日')
                   : '栽培開始日'}
               </label>
-              <input
-                type="date"
-                id="started_on"
-                name="started_on"
-                value={formData.started_on}
-                onChange={handleInputChange}
+              <DatePicker
+                selected={formData.started_on ? new Date(formData.started_on) : null}
+                onChange={(date) => setFormData(prev => ({ ...prev, started_on: date ? date.toISOString().split('T')[0] : '' }))}
+                dateFormat="yyyy年MM月dd日"
+                locale="ja"
+                placeholderText="日付を選択してください"
+                customInput={<DateInputWithIcon />}
+                wrapperClassName="w-full"
+                calendarClassName="z-[10001]"
+                preventOpenOnFocus
+                shouldCloseOnSelect
                 required={formData.status !== 'planning'}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
               />
             </div>
 
             {(formData.status === 'completed' || formData.status === 'failed') && (
               <div>
-                <label htmlFor="ended_on" className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   栽培終了日
                 </label>
-                <input
-                  type="date"
-                  id="ended_on"
-                  name="ended_on"
-                  value={formData.ended_on}
-                  onChange={handleInputChange}
+                <DatePicker
+                  selected={formData.ended_on ? new Date(formData.ended_on) : null}
+                  onChange={(date) => setFormData(prev => ({ ...prev, ended_on: date ? date.toISOString().split('T')[0] : '' }))}
+                  dateFormat="yyyy年MM月dd日"
+                  locale="ja"
+                  placeholderText="日付を選択してください"
+                  customInput={<DateInputWithIcon />}
+                  wrapperClassName="w-full"
+                  calendarClassName="z-[10001]"
+                  preventOpenOnFocus
+                  shouldCloseOnSelect
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 />
               </div>
             )}
@@ -513,4 +559,6 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
       </div>
     </div>
   )
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : null
 }

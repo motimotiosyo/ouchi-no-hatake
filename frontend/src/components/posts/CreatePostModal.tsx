@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useAuthContext as useAuth } from '@/contexts/auth'
 import { apiClient } from '@/services/apiClient'
+import CustomSelect from '@/components/ui/CustomSelect'
 
 interface GrowthRecord {
   id: number
@@ -288,7 +289,7 @@ export default function CreatePostModal({
 
   return (
     <div 
-      className="fixed inset-0 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 flex items-center justify-center z-[10000] p-4"
       style={{
         backgroundColor: 'rgba(0, 0, 0, 0.3)',
         backdropFilter: 'brightness(0.7)'
@@ -359,22 +360,21 @@ export default function CreatePostModal({
                 <label htmlFor="growth_record_id" className="block text-sm font-medium text-gray-700 mb-2">
                   成長記録 <span className="text-red-500">*</span>
                 </label>
-                <select
+                <CustomSelect
                   id="growth_record_id"
                   name="growth_record_id"
                   value={formData.growth_record_id}
-                  onChange={handleInputChange}
+                  onChange={(value) => setFormData(prev => ({ ...prev, growth_record_id: value }))}
+                  options={[
+                    { value: '', label: '成長記録を選択してください' },
+                    ...growthRecords.map(record => ({
+                      value: record.id.toString(),
+                      label: `${record.plant.name} - ${record.record_name}`
+                    }))
+                  ]}
                   required
                   disabled={!!preselectedGrowthRecordId}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100"
-                >
-                  <option value="">成長記録を選択してください</option>
-                  {growthRecords.map((record) => (
-                    <option key={record.id} value={record.id}>
-                      {record.plant.name} - {record.record_name}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
             )}
 
@@ -384,21 +384,20 @@ export default function CreatePostModal({
                 <label htmlFor="category_id" className="block text-sm font-medium text-gray-700 mb-2">
                   カテゴリ <span className="text-red-500">*</span>
                 </label>
-                <select
+                <CustomSelect
                   id="category_id"
                   name="category_id"
                   value={formData.category_id}
-                  onChange={handleInputChange}
+                  onChange={(value) => setFormData(prev => ({ ...prev, category_id: value }))}
+                  options={[
+                    { value: '', label: 'カテゴリを選択してください' },
+                    ...CATEGORIES.filter(category => category.name !== '雑談' && category.id !== 5).map(category => ({
+                      value: category.id.toString(),
+                      label: category.name
+                    }))
+                  ]}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                >
-                  <option value="">カテゴリを選択してください</option>
-                  {CATEGORIES.filter(category => category.name !== '雑談' && category.id !== 5).map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
             )}
 

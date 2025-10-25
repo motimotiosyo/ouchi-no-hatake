@@ -61,7 +61,7 @@ export default function FollowersPage({ params }: { params: Promise<Params> }) {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
+    <div className="max-w-2xl mx-auto px-4 pb-6 -mt-4">
       <div className="mb-6">
         <button
           onClick={() => router.back()}

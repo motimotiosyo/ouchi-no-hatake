@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: https:",
+              "img-src 'self' data: https: http://localhost:3001",
               "font-src 'self' data:",
               "connect-src 'self' http://localhost:3001",
               "frame-ancestors 'none'",

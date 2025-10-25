@@ -20,7 +20,7 @@ export default function Profile() {
 
   return (
     <div className="flex justify-center" style={{ minWidth: '360px' }}>
-      <div className="w-full max-w-2xl px-4 py-6" style={{ minWidth: '360px' }}>
+      <div className="w-full max-w-2xl px-4 pb-6 -mt-4" style={{ minWidth: '360px' }}>
         <ProfilePage />
       </div>
     </div>

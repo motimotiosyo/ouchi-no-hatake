@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { apiClient } from '@/services/apiClient'
 import type { PostCategory } from '@/types'
+import CustomSelect from '@/components/ui/CustomSelect'
 
 interface CategoryFilterProps {
   selectedCategoryId: number | null
@@ -38,8 +39,7 @@ export default function CategoryFilter({ selectedCategoryId, onCategoryChange }:
     fetchCategories()
   }, [])
 
-  const handleCategoryChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = event.target.value
+  const handleCategoryChange = (value: string) => {
     onCategoryChange(value === '' ? null : Number(value))
   }
 
@@ -56,20 +56,19 @@ export default function CategoryFilter({ selectedCategoryId, onCategoryChange }:
       <label htmlFor="category-filter" className="block text-sm font-medium text-gray-700 mb-2">
         カテゴリで絞り込み
       </label>
-      <select
+      <CustomSelect
         id="category-filter"
         value={selectedCategoryId?.toString() || ''}
         onChange={handleCategoryChange}
+        options={[
+          { value: '', label: 'すべて' },
+          ...categories.map(category => ({
+            value: category.id.toString(),
+            label: category.name
+          }))
+        ]}
         disabled={loading}
-        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent disabled:bg-gray-100 disabled:cursor-not-allowed"
-      >
-        <option value="">すべて</option>
-        {categories.map((category) => (
-          <option key={category.id} value={category.id}>
-            {category.name}
-          </option>
-        ))}
-      </select>
+      />
     </div>
   )
 }

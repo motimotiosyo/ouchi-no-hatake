@@ -30,6 +30,8 @@ export default function PostDetailPage() {
   const [deleteCommentId, setDeleteCommentId] = useState<number | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
   const [expandedComments, setExpandedComments] = useState<Set<number>>(new Set())
+  const [showDeletePostModal, setShowDeletePostModal] = useState(false)
+  const [isDeletingPost, setIsDeletingPost] = useState(false)
 
   // 投稿詳細とコメント取得
   useEffect(() => {
@@ -228,6 +230,43 @@ export default function PostDetailPage() {
     setDeleteCommentId(null)
   }
 
+  // 投稿削除確認
+  const handleDeletePost = () => {
+    setShowDeletePostModal(true)
+  }
+
+  // 投稿削除実行
+  const handleConfirmDeletePost = async () => {
+    if (!isAuthenticated || !post || isDeletingPost) return
+
+    setIsDeletingPost(true)
+    try {
+      const token = localStorage.getItem('auth_token')
+      if (!token) {
+        console.error('認証トークンが見つかりません')
+        return
+      }
+
+      const result = await apiClient.delete<void>(`/api/v1/posts/${post.id}`, token)
+
+      if (result.success) {
+        router.push('/')
+      } else {
+        console.error('投稿削除に失敗しました:', result.error.message)
+      }
+    } catch (error) {
+      console.error('投稿削除でエラーが発生しました:', error)
+    } finally {
+      setIsDeletingPost(false)
+      setShowDeletePostModal(false)
+    }
+  }
+
+  // 投稿削除キャンセル
+  const handleCancelDeletePost = () => {
+    setShowDeletePostModal(false)
+  }
+
   // リプライ表示切り替え
   const toggleCommentExpansion = (commentId: number) => {
     setExpandedComments(prev => {
@@ -265,18 +304,18 @@ export default function PostDetailPage() {
         {/* コンテンツエリア */}
         <div className="flex-1 min-w-0">
           {/* ユーザー名と日時、アクションボタン */}
-          <div className="flex justify-between items-center mb-2">
-            <div className="flex items-center space-x-2">
-              <span className="font-medium text-sm text-gray-900">{comment.user.name}</span>
+          <div className="flex justify-between items-start mb-2">
+            <div className="flex flex-col flex-1 min-w-0">
+              <span className="font-medium text-sm text-gray-900 truncate">{comment.user.name}</span>
               <span className="text-xs text-gray-500">
                 {formatDateTime(comment.created_at)}
               </span>
             </div>
-            
-            <div className="flex items-center space-x-2">
+
+            <div className="flex items-center space-x-2 flex-shrink-0">
               {isAuthenticated && (
                 <button
-                  onClick={() => setReplyingTo(comment.id)}
+                  onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
                   className={`text-gray-400 hover:text-blue-500 ${depth === 0 ? 'text-sm px-2 py-1' : 'text-xs px-1 py-1'} rounded hover:bg-blue-50 transition-colors`}
                   title="返信"
                 >
@@ -328,22 +367,22 @@ export default function PostDetailPage() {
                   maxLength={255}
                   disabled={submitting}
                 />
-                <div className="flex justify-between items-center mt-2">
-                  <span className="text-sm text-gray-500">
+                <div className="flex justify-between items-center mt-2 flex-wrap gap-2">
+                  <span className="text-sm text-gray-500 flex-shrink-0">
                     {newComment.length}/255文字
                   </span>
-                  <div className="flex space-x-2">
+                  <div className="flex space-x-2 flex-shrink-0">
                     <button
                       type="button"
                       onClick={() => setReplyingTo(null)}
-                      className="px-4 py-2 text-gray-500 hover:text-gray-700 transition-colors"
+                      className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors whitespace-nowrap"
                     >
                       キャンセル
                     </button>
                     <button
                       type="submit"
                       disabled={!newComment.trim() || submitting}
-                      className="px-4 py-2 bg-blue-500 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors"
+                      className="px-3 py-1.5 text-sm bg-blue-500 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors whitespace-nowrap"
                     >
                       {submitting ? '投稿中...' : 'リプライ'}
                     </button>
@@ -361,7 +400,8 @@ export default function PostDetailPage() {
   // 全ての子孫コメントを再帰的に表示する関数（フラット表示）
   const renderAllReplies = (replies: Comment[], parentDepth: number = 0) => {
     return replies.map((reply) => (
-      <div key={reply.id} className="space-y-3">
+      <div key={reply.id}>
+        <div className="border-t border-gray-200 my-3"></div>
         {renderComment(reply, parentDepth + 1)}
         {reply.replies && reply.replies.length > 0 && renderAllReplies(reply.replies, parentDepth + 1)}
       </div>
@@ -397,7 +437,7 @@ export default function PostDetailPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
+    <div className="max-w-2xl mx-auto px-4 pb-6 -mt-4">
       {/* 戻るボタン */}
       <div className="mb-4">
         <button
@@ -412,7 +452,7 @@ export default function PostDetailPage() {
       </div>
 
       {/* 投稿詳細 */}
-      <div className="bg-white rounded-lg shadow-md border border-gray-200 px-6 py-6">
+      <div className="bg-white rounded-lg shadow-md border border-gray-200 px-6 pt-6 pb-4">
         {/* ヘッダー部分 */}
         <div className="mb-4">
           {/* ユーザー情報と日時 */}
@@ -430,6 +470,19 @@ export default function PostDetailPage() {
                 </div>
               </div>
             </div>
+
+            {/* 削除ボタン */}
+            {isAuthenticated && user && user.id === post.user.id && (
+              <button
+                onClick={handleDeletePost}
+                className="text-gray-400 hover:text-red-500 p-2 rounded hover:bg-red-50 transition-colors"
+                title="投稿を削除"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            )}
           </div>
           
           {/* カテゴリ・成長記録情報 */}
@@ -459,7 +512,7 @@ export default function PostDetailPage() {
         </div>
 
         {/* 投稿内容 */}
-        <div className="mb-4">
+        <div className="mb-1">
           <p className="text-gray-900 text-lg leading-relaxed">
             {post.content}
           </p>
@@ -467,7 +520,7 @@ export default function PostDetailPage() {
 
         {/* 投稿画像 */}
         {post.images && post.images.length > 0 && (
-          <div className="mb-6">
+          <div className="mb-1">
             <div className={`grid gap-3 ${
               post.images.length === 1 ? 'grid-cols-1' : 'grid-cols-2'
             }`}>
@@ -477,8 +530,8 @@ export default function PostDetailPage() {
                     src={`${API_BASE_URL}${imageUrl}`}
                     alt={`投稿画像 ${index + 1}`}
                     className={`w-full rounded-md border border-gray-200 transition-opacity hover:opacity-90 ${
-                      post.images?.length === 1 
-                        ? 'max-h-96 object-contain' 
+                      post.images?.length === 1
+                        ? 'max-h-96 object-contain'
                         : 'h-48 object-cover'
                     }`}
                     onClick={() => handleImageClick(index)}
@@ -490,10 +543,10 @@ export default function PostDetailPage() {
         )}
 
         {/* アクションボタン */}
-        <div className="flex items-center py-3">
+        <div className="flex items-center">
           <div className="flex-1 flex justify-center">
             <div className="flex items-center text-gray-500">
-              <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.965 8.965 0 01-4.126-1.004L5 21l1.996-3.874A8.965 8.965 0 013 12c0-4.418 3.582-8 8-8s8 3.582 8 8z" />
               </svg>
               <span className="text-sm">
@@ -501,30 +554,30 @@ export default function PostDetailPage() {
               </span>
             </div>
           </div>
-          
+
           <div className="flex-1 flex justify-center">
-            <button 
+            <button
               onClick={handleLikeClick}
               className={`flex items-center justify-center transition-colors ${
-                isLiked 
-                  ? 'text-red-500' 
-                  : isAuthenticated 
-                    ? 'text-gray-500 hover:text-red-500' 
+                isLiked
+                  ? 'text-red-500'
+                  : isAuthenticated
+                    ? 'text-gray-500 hover:text-red-500'
                     : 'text-gray-300 cursor-not-allowed'
               }`}
               disabled={!isAuthenticated || isLikeLoading}
             >
-              <svg 
-                className="w-5 h-5 mr-1" 
-                fill={isLiked ? "currentColor" : "none"} 
-                stroke="currentColor" 
+              <svg
+                className="w-6 h-6 mr-1"
+                fill={isLiked ? "currentColor" : "none"}
+                stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" 
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
                 />
               </svg>
               <span className="text-sm">
@@ -532,14 +585,14 @@ export default function PostDetailPage() {
               </span>
             </button>
           </div>
-          
+
           <div className="flex-1 flex justify-center">
             <button
               onClick={handleShareClick}
               className="flex items-center text-gray-500 hover:text-blue-500 transition-colors"
               disabled={isSharing}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
               </svg>
             </button>
@@ -562,7 +615,7 @@ export default function PostDetailPage() {
                   <textarea
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="返信をポスト"
+                    placeholder="コメントを入力"
                     className="w-full p-3 rounded-lg resize-none focus:outline-none border-0 transition-all"
                     rows={1}
                     maxLength={255}
@@ -657,7 +710,7 @@ export default function PostDetailPage() {
       </div>
 
       {/* モバイル版用のスペース確保 */}
-      <div className="md:hidden h-20"></div>
+      <div className="md:hidden h-32"></div>
 
       {/* モバイル版: 画面下部固定入力フォーム */}
       {isAuthenticated && !replyingTo && (
@@ -674,7 +727,7 @@ export default function PostDetailPage() {
                   <textarea
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="返信をポスト"
+                    placeholder="コメントを入力"
                     className="w-full p-3 rounded-lg resize-none focus:outline-none border-0 transition-all duration-300"
                     rows={1}
                     maxLength={255}
@@ -719,7 +772,7 @@ export default function PostDetailPage() {
 
       {/* コメント削除確認モーダル */}
       {deleteCommentId && (
-        <div 
+        <div
           className="fixed inset-0 flex items-center justify-center z-50"
           style={{
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
@@ -747,6 +800,42 @@ export default function PostDetailPage() {
                 className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isDeleting ? '削除中...' : '削除する'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 投稿削除確認モーダル */}
+      {showDeletePostModal && (
+        <div
+          className="fixed inset-0 flex items-center justify-center z-50"
+          style={{
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(2px)'
+          }}
+          onClick={handleCancelDeletePost}
+        >
+          <div className="bg-white rounded-lg p-6 m-4 max-w-sm w-full shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-semibold mb-4 text-gray-900">投稿を削除</h3>
+            <p className="text-gray-600 mb-6">
+              この投稿を削除してもよろしいですか？<br />
+              この操作は取り消せません。
+            </p>
+            <div className="flex space-x-3 justify-end">
+              <button
+                onClick={handleCancelDeletePost}
+                disabled={isDeletingPost}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={handleConfirmDeletePost}
+                disabled={isDeletingPost}
+                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isDeletingPost ? '削除中...' : '削除する'}
               </button>
             </div>
           </div>

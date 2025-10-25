@@ -113,7 +113,7 @@ export default function CategoryFilterSidebar({
     <>
       {/* オーバーレイ */}
       <div
-        className="fixed inset-0 z-40"
+        className="fixed inset-0 z-[10000]"
         style={{
           backgroundColor: 'rgba(0, 0, 0, 0.3)',
           backdropFilter: 'brightness(0.7)'
@@ -122,7 +122,7 @@ export default function CategoryFilterSidebar({
       />
 
       {/* サイドバー（左側） */}
-      <div className="fixed top-0 left-0 h-full w-80 bg-white shadow-lg z-50 transform transition-transform duration-300 ease-in-out overflow-y-auto">
+      <div className="fixed top-0 left-0 h-full w-80 bg-white shadow-lg z-[10001] transform transition-transform duration-300 ease-in-out overflow-y-auto">
         {/* ヘッダー */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200 sticky top-0 bg-white z-10">
           <h2 className="text-lg font-semibold text-gray-900">フィルター設定</h2>

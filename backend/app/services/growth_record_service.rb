@@ -359,6 +359,9 @@ class GrowthRecordService < ApplicationService
     last_completed = growth_record.growth_record_steps.where(done: true).order(:completed_at).last
     return last_completed.guide_step.due_days if last_completed
 
+    # ガイドがない場合は0を返す
+    return 0 unless growth_record.guide
+
     # 完了ステップがない場合、planting_methodに応じた基準フェーズのdue_daysを取得
     guide_steps = growth_record.guide.guide_steps
     base_phase = case growth_record.planting_method

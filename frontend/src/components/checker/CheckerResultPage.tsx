@@ -52,7 +52,7 @@ export default function CheckerResultPage({ results, selectedChoices, onRetry }:
   }
 
   return (
-    <div className="px-4 py-6 animate-fade-in">
+    <div className="px-4 pb-6 -mt-4 animate-fade-in">
       {/* ヘッダー */}
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-2">診断結果</h1>

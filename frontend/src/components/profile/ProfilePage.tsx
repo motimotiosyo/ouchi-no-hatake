@@ -133,7 +133,7 @@ export default function ProfilePage() {
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            📖 お気に入り
+            お気に入り
           </button>
         </div>
       </div>

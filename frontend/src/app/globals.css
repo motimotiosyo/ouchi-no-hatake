@@ -35,6 +35,26 @@ html {
   background: #89FD8B33;
 }
 
+/* セレクトボックスのフォントサイズ統一 */
+select {
+  font-size: 18px !important;
+  -webkit-text-size-adjust: 100% !important;
+  -webkit-appearance: menulist;
+}
+
+select option {
+  font-size: 18px !important;
+  min-height: 1.5em !important;
+  padding: 8px !important;
+}
+
+/* モバイル対応の追加スタイル */
+@media screen and (max-width: 768px) {
+  select, select option {
+    font-size: 20px !important;
+  }
+}
+
 /* 認証フォーム用の統一スタイル */
 .auth-container {
   min-height: 100vh;
@@ -207,4 +227,25 @@ html {
 .animate-slide-in-right {
   animation: slide-in-from-right 1s ease-out forwards;
   opacity: 0;
+}
+
+/* react-datepickerのアイコンを右側に配置 */
+.react-datepicker__input-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 100%;
+}
+
+.react-datepicker__input-container input {
+  flex: 1;
+  padding-right: 40px !important;
+}
+
+.react-datepicker__calendar-icon {
+  position: absolute;
+  right: 10px;
+  pointer-events: auto;
+  cursor: pointer;
+  z-index: 1;
 }

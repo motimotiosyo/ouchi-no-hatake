@@ -139,6 +139,23 @@ export default function Timeline() {
     <>
       <div className="flex justify-center">
         <div className="w-full max-w-2xl min-w-80">
+        {/* 家庭菜園チェッカー誘導バナー（ログイン前のみ表示） */}
+        {!user && (
+          <div className="mb-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border-2 border-green-200 p-4 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center justify-between">
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-green-800 mb-1">🌱 家庭菜園チェッカー</h3>
+                <p className="text-sm text-green-700">あなたの環境に最適な野菜を診断しましょう！</p>
+              </div>
+              <a
+                href="/checker"
+                className="ml-4 px-6 py-2 bg-green-500 hover:bg-green-600 text-white font-medium rounded-lg transition-colors whitespace-nowrap"
+              >
+                診断する
+              </a>
+            </div>
+          </div>
+        )}
         <div className="pt-0">
         {posts.length === 0 ? (
           <div className="text-center py-8">
@@ -150,7 +167,7 @@ export default function Timeline() {
               <div
                 key={post.id}
                 ref={index === posts.length - 1 ? lastPostElementRef : undefined}
-                className="bg-white rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 border border-gray-200 transition-all duration-200 px-4 py-4 mb-4"
+                className="bg-white rounded-lg shadow-md hover:shadow-lg hover:-translate-y-1 border border-gray-200 transition-all duration-200 px-4 pt-4 pb-3 mb-4"
               >
                 <TimelinePost post={post} />
               </div>

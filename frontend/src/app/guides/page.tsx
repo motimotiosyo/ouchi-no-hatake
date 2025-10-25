@@ -72,7 +72,7 @@ export default function GuidesPage() {
 
   return (
     <div className="flex justify-center">
-      <div className="w-full max-w-2xl min-w-80 px-4 py-6">
+      <div className="w-full max-w-2xl min-w-80 px-4 pb-6 -mt-4">
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">育て方ガイド</h1>
           <p className="text-gray-600">植物ごとの育て方を確認できます。種まきから収穫までのステップをチェックしましょう！</p>
