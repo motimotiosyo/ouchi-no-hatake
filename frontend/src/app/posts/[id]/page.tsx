@@ -399,7 +399,7 @@ export default function PostDetailPage() {
 
   // 全ての子孫コメントを再帰的に表示する関数（フラット表示）
   const renderAllReplies = (replies: Comment[], parentDepth: number = 0) => {
-    return replies.map((reply, index) => (
+    return replies.map((reply) => (
       <div key={reply.id}>
         <div className="border-t border-gray-200 my-3"></div>
         {renderComment(reply, parentDepth + 1)}
