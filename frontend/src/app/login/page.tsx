@@ -8,6 +8,7 @@ import { useAuthContext as useAuth } from '@/contexts/auth'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import ForgotPasswordModal from '@/components/auth/ForgotPasswordModal'
 import type { User } from '@/types/auth'
 
 export default function LoginPage() {
@@ -16,6 +17,7 @@ export default function LoginPage() {
   const [apiError, setApiError] = useState<string | null>(null)
   const [requiresVerification, setRequiresVerification] = useState(false)
   const [unverifiedEmail, setUnverifiedEmail] = useState<string>('')
+  const [isForgotPasswordModalOpen, setIsForgotPasswordModalOpen] = useState(false)
 
   const { login } = useAuth()
 
@@ -144,12 +146,13 @@ export default function LoginPage() {
 
           {/* パスワードリセットリンク */}
           <div className="text-center mt-4">
-            <Link 
-              href="/forgot-password"
+            <button
+              type="button"
+              onClick={() => setIsForgotPasswordModalOpen(true)}
               className="text-green-600 hover:text-green-500 text-sm"
             >
               パスワードを忘れた方はこちら
-            </Link>
+            </button>
           </div>
 
           {/* 新規登録リンク */}
@@ -164,6 +167,10 @@ export default function LoginPage() {
           </div>
         </form>
       </div>
+      <ForgotPasswordModal
+        isOpen={isForgotPasswordModalOpen}
+        onClose={() => setIsForgotPasswordModalOpen(false)}
+      />
     </div>
   )
 }
