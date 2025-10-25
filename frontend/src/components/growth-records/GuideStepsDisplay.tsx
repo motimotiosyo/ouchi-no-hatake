@@ -86,7 +86,7 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
                       <span className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium mr-3 flex-shrink-0 ${
                         step.done ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-700'
                       }`}>
-                        {step.done ? '✓' : step.position}
+                        {step.done ? '✓' : step.phase === 0 ? '準' : step.position}
                       </span>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900">{step.title}</p>
@@ -299,7 +299,7 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
                         : 'bg-gray-300 text-gray-700'
                     }`}
                   >
-                    {step.is_completed ? '✓' : step.position}
+                    {step.is_completed ? '✓' : step.phase === 0 ? '準' : step.position}
                   </div>
 
                   {/* ステップ内容 */}
