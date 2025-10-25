@@ -286,32 +286,36 @@ export default function GrowthRecordDetail({ id }: Props) {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-1">栽培場所</h3>
-                <p className="text-gray-900">{growthRecord.location}</p>
+            <div className="space-y-2">
+              <div className="flex items-center gap-6 text-sm flex-wrap">
+                <div>
+                  <span className="text-gray-500">栽培場所:</span>
+                  <span className="ml-2 text-gray-900">{growthRecord.location}</span>
+                </div>
+                <div>
+                  <span className="text-gray-500">記録作成:</span>
+                  <span className="ml-2 text-gray-900">{formatDate(growthRecord.created_at)}</span>
+                </div>
               </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-1">記録作成日</h3>
-                <p className="text-gray-900">{formatDate(growthRecord.created_at)}</p>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-1">
-                  {growthRecord.planting_method === 'seed'
-                    ? '種まき日'
-                    : growthRecord.planting_method === 'seedling'
-                      ? '植え付け日'
-                      : '栽培開始日'}
-                </h3>
-                <p className="text-gray-900">
-                  {growthRecord.started_on ? formatDate(growthRecord.started_on) : '--/--'}
-                </p>
-              </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-500 mb-1">栽培終了日</h3>
-                <p className="text-gray-900">
-                  {growthRecord.ended_on ? formatDate(growthRecord.ended_on) : '--/--'}
-                </p>
+              <div className="flex items-center gap-6 text-sm flex-wrap">
+                <div>
+                  <span className="text-gray-500">
+                    {growthRecord.planting_method === 'seed'
+                      ? '種まき日:'
+                      : growthRecord.planting_method === 'seedling'
+                        ? '植え付け日:'
+                        : '栽培開始日:'}
+                  </span>
+                  <span className="ml-2 text-gray-900">
+                    {growthRecord.started_on ? formatDate(growthRecord.started_on) : '--/--'}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-gray-500">栽培終了日:</span>
+                  <span className="ml-2 text-gray-900">
+                    {growthRecord.ended_on ? formatDate(growthRecord.ended_on) : '--/--'}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
