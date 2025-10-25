@@ -14,7 +14,7 @@ export default function PublicHamburgerMenu({ isOpen, onClose }: PublicHamburger
     <>
       {/* 薄暗いオーバーレイ - メニュー外クリックで閉じる */}
       <div
-        className="fixed inset-0 z-[9998]"
+        className="fixed inset-0 z-[10000]"
         style={{
           backgroundColor: 'rgba(0, 0, 0, 0.3)',
           backdropFilter: 'brightness(0.7)'
@@ -23,7 +23,7 @@ export default function PublicHamburgerMenu({ isOpen, onClose }: PublicHamburger
       />
 
       {/* メニュー */}
-      <div className="fixed top-0 right-0 h-full w-80 max-w-[80vw] bg-white shadow-lg z-[9999] transform transition-transform duration-300 ease-in-out">
+      <div className="fixed top-0 right-0 h-full w-80 max-w-[80vw] bg-white shadow-lg z-[10001] transform transition-transform duration-300 ease-in-out">
         {/* ヘッダー */}
         <div className="flex items-center justify-between p-4 border-b border-gray-200">
           <h2 className="text-lg font-semibold">メニュー</h2>
