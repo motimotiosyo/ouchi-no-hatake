@@ -91,7 +91,7 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900">{step.title}</p>
                         <p className="text-xs text-gray-500">目安: {step.due_days}日後</p>
-                        {step.done && step.completed_at && (
+                        {step.phase !== 0 && step.done && step.completed_at && (
                           <p className="text-xs text-green-600 mt-1">完了日: {step.completed_at}</p>
                         )}
                       </div>
@@ -99,32 +99,21 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
                       {/* 完了登録・編集ボタン（Phase 0, 1, 3のみ） */}
                       {isOwner && canCompleteInPlanning && onStepComplete && step.growth_record_step_id && (
                         <div className="ml-3 flex gap-2 flex-shrink-0">
-                          {!step.done ? (
-                            <button
-                              onClick={() => {
-                                if (step.growth_record_step_id) {
-                                  setSelectedDate(new Date())
-                                  setShowDateInput(step.growth_record_step_id)
-                                }
-                              }}
-                              className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 transition-colors whitespace-nowrap"
-                            >
-                              完了を記録
-                            </button>
-                          ) : (
-                            <>
+                          {step.phase === 0 ? (
+                            // Phase 0（準備）はチェックボックス形式
+                            !step.done ? (
                               <button
                                 onClick={() => {
-                                  if (step.growth_record_step_id && step.completed_at) {
-                                    setSelectedDate(new Date(step.completed_at))
-                                    setShowDateInput(step.growth_record_step_id)
+                                  if (step.growth_record_step_id) {
+                                    onStepComplete(step.growth_record_step_id, new Date().toISOString().split('T')[0])
                                   }
                                 }}
-                                className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors whitespace-nowrap"
+                                className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 transition-colors whitespace-nowrap"
                               >
-                                日付を編集
+                                完了
                               </button>
-                              {onStepUncomplete && (
+                            ) : (
+                              onStepUncomplete && (
                                 <button
                                   onClick={() => {
                                     if (step.growth_record_step_id) onStepUncomplete(step.growth_record_step_id)
@@ -133,15 +122,54 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
                                 >
                                   完了を取消
                                 </button>
-                              )}
-                            </>
+                              )
+                            )
+                          ) : (
+                            // Phase 1, 3は日付入力あり
+                            !step.done ? (
+                              <button
+                                onClick={() => {
+                                  if (step.growth_record_step_id) {
+                                    setSelectedDate(new Date())
+                                    setShowDateInput(step.growth_record_step_id)
+                                  }
+                                }}
+                                className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 transition-colors whitespace-nowrap"
+                              >
+                                完了を記録
+                              </button>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    if (step.growth_record_step_id && step.completed_at) {
+                                      setSelectedDate(new Date(step.completed_at))
+                                      setShowDateInput(step.growth_record_step_id)
+                                    }
+                                  }}
+                                  className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors whitespace-nowrap"
+                                >
+                                  日付を編集
+                                </button>
+                                {onStepUncomplete && (
+                                  <button
+                                    onClick={() => {
+                                      if (step.growth_record_step_id) onStepUncomplete(step.growth_record_step_id)
+                                    }}
+                                    className="px-3 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors whitespace-nowrap"
+                                  >
+                                    完了を取消
+                                  </button>
+                                )}
+                              </>
+                            )
                           )}
                         </div>
                       )}
                     </div>
 
-                    {/* 日付入力UI */}
-                    {showDateInput === step.growth_record_step_id && onStepComplete && (
+                    {/* 日付入力UI（Phase 0以外） */}
+                    {step.phase !== 0 && showDateInput === step.growth_record_step_id && onStepComplete && (
                       <div className="mt-3 ml-0 md:ml-11 p-3 bg-blue-50 border border-blue-200 rounded">
                         {/* Phase 1（種まき）またはPhase 3（植え付け）の未完了時の警告 */}
                         {!step.done && (step.phase === 1 || step.phase === 3) && (

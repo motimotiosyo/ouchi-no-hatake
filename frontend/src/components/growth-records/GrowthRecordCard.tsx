@@ -201,19 +201,16 @@ return (
               </div>
             )}
           </div>
-          <div className="flex items-center justify-between text-sm text-gray-600">
-            <div
-              className="pointer-events-auto cursor-default relative"
-              style={{ zIndex: 10 }}
-              onClick={(e) => e.preventDefault()}
-            >
-              <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(record.status)}`}>
-                {getStatusText(record.status)}
-              </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div>
-                {record.started_on ? formatDate(record.started_on) : '---.--.-'} 〜 {record.ended_on ? formatDate(record.ended_on) : '---.--.-'}
+          <div className="text-sm text-gray-600 space-y-1">
+            <div className="flex items-center justify-between">
+              <div
+                className="pointer-events-auto cursor-default relative"
+                style={{ zIndex: 10 }}
+                onClick={(e) => e.preventDefault()}
+              >
+                <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(record.status)}`}>
+                  {getStatusText(record.status)}
+                </span>
               </div>
               {showFavoriteButton && user && (
                 <div className="pointer-events-auto">
@@ -225,6 +222,12 @@ return (
                   />
                 </div>
               )}
+            </div>
+            <div className="text-xs text-gray-500">
+              記録作成: {formatDate(record.created_at)}
+            </div>
+            <div>
+              栽培期間: {record.started_on ? formatDate(record.started_on) : '--/--'} 〜 {record.ended_on ? formatDate(record.ended_on) : '--/--'}
             </div>
           </div>
         </div>
@@ -315,7 +318,10 @@ return (
                 </div>
                 <div className="text-sm text-gray-600">
                   <div className="flex items-center justify-between">
-                    <div>栽培期間： {record.started_on ? formatDate(record.started_on) : '---.--.-'} 〜 {record.ended_on ? formatDate(record.ended_on) : '---.--.-'}</div>
+                    <div className="space-y-1">
+                      <div className="text-xs text-gray-500">記録作成: {formatDate(record.created_at)}</div>
+                      <div>栽培期間: {record.started_on ? formatDate(record.started_on) : '--/--'} 〜 {record.ended_on ? formatDate(record.ended_on) : '--/--'}</div>
+                    </div>
                     {showFavoriteButton && user && (
                       <div className="pointer-events-auto ml-2">
                         <FavoriteButton
@@ -328,7 +334,7 @@ return (
                     )}
                   </div>
                   {record.user && (
-                    <div className="text-xs text-gray-500 mt-1">投稿者： {record.user.name}</div>
+                    <div className="text-xs text-gray-500 mt-1">投稿者: {record.user.name}</div>
                   )}
                 </div>
               </div>

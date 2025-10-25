@@ -410,7 +410,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
               />
             </div>
 
-            {formData.status === 'growing' && (
+            {formData.status !== 'planning' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   栽培方法
@@ -442,26 +442,26 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
               </div>
             )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {formData.status === 'growing'
-                  ? (formData.planting_method === 'seed' ? '種まき日' : '植え付け日')
-                  : '栽培開始日'}
-              </label>
-              <DatePicker
-                selected={formData.started_on ? new Date(formData.started_on) : null}
-                onChange={(date) => setFormData(prev => ({ ...prev, started_on: date ? date.toISOString().split('T')[0] : '' }))}
-                dateFormat="yyyy年MM月dd日"
-                locale="ja"
-                placeholderText="日付を選択してください"
-                customInput={<DateInputWithIcon />}
-                wrapperClassName="w-full"
-                calendarClassName="z-[10001]"
-                preventOpenOnFocus
-                shouldCloseOnSelect
-                required={formData.status !== 'planning'}
-              />
-            </div>
+            {formData.status !== 'planning' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {formData.planting_method === 'seed' ? '種まき日' : '植え付け日'}
+                </label>
+                <DatePicker
+                  selected={formData.started_on ? new Date(formData.started_on) : null}
+                  onChange={(date) => setFormData(prev => ({ ...prev, started_on: date ? date.toISOString().split('T')[0] : '' }))}
+                  dateFormat="yyyy年MM月dd日"
+                  locale="ja"
+                  placeholderText="日付を選択してください"
+                  customInput={<DateInputWithIcon />}
+                  wrapperClassName="w-full"
+                  calendarClassName="z-[10001]"
+                  preventOpenOnFocus
+                  shouldCloseOnSelect
+                  required
+                />
+              </div>
+            )}
 
             {(formData.status === 'completed' || formData.status === 'failed') && (
               <div>
