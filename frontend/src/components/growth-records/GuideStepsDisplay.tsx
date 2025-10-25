@@ -105,7 +105,7 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
 
                     {/* 日付入力UI */}
                     {showDateInput === step.growth_record_step_id && onStepComplete && (
-                      <div className="mt-3 ml-0 md:ml-11 p-3 bg-blue-50 border border-blue-200 rounded">
+                      <div className="mt-3 ml-0 md:ml-11 p-3 bg-blue-50 border border-blue-200 rounded mb-[280px]">
                         {/* Phase 1（種まき）またはPhase 3（植え付け）の未完了時の警告 */}
                         {!step.done && (step.phase === 1 || step.phase === 3) && (
                           <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
@@ -124,7 +124,7 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
                             onChange={(e) => setSelectedDate(e.target.value)}
                             onFocus={(e) => {
                               setTimeout(() => {
-                                e.target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                                e.target.scrollIntoView({ behavior: 'smooth', block: 'start' })
                               }, 100)
                             }}
                             className="w-full md:flex-1 px-3 py-2 text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
@@ -286,7 +286,7 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
 
                         {/* 日付入力UI */}
                         {showDateInput === step.growth_record_step_id && onStepComplete && (
-                          <div className="mt-3 p-3 bg-white border border-gray-300 rounded">
+                          <div className="mt-3 p-3 bg-white border border-gray-300 rounded mb-[280px]">
                             <label className="block text-xs font-medium text-gray-700 mb-2">
                               完了日を入力してください
                             </label>
@@ -297,7 +297,7 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
                                 onChange={(e) => setSelectedDate(e.target.value)}
                                 onFocus={(e) => {
                                   setTimeout(() => {
-                                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                                    e.target.scrollIntoView({ behavior: 'smooth', block: 'start' })
                                   }, 100)
                                 }}
                                 className="w-full md:flex-1 px-3 py-2 text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"

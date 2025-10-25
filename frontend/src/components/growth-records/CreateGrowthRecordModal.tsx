@@ -404,7 +404,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
               </div>
             )}
 
-            <div>
+            <div className="mb-[280px]">
               <label htmlFor="started_on" className="block text-sm font-medium text-gray-700 mb-2">
                 {formData.status === 'growing'
                   ? (formData.planting_method === 'seed' ? '種まき日' : '植え付け日')
@@ -418,7 +418,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
                 onChange={handleInputChange}
                 onFocus={(e) => {
                   setTimeout(() => {
-                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                    e.target.scrollIntoView({ behavior: 'smooth', block: 'start' })
                   }, 100)
                 }}
                 required={formData.status !== 'planning'}
@@ -428,7 +428,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
             </div>
 
             {(formData.status === 'completed' || formData.status === 'failed') && (
-              <div>
+              <div className="mb-[280px]">
                 <label htmlFor="ended_on" className="block text-sm font-medium text-gray-700 mb-2">
                   栽培終了日
                 </label>
@@ -440,7 +440,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
                   onChange={handleInputChange}
                   onFocus={(e) => {
                     setTimeout(() => {
-                      e.target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                      e.target.scrollIntoView({ behavior: 'smooth', block: 'start' })
                     }, 100)
                   }}
                   required
