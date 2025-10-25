@@ -105,7 +105,7 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
 
                     {/* 日付入力UI */}
                     {showDateInput === step.growth_record_step_id && onStepComplete && (
-                      <div className="mt-3 ml-11 p-3 bg-blue-50 border border-blue-200 rounded">
+                      <div className="mt-3 ml-0 md:ml-11 p-3 bg-blue-50 border border-blue-200 rounded">
                         {/* Phase 1（種まき）またはPhase 3（植え付け）の未完了時の警告 */}
                         {!step.done && (step.phase === 1 || step.phase === 3) && (
                           <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
@@ -117,30 +117,33 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
                         <label className="block text-xs font-medium text-gray-700 mb-2">
                           完了日を入力してください
                         </label>
-                        <div className="flex gap-2">
+                        <div className="flex flex-col md:flex-row gap-2">
                           <input
                             type="date"
                             value={selectedDate}
                             onChange={(e) => setSelectedDate(e.target.value)}
-                            className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                            className="w-full md:flex-1 px-3 py-2 text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                            style={{ fontSize: '16px' }}
                           />
-                          <button
-                            onClick={async () => {
-                              if (step.growth_record_step_id) {
-                                await onStepComplete(step.growth_record_step_id, selectedDate)
-                                setShowDateInput(null)
-                              }
-                            }}
-                            className="px-3 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
-                          >
-                            記録
-                          </button>
-                          <button
-                            onClick={() => setShowDateInput(null)}
-                            className="px-3 py-1 text-sm bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors"
-                          >
-                            キャンセル
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => setShowDateInput(null)}
+                              className="flex-1 md:flex-none px-4 py-2 text-sm bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors whitespace-nowrap"
+                            >
+                              キャンセル
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (step.growth_record_step_id) {
+                                  await onStepComplete(step.growth_record_step_id, selectedDate)
+                                  setShowDateInput(null)
+                                }
+                              }}
+                              className="flex-1 md:flex-none px-4 py-2 text-sm bg-green-500 text-white rounded hover:bg-green-600 transition-colors whitespace-nowrap"
+                            >
+                              記録
+                            </button>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -282,30 +285,33 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
                             <label className="block text-xs font-medium text-gray-700 mb-2">
                               完了日を入力してください
                             </label>
-                            <div className="flex gap-2">
+                            <div className="flex flex-col md:flex-row gap-2">
                               <input
                                 type="date"
                                 value={selectedDate}
                                 onChange={(e) => setSelectedDate(e.target.value)}
-                                className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                                className="w-full md:flex-1 px-3 py-2 text-base border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+                                style={{ fontSize: '16px' }}
                               />
-                              <button
-                                onClick={async () => {
-                                  if (step.growth_record_step_id) {
-                                    await onStepComplete(step.growth_record_step_id, selectedDate)
-                                    setShowDateInput(null)
-                                  }
-                                }}
-                                className="px-3 py-1 text-sm bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
-                              >
-                                記録
-                              </button>
-                              <button
-                                onClick={() => setShowDateInput(null)}
-                                className="px-3 py-1 text-sm bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors"
-                              >
-                                キャンセル
-                              </button>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => setShowDateInput(null)}
+                                  className="flex-1 md:flex-none px-4 py-2 text-sm bg-gray-300 text-gray-700 rounded hover:bg-gray-400 transition-colors whitespace-nowrap"
+                                >
+                                  キャンセル
+                                </button>
+                                <button
+                                  onClick={async () => {
+                                    if (step.growth_record_step_id) {
+                                      await onStepComplete(step.growth_record_step_id, selectedDate)
+                                      setShowDateInput(null)
+                                    }
+                                  }}
+                                  className="flex-1 md:flex-none px-4 py-2 text-sm bg-green-500 text-white rounded hover:bg-green-600 transition-colors whitespace-nowrap"
+                                >
+                                  記録
+                                </button>
+                              </div>
                             </div>
                           </div>
                         )}
