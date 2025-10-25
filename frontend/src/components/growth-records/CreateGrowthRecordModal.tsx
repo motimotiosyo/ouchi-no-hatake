@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, forwardRef } from 'react'
+import { createPortal } from 'react-dom'
 import { useAuthContext as useAuth } from '@/contexts/auth'
 import { apiClient } from '@/services/apiClient'
 import type { Plant } from '@/types/growthRecord'
@@ -261,7 +262,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
 
   if (!isOpen) return null
 
-  return (
+  const modalContent = (
     <div
       className="fixed inset-0 z-[10000] flex items-center justify-center p-4"
       style={{
@@ -554,4 +555,6 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
       </div>
     </div>
   )
+
+  return typeof document !== 'undefined' ? createPortal(modalContent, document.body) : null
 }
