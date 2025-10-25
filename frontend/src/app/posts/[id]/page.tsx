@@ -265,18 +265,18 @@ export default function PostDetailPage() {
         {/* コンテンツエリア */}
         <div className="flex-1 min-w-0">
           {/* ユーザー名と日時、アクションボタン */}
-          <div className="flex justify-between items-center mb-2">
-            <div className="flex items-center space-x-2">
-              <span className="font-medium text-sm text-gray-900">{comment.user.name}</span>
+          <div className="flex justify-between items-start mb-2">
+            <div className="flex flex-col flex-1 min-w-0">
+              <span className="font-medium text-sm text-gray-900 truncate">{comment.user.name}</span>
               <span className="text-xs text-gray-500">
                 {formatDateTime(comment.created_at)}
               </span>
             </div>
-            
-            <div className="flex items-center space-x-2">
+
+            <div className="flex items-center space-x-2 flex-shrink-0">
               {isAuthenticated && (
                 <button
-                  onClick={() => setReplyingTo(comment.id)}
+                  onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
                   className={`text-gray-400 hover:text-blue-500 ${depth === 0 ? 'text-sm px-2 py-1' : 'text-xs px-1 py-1'} rounded hover:bg-blue-50 transition-colors`}
                   title="返信"
                 >
@@ -328,22 +328,22 @@ export default function PostDetailPage() {
                   maxLength={255}
                   disabled={submitting}
                 />
-                <div className="flex justify-between items-center mt-2">
-                  <span className="text-sm text-gray-500">
+                <div className="flex justify-between items-center mt-2 flex-wrap gap-2">
+                  <span className="text-sm text-gray-500 flex-shrink-0">
                     {newComment.length}/255文字
                   </span>
-                  <div className="flex space-x-2">
+                  <div className="flex space-x-2 flex-shrink-0">
                     <button
                       type="button"
                       onClick={() => setReplyingTo(null)}
-                      className="px-4 py-2 text-gray-500 hover:text-gray-700 transition-colors"
+                      className="px-3 py-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors whitespace-nowrap"
                     >
                       キャンセル
                     </button>
                     <button
                       type="submit"
                       disabled={!newComment.trim() || submitting}
-                      className="px-4 py-2 bg-blue-500 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors"
+                      className="px-3 py-1.5 text-sm bg-blue-500 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-600 transition-colors whitespace-nowrap"
                     >
                       {submitting ? '投稿中...' : 'リプライ'}
                     </button>
@@ -397,7 +397,7 @@ export default function PostDetailPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 py-6">
+    <div className="max-w-2xl mx-auto px-4 pb-6 -mt-8">
       {/* 戻るボタン */}
       <div className="mb-4">
         <button
@@ -657,7 +657,7 @@ export default function PostDetailPage() {
       </div>
 
       {/* モバイル版用のスペース確保 */}
-      <div className="md:hidden h-20"></div>
+      <div className="md:hidden h-32"></div>
 
       {/* モバイル版: 画面下部固定入力フォーム */}
       {isAuthenticated && !replyingTo && (
