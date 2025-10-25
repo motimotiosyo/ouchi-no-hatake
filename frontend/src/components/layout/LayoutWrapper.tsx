@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useAuthContext as useAuth } from '@/contexts/auth'
 import { ImageModalProvider, useImageModal } from '@/contexts/ImageModalContext'
 import PublicHeader from './PublicHeader'
-import PublicFooter from './PublicFooter'
+
 import AuthenticatedHeader from './AuthenticatedHeader'
 import AuthenticatedFooter from './AuthenticatedFooter'
 import ImageModal from '@/components/ui/ImageModal'
@@ -71,10 +71,9 @@ function LayoutWrapperContent({ children }: LayoutWrapperProps) {
   return (
     <>
       <PublicHeader />
-      <main className="flex-1 container mx-auto p-6 pt-20 pb-20">
+      <main className="flex-1 container mx-auto p-6 pt-20">
         {children}
       </main>
-      <PublicFooter />
       <ImageModal
         images={modalState.images}
         currentIndex={modalState.currentIndex}

@@ -151,6 +151,17 @@ export default function LoginPage() {
               パスワードを忘れた方はこちら
             </Link>
           </div>
+
+          {/* 新規登録リンク */}
+          <div className="text-center mt-3">
+            <span className="text-gray-600 text-sm">アカウントをお持ちでない方は</span>
+            <Link 
+              href="/signup"
+              className="text-green-600 hover:text-green-500 text-sm font-medium ml-1"
+            >
+              新規登録
+            </Link>
+          </div>
         </form>
       </div>
     </div>

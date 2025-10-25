@@ -7,6 +7,7 @@ import { apiClient } from '@/services/apiClient'
 import { useAuthContext as useAuth } from '@/contexts/auth'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import type { User } from '@/types/auth'
 
 export default function SignupPage() {
@@ -125,6 +126,17 @@ export default function SignupPage() {
             >
               {isLoading ? '登録中...' : '新規登録'}
             </button>
+          </div>
+
+          {/* ログインリンク */}
+          <div className="text-center mt-4">
+            <span className="text-gray-600 text-sm">すでにアカウントをお持ちの方は</span>
+            <Link 
+              href="/login"
+              className="text-green-600 hover:text-green-500 text-sm font-medium ml-1"
+            >
+              ログイン
+            </Link>
           </div>
         </form>
       </div>
