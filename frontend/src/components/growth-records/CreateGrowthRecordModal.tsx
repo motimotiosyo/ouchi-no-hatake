@@ -404,7 +404,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
               </div>
             )}
 
-            <div className="relative z-[10001]">
+            <div>
               <label htmlFor="started_on" className="block text-sm font-medium text-gray-700 mb-2">
                 {formData.status === 'growing'
                   ? (formData.planting_method === 'seed' ? '種まき日' : '植え付け日')
@@ -420,10 +420,12 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                 style={{ fontSize: '16px' }}
               />
+              {/* カレンダーピッカー表示スペース確保 */}
+              <div className="h-[300px]"></div>
             </div>
 
             {(formData.status === 'completed' || formData.status === 'failed') && (
-              <div className="relative z-[10001]">
+              <div>
                 <label htmlFor="ended_on" className="block text-sm font-medium text-gray-700 mb-2">
                   栽培終了日
                 </label>
@@ -437,6 +439,8 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
                   style={{ fontSize: '16px' }}
                 />
+                {/* カレンダーピッカー表示スペース確保 */}
+                <div className="h-[300px]"></div>
               </div>
             )}
 
