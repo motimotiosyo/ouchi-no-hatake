@@ -237,13 +237,13 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
       }}
       onClick={handleClose}
     >
-      <div 
-        className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto"
+      <div
+        className="bg-white rounded-lg max-w-md w-full max-h-[90vh] flex flex-col"
         style={{ fontSize: '16px' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-6">
-          <div className="flex justify-between items-center mb-6">
+        <div className="p-6 border-b border-gray-200 flex-shrink-0">
+          <div className="flex justify-between items-center">
             <h2 className="text-xl font-bold text-gray-900">
               {editData ? '成長記録を編集' : '成長記録を登録'}
             </h2>
@@ -254,7 +254,9 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
               ×
             </button>
           </div>
+        </div>
 
+        <div className="p-6 overflow-y-auto flex-1">
           {error && (
             <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-md">
               <p className="text-red-700 text-sm">{error}</p>
@@ -416,6 +418,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
                 onChange={handleInputChange}
                 required={formData.status !== 'planning'}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                style={{ fontSize: '16px' }}
               />
             </div>
 
@@ -432,6 +435,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
                   onChange={handleInputChange}
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  style={{ fontSize: '16px' }}
                 />
               </div>
             )}
