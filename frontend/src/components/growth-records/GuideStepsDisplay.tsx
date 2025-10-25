@@ -116,7 +116,7 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
                               <button
                                 onClick={() => {
                                   if (step.growth_record_step_id && step.completed_at) {
-                                    setSelectedDate(step.completed_at)
+                                    setSelectedDate(new Date(step.completed_at))
                                     setShowDateInput(step.growth_record_step_id)
                                   }
                                 }}
