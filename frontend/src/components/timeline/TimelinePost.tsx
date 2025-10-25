@@ -245,7 +245,7 @@ export default function TimelinePost({ post }: TimelinePostProps) {
       </div>
 
       {/* 投稿内容 */}
-      <div className="mb-4">
+      <div className="mb-1">
         <p className="text-gray-900 text-base leading-relaxed">
           {post.content}
         </p>
@@ -253,7 +253,7 @@ export default function TimelinePost({ post }: TimelinePostProps) {
 
       {/* 投稿画像 */}
       {post.images && post.images.length > 0 && (
-        <div className="mb-4">
+        <div className="mb-1">
           <div className={`grid gap-2 max-h-80 overflow-hidden ${
             post.images.length === 1 ? 'grid-cols-1' :
             'grid-cols-2'
@@ -277,13 +277,13 @@ export default function TimelinePost({ post }: TimelinePostProps) {
       )}
 
       {/* アクションボタン */}
-      <div className="flex items-center py-2 h-10">
+      <div className="flex items-center">
         <div className="flex-1 flex justify-center">
-          <button 
+          <button
             onClick={handleCommentClick}
             className="flex items-center justify-center transition-colors w-12 h-8 text-gray-500 hover:text-gray-700"
           >
-            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.965 8.965 0 01-4.126-1.004L5 21l1.996-3.874A8.965 8.965 0 013 12c0-4.418 3.582-8 8-8s8 3.582 8 8z" />
             </svg>
             <span className="text-sm ml-1 w-4 text-left transition-all duration-150">
@@ -291,30 +291,30 @@ export default function TimelinePost({ post }: TimelinePostProps) {
             </span>
           </button>
         </div>
-        
+
         <div className="flex-1 flex justify-center">
-          <button 
+          <button
             onClick={handleLikeClick}
             className={`flex items-center justify-center transition-colors w-12 h-8 ${
-              isLiked 
-                ? 'text-red-500' 
-                : isAuthenticated 
-                  ? 'text-gray-500 hover:text-red-500' 
+              isLiked
+                ? 'text-red-500'
+                : isAuthenticated
+                  ? 'text-gray-500 hover:text-red-500'
                   : 'text-gray-400 hover:text-gray-600'
             }`}
             disabled={isLikeLoading}
           >
-            <svg 
-              className="w-5 h-5 flex-shrink-0" 
-              fill={isLiked ? "currentColor" : "none"} 
-              stroke="currentColor" 
+            <svg
+              className="w-6 h-6 flex-shrink-0"
+              fill={isLiked ? "currentColor" : "none"}
+              stroke="currentColor"
               viewBox="0 0 24 24"
             >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={2} 
-                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" 
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
               />
             </svg>
             <span className="text-sm ml-1 w-4 text-left">
@@ -322,14 +322,14 @@ export default function TimelinePost({ post }: TimelinePostProps) {
             </span>
           </button>
         </div>
-        
+
         <div className="flex-1 flex justify-center">
           <button
             onClick={handleShareClick}
             className="flex items-center justify-center w-8 h-8 text-gray-500 hover:text-blue-500 transition-colors"
             disabled={isSharing}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
             </svg>
           </button>
