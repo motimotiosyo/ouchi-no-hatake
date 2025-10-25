@@ -299,7 +299,7 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
                               {!step.done ? (
                                 <button
                                   onClick={() => {
-                                    setSelectedDate(new Date().toISOString().split('T')[0])
+                                    setSelectedDate(new Date())
                                     setShowDateInput(step.growth_record_step_id!)
                                   }}
                                   className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
@@ -310,7 +310,7 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
                                 <button
                                   onClick={() => {
                                     if (step.completed_at) {
-                                      setSelectedDate(step.completed_at)
+                                      setSelectedDate(new Date(step.completed_at))
                                       setShowDateInput(step.growth_record_step_id!)
                                     }
                                   }}
