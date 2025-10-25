@@ -241,16 +241,18 @@ export default function GrowthRecordDetail({ id }: Props) {
           {/* 右側：基本情報 */}
           <div className="flex flex-col">
             <div className="flex justify-between items-start mb-4">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                  {growthRecord.plant.name}
-                </h1>
-                <p className="text-gray-600 mb-2">{growthRecord.record_name}</p>
-                <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(growthRecord.status)}`}>
-                  {getStatusText(growthRecord.status)}
-                </span>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2 flex-wrap">
+                  <h1 className="text-2xl font-bold text-gray-900">
+                    {growthRecord.plant.name}
+                  </h1>
+                  <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(growthRecord.status)}`}>
+                    {getStatusText(growthRecord.status)}
+                  </span>
+                </div>
+                <p className="text-gray-600">{growthRecord.record_name}</p>
               </div>
-              <div className="flex space-x-2">
+              <div className="flex space-x-2 flex-shrink-0">
                 {/* お気に入りボタン */}
                 {user && growthRecord.user && user.id !== growthRecord.user.id && (
                   <FavoriteButton
@@ -286,8 +288,8 @@ export default function GrowthRecordDetail({ id }: Props) {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <div className="flex items-center gap-6 text-sm flex-wrap">
+            <div className="space-y-2 text-sm">
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                 <div>
                   <span className="text-gray-500">栽培場所:</span>
                   <span className="ml-2 text-gray-900">{growthRecord.location}</span>
@@ -296,8 +298,6 @@ export default function GrowthRecordDetail({ id }: Props) {
                   <span className="text-gray-500">記録作成:</span>
                   <span className="ml-2 text-gray-900">{formatDate(growthRecord.created_at)}</span>
                 </div>
-              </div>
-              <div className="flex items-center gap-6 text-sm flex-wrap">
                 <div>
                   <span className="text-gray-500">
                     {growthRecord.planting_method === 'seed'
