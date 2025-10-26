@@ -319,21 +319,23 @@ export default function GuideStepsDisplay({ stepInfo, recordStatus, plantingMeth
                 // Phase 0を除いた連番を計算
                 const displayNumber = stepInfo.all_steps.slice(0, index).filter(s => s.phase !== 0).length + 1
 
-                // Phase 3（植え付け）の完了状況を確認
+                // Phase 1（種まき）とPhase 3（植え付け）の完了状況を確認
+                const phase1Step = stepInfo.all_steps.find(s => s.phase === 1)
                 const phase3Step = stepInfo.all_steps.find(s => s.phase === 3)
+                const isPhase1Complete = phase1Step?.done || false
                 const isPhase3Complete = phase3Step?.done || false
 
                 // スキップ判定:
                 // - 苗から栽培の場合、Phase 1（種まき）とPhase 2（育苗）はスキップ
-                // - Phase 3完了時、Phase 1とPhase 2はスキップ（植え付けから開始した場合）
+                // - Phase 3が完了していて、Phase 1が未完了の場合、Phase 1とPhase 2はスキップ（植え付けから開始した場合）
                 const isSkippedPhase = (plantingMethod === 'seedling' && (step.phase === 1 || step.phase === 2)) ||
-                  (isPhase3Complete && (step.phase === 1 || step.phase === 2))
+                  (isPhase3Complete && !isPhase1Complete && (step.phase === 1 || step.phase === 2))
 
                 // 前のステップが完了しているか確認（順次活性化）
                 // スキップ対象のフェーズは無視する
                 const previousSteps = stepInfo.all_steps.slice(0, index).filter(s => {
                   const isPrevSkipped = (plantingMethod === 'seedling' && (s.phase === 1 || s.phase === 2)) ||
-                    (isPhase3Complete && (s.phase === 1 || s.phase === 2))
+                    (isPhase3Complete && !isPhase1Complete && (s.phase === 1 || s.phase === 2))
                   return !isPrevSkipped
                 })
                 const canComplete = !isSkippedPhase && (previousSteps.length === 0 || previousSteps.every(s => s.done))

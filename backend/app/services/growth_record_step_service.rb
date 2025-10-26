@@ -7,14 +7,19 @@ class GrowthRecordStepService < ApplicationService
 
     # 育成中ステータスでの制限チェック
     if growth_record.status == "growing"
-      # Phase 3（植え付け）が完了している場合、Phase 1（種まき）とPhase 2（育苗）は完了不可
-      # これは「苗から栽培」で植え付けから開始した場合
+      # Phase 3（植え付け）が完了していて、Phase 1（種まき）が未完了の場合、
+      # Phase 1とPhase 2は完了不可（植え付けから開始した場合）
+      phase1_completed = growth_record.growth_record_steps.joins(:guide_step).where(
+        guide_steps: { phase: 1 },
+        done: true
+      ).exists?
+
       phase3_completed = growth_record.growth_record_steps.joins(:guide_step).where(
         guide_steps: { phase: 3 },
         done: true
       ).exists?
 
-      if phase3_completed && (guide_step.phase == 1 || guide_step.phase == 2)
+      if phase3_completed && !phase1_completed && (guide_step.phase == 1 || guide_step.phase == 2)
         return { success: false, error: "植え付けから栽培を開始したため、種まきと育苗は記録できません" }
       end
     end
@@ -24,12 +29,8 @@ class GrowthRecordStepService < ApplicationService
       # 前のフェーズの完了日を取得（スキップされたフェーズは除外）
       previous_phases = (0...guide_step.phase).to_a
 
-      # Phase 1/2がスキップされる条件を考慮
-      phase3_completed = growth_record.growth_record_steps.joins(:guide_step).where(
-        guide_steps: { phase: 3 },
-        done: true
-      ).exists?
-      previous_phases -= [ 1, 2 ] if phase3_completed && guide_step.phase > 3
+      # Phase 1/2がスキップされる条件を考慮（Phase 3完了かつPhase 1未完了の場合）
+      previous_phases -= [ 1, 2 ] if phase3_completed && !phase1_completed && guide_step.phase > 3
 
       # 前のフェーズの最新完了日を取得
       previous_completed_dates = growth_record.growth_record_steps.joins(:guide_step).where(
