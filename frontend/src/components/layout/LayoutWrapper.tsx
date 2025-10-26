@@ -71,7 +71,7 @@ function LayoutWrapperContent({ children }: LayoutWrapperProps) {
   return (
     <>
       <PublicHeader />
-      <main className="flex-1 container mx-auto p-6 pt-20">
+      <main className="flex-1 pt-24 pb-20" style={{ minWidth: '360px' }}>
         {children}
       </main>
       <ImageModal
