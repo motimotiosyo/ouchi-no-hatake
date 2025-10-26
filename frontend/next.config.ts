@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: https: http://localhost:3001",
               "font-src 'self' data:",
-              "connect-src 'self' http://localhost:3001",
+              "connect-src 'self' http://localhost:3001 https://ouchi-no-hatake.onrender.com",
               "frame-ancestors 'none'",
             ].join("; "),
           },
