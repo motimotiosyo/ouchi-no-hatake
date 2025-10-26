@@ -375,6 +375,7 @@ export default function GrowthRecordDetail({ id }: Props) {
                 <GuideStepsDisplay
                   stepInfo={growthRecord.guide.guide_step_info}
                   recordStatus={growthRecord.status}
+                  plantingMethod={growthRecord.planting_method}
                   isOwner={user?.id === growthRecord.user?.id}
                   onStepComplete={handleStepComplete}
                   onStepUncomplete={handleStepUncomplete}

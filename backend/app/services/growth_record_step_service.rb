@@ -2,15 +2,69 @@ class GrowthRecordStepService < ApplicationService
   # ステップ完了
   def self.complete_step(growth_record_step, completed_at = nil)
     completed_at ||= Date.today
+    guide_step = growth_record_step.guide_step
+    growth_record = growth_record_step.growth_record
+
+    # 育成中ステータスでの制限チェック
+    if growth_record.status == "growing"
+      # Phase 3（植え付け）が完了している場合、Phase 1（種まき）とPhase 2（育苗）は完了不可
+      # これは「苗から栽培」で植え付けから開始した場合
+      phase3_completed = growth_record.growth_record_steps.joins(:guide_step).where(
+        guide_steps: { phase: 3 },
+        done: true
+      ).exists?
+
+      if phase3_completed && (guide_step.phase == 1 || guide_step.phase == 2)
+        return { success: false, error: "植え付けから栽培を開始したため、種まきと育苗は記録できません" }
+      end
+    end
+
+    # Phase 0以外は時系列バリデーション
+    if guide_step.phase != 0 && completed_at
+      # 前のフェーズの完了日を取得（スキップされたフェーズは除外）
+      previous_phases = (0...guide_step.phase).to_a
+
+      # Phase 1/2がスキップされる条件を考慮
+      phase3_completed = growth_record.growth_record_steps.joins(:guide_step).where(
+        guide_steps: { phase: 3 },
+        done: true
+      ).exists?
+      previous_phases -= [ 1, 2 ] if phase3_completed && guide_step.phase > 3
+
+      # 前のフェーズの最新完了日を取得
+      previous_completed_dates = growth_record.growth_record_steps.joins(:guide_step).where(
+        guide_steps: { phase: previous_phases },
+        done: true
+      ).pluck(:completed_at).compact
+
+      if previous_completed_dates.any?
+        max_previous_date = previous_completed_dates.max
+        if completed_at < max_previous_date
+          return { success: false, error: "完了日は前のステップの完了日（#{max_previous_date}）以降の日付を指定してください" }
+        end
+      end
+
+      # 後のフェーズの完了日を取得
+      next_phases = ((guide_step.phase + 1)..6).to_a
+      next_completed_dates = growth_record.growth_record_steps.joins(:guide_step).where(
+        guide_steps: { phase: next_phases },
+        done: true
+      ).pluck(:completed_at).compact
+
+      if next_completed_dates.any?
+        min_next_date = next_completed_dates.min
+        if completed_at > min_next_date
+          return { success: false, error: "完了日は次のステップの完了日（#{min_next_date}）以前の日付を指定してください" }
+        end
+      end
+    end
 
     growth_record_step.done = true
-    growth_record_step.completed_at = completed_at
+    # Phase 0（準備）は日付を記録しない
+    growth_record_step.completed_at = guide_step.phase == 0 ? nil : completed_at
 
     if growth_record_step.save
       # チェックポイントフェーズ（Phase 1: 種まき、Phase 3: 植え付け）完了時の処理
-      growth_record = growth_record_step.growth_record
-      guide_step = growth_record_step.guide_step
-
       # 計画中かつチェックポイントフェーズの完了の場合、育成中に移行
       if growth_record.status == "planning" && (guide_step.phase == 1 || guide_step.phase == 3)
         growth_record.started_on = completed_at
