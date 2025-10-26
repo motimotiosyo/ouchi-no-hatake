@@ -27,6 +27,7 @@ class GrowthRecordService < ApplicationService
       record_number: record.record_number,
       record_name: record.record_name,
       location: record.location,
+      planting_method: record.planting_method,
       started_on: record.started_on,
       ended_on: record.ended_on,
       status: record.status,
@@ -164,12 +165,21 @@ class GrowthRecordService < ApplicationService
     params = handle_record_name_auto_generation(record, params)
 
     plant_id_changed = params.key?(:plant_id) && params[:plant_id] != record.plant_id
+    planting_method_changed = params.key?(:planting_method) && params[:planting_method] != record.planting_method
     started_on_changed = params.key?(:started_on) && params[:started_on] != record.started_on
 
     # 育成中以降は品種変更を禁止
     if plant_id_changed && record.status.in?(%w[growing completed failed])
       raise ValidationError.new(
         "育成中以降は品種を変更できません",
+        []
+      )
+    end
+
+    # 育成中以降は栽培方法変更を禁止
+    if planting_method_changed && record.status.in?(%w[growing completed failed])
+      raise ValidationError.new(
+        "育成中以降は栽培方法を変更できません",
         []
       )
     end

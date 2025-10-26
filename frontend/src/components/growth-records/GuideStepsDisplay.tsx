@@ -4,6 +4,7 @@ import { useState, forwardRef } from 'react'
 import type { GuideStepInfo, GrowthRecordStatus } from '@/types/growthRecord'
 import DatePicker, { registerLocale } from 'react-datepicker'
 import { ja } from 'date-fns/locale/ja'
+import StatusUpdateConfirmDialog from './StatusUpdateConfirmDialog'
 import 'react-datepicker/dist/react-datepicker.css'
 
 registerLocale('ja', ja)
@@ -43,14 +44,46 @@ DateInputWithIcon.displayName = 'DateInputWithIcon'
 interface Props {
   stepInfo: GuideStepInfo
   recordStatus: GrowthRecordStatus
+  plantingMethod: 'seed' | 'seedling' | null
   isOwner?: boolean
   onStepComplete?: (stepId: number, completedAt: string) => Promise<void>
   onStepUncomplete?: (stepId: number) => Promise<void>
+  onStatusUpdate?: (status: 'completed' | 'failed') => Promise<void>
 }
 
-export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepComplete, onStepUncomplete }: Props) {
+export default function GuideStepsDisplay({ stepInfo, plantingMethod, isOwner = false, onStepComplete, onStepUncomplete, onStatusUpdate }: Props) {
   const [showDateInput, setShowDateInput] = useState<number | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date())
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false)
+  const [pendingStatus, setPendingStatus] = useState<'completed' | 'failed' | null>(null)
+  const [statusUpdateLoading, setStatusUpdateLoading] = useState(false)
+  const [isStatusSectionOpen, setIsStatusSectionOpen] = useState(false)
+
+  const handleStatusButtonClick = (status: 'completed' | 'failed') => {
+    setPendingStatus(status)
+    setStatusDialogOpen(true)
+  }
+
+  const handleStatusConfirm = async () => {
+    if (!pendingStatus || !onStatusUpdate) return
+
+    setStatusUpdateLoading(true)
+    try {
+      await onStatusUpdate(pendingStatus)
+      setStatusDialogOpen(false)
+      setPendingStatus(null)
+    } finally {
+      setStatusUpdateLoading(false)
+    }
+  }
+
+  const handleStatusDialogClose = () => {
+    if (!statusUpdateLoading) {
+      setStatusDialogOpen(false)
+      setPendingStatus(null)
+    }
+  }
+
   // 計画中の表示
   if (stepInfo.status === 'planning' && stepInfo.preparation_step) {
     return (
@@ -61,9 +94,6 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
               準備: {stepInfo.preparation_step.title}
             </h3>
             <p className="text-gray-700">{stepInfo.preparation_step.description}</p>
-            {stepInfo.preparation_step.done && stepInfo.preparation_step.completed_at && (
-              <p className="text-xs text-green-600 mt-2">完了日: {stepInfo.preparation_step.completed_at}</p>
-            )}
           </div>
         </div>
 
@@ -71,60 +101,74 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
         <div className="mt-6">
           <h4 className="text-sm font-medium text-gray-700 mb-3">栽培スケジュール</h4>
           <div className="space-y-2">
-            {stepInfo.all_steps.map((step) => {
+            {stepInfo.all_steps.map((step, index) => {
+              // Phase 0を除いた連番を計算
+              const displayNumber = stepInfo.all_steps.slice(0, index).filter(s => s.phase !== 0).length + 1
+
+              // Phase 0（準備）が完了しているか確認
+              const phase0Step = stepInfo.all_steps.find(s => s.phase === 0)
+              const isPhase0Complete = phase0Step?.done || false
+
+              // 苗から栽培の場合、Phase 1（種まき）とPhase 2（育苗）はスキップ
+              const isSkippedPhase = plantingMethod === 'seedling' && (step.phase === 1 || step.phase === 2)
+
               // Phase 0（準備）、Phase 1（種まき）、Phase 3（植え付け）のみ計画中で完了可能
-              const canCompleteInPlanning = step.phase === 0 || step.phase === 1 || step.phase === 3
+              // ただし、Phase 1とPhase 3はPhase 0完了後のみ
+              // 苗から栽培の場合はPhase 1をスキップ
+              const canCompleteInPlanning = !isSkippedPhase && (
+                step.phase === 0 ||
+                ((step.phase === 1 || step.phase === 3) && isPhase0Complete)
+              )
 
               return (
                 <div key={step.id}>
                   <div
                     className={`p-3 rounded border ${
-                      step.done ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
+                      isSkippedPhase
+                        ? 'bg-gray-100 border-gray-300 opacity-50'
+                        : step.done ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-200'
                     }`}
                   >
                     <div className="flex items-start">
                       <span className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium mr-3 flex-shrink-0 ${
-                        step.done ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-700'
+                        isSkippedPhase
+                          ? 'bg-gray-400 text-gray-600 line-through'
+                          : step.done ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-700'
                       }`}>
-                        {step.done ? '✓' : step.position}
+                        {isSkippedPhase ? '−' : step.done ? '✓' : step.phase === 0 ? '準' : displayNumber}
                       </span>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-gray-900">{step.title}</p>
-                        <p className="text-xs text-gray-500">目安: {step.due_days}日後</p>
-                        {step.done && step.completed_at && (
-                          <p className="text-xs text-green-600 mt-1">完了日: {step.completed_at}</p>
+                        {isSkippedPhase ? (
+                          <p className="text-xs text-gray-500">苗から栽培のためスキップ</p>
+                        ) : (
+                          <>
+                            <p className="text-xs text-gray-500">目安: {step.due_days}日後</p>
+                            {step.phase !== 0 && step.done && step.completed_at && (
+                              <p className="text-xs text-green-600 mt-1">完了日: {step.completed_at}</p>
+                            )}
+                          </>
                         )}
                       </div>
 
                       {/* 完了登録・編集ボタン（Phase 0, 1, 3のみ） */}
                       {isOwner && canCompleteInPlanning && onStepComplete && step.growth_record_step_id && (
                         <div className="ml-3 flex gap-2 flex-shrink-0">
-                          {!step.done ? (
-                            <button
-                              onClick={() => {
-                                if (step.growth_record_step_id) {
-                                  setSelectedDate(new Date())
-                                  setShowDateInput(step.growth_record_step_id)
-                                }
-                              }}
-                              className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 transition-colors whitespace-nowrap"
-                            >
-                              完了を記録
-                            </button>
-                          ) : (
-                            <>
+                          {step.phase === 0 ? (
+                            // Phase 0（準備）はチェックボックス形式
+                            !step.done ? (
                               <button
                                 onClick={() => {
-                                  if (step.growth_record_step_id && step.completed_at) {
-                                    setSelectedDate(new Date(step.completed_at))
-                                    setShowDateInput(step.growth_record_step_id)
+                                  if (step.growth_record_step_id) {
+                                    onStepComplete(step.growth_record_step_id, new Date().toISOString().split('T')[0])
                                   }
                                 }}
-                                className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors whitespace-nowrap"
+                                className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 transition-colors whitespace-nowrap"
                               >
-                                日付を編集
+                                準備を完了
                               </button>
-                              {onStepUncomplete && (
+                            ) : (
+                              onStepUncomplete && (
                                 <button
                                   onClick={() => {
                                     if (step.growth_record_step_id) onStepUncomplete(step.growth_record_step_id)
@@ -133,21 +177,68 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
                                 >
                                   完了を取消
                                 </button>
-                              )}
-                            </>
+                              )
+                            )
+                          ) : (
+                            // Phase 1, 3は日付入力あり
+                            !step.done ? (
+                              <button
+                                onClick={() => {
+                                  if (step.growth_record_step_id && canCompleteInPlanning) {
+                                    setSelectedDate(new Date())
+                                    setShowDateInput(step.growth_record_step_id)
+                                  }
+                                }}
+                                disabled={!canCompleteInPlanning}
+                                className={`px-3 py-1 text-xs rounded transition-colors whitespace-nowrap ${
+                                  canCompleteInPlanning
+                                    ? 'bg-green-500 text-white hover:bg-green-600'
+                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                }`}
+                              >
+                                完了を記録
+                              </button>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    if (step.growth_record_step_id && step.completed_at) {
+                                      setSelectedDate(new Date(step.completed_at))
+                                      setShowDateInput(step.growth_record_step_id)
+                                    }
+                                  }}
+                                  className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors whitespace-nowrap"
+                                >
+                                  日付を編集
+                                </button>
+                                {onStepUncomplete && (
+                                  <button
+                                    onClick={() => {
+                                      if (step.growth_record_step_id) onStepUncomplete(step.growth_record_step_id)
+                                    }}
+                                    className="px-3 py-1 text-xs bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors whitespace-nowrap"
+                                  >
+                                    完了を取消
+                                  </button>
+                                )}
+                              </>
+                            )
                           )}
                         </div>
                       )}
                     </div>
 
-                    {/* 日付入力UI */}
-                    {showDateInput === step.growth_record_step_id && onStepComplete && (
+                    {/* 日付入力UI（Phase 0以外） */}
+                    {step.phase !== 0 && showDateInput === step.growth_record_step_id && onStepComplete && (
                       <div className="mt-3 ml-0 md:ml-11 p-3 bg-blue-50 border border-blue-200 rounded">
                         {/* Phase 1（種まき）またはPhase 3（植え付け）の未完了時の警告 */}
                         {!step.done && (step.phase === 1 || step.phase === 3) && (
                           <div className="mb-3 p-2 bg-yellow-50 border border-yellow-200 rounded">
-                            <p className="text-xs text-yellow-700">
+                            <p className="text-xs text-yellow-700 mb-1">
                               ⚠️ {step.phase === 1 ? '種まき' : '植え付け'}を完了すると、ステータスが育成中に変わり、計画中には戻せなくなります
+                            </p>
+                            <p className="text-xs text-yellow-700">
+                              ⚠️ 栽培方法が「{step.phase === 1 ? '種から' : '苗から'}」に自動設定され、後から変更できなくなります
                             </p>
                           </div>
                         )}
@@ -196,7 +287,52 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
               )
             })}
           </div>
+
+          {/* 記録完了ボタン（計画中は失敗登録のみ） */}
+          {isOwner && onStatusUpdate && (
+            <div className="mt-6 border border-gray-300 rounded-lg bg-gray-50">
+              <button
+                onClick={() => setIsStatusSectionOpen(!isStatusSectionOpen)}
+                className="w-full p-4 flex items-center justify-between text-left hover:bg-gray-100 transition-colors rounded-lg"
+              >
+                <span className="font-bold text-sm text-gray-700">栽培を中止する？</span>
+                <svg
+                  className={`w-5 h-5 text-gray-600 transition-transform ${isStatusSectionOpen ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {isStatusSectionOpen && (
+                <div className="px-4 pb-4">
+                  <div className="text-sm text-gray-700 mb-3">
+                    <p className="mt-1">栽培を開始せずに中止する場合は、失敗として記録できます</p>
+                  </div>
+                  <button
+                    onClick={() => handleStatusButtonClick('failed')}
+                    className="w-full px-4 py-2 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                  >
+                    失敗登録
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
+
+        {/* ステータス更新確認ダイアログ */}
+        {pendingStatus && (
+          <StatusUpdateConfirmDialog
+            isOpen={statusDialogOpen}
+            onClose={handleStatusDialogClose}
+            onConfirm={handleStatusConfirm}
+            status={pendingStatus}
+            loading={statusUpdateLoading}
+          />
+        )}
       </div>
     )
   }
@@ -259,26 +395,55 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
             <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-300"></div>
 
             <div className="space-y-4">
-              {stepInfo.all_steps.map((step) => (
-                <div key={step.id} className="relative flex items-start">
-                  {/* ステップマーカー */}
-                  <div
-                    className={`relative z-10 w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium ${
-                      step.is_completed
-                        ? 'bg-green-500 text-white'
-                        : step.is_current
-                        ? 'bg-blue-500 text-white'
-                        : 'bg-gray-300 text-gray-700'
-                    }`}
-                  >
-                    {step.is_completed ? '✓' : step.position}
-                  </div>
+              {stepInfo.all_steps.map((step, index) => {
+                // Phase 0を除いた連番を計算
+                const displayNumber = stepInfo.all_steps.slice(0, index).filter(s => s.phase !== 0).length + 1
+
+                // Phase 1（種まき）とPhase 3（植え付け）の完了状況を確認
+                const phase1Step = stepInfo.all_steps.find(s => s.phase === 1)
+                const phase3Step = stepInfo.all_steps.find(s => s.phase === 3)
+                const isPhase1Complete = phase1Step?.done || false
+                const isPhase3Complete = phase3Step?.done || false
+
+                // スキップ判定:
+                // - 苗から栽培の場合、Phase 1（種まき）とPhase 2（育苗）はスキップ
+                // - Phase 3が完了していて、Phase 1が未完了の場合、Phase 1とPhase 2はスキップ（植え付けから開始した場合）
+                const isSkippedPhase = (plantingMethod === 'seedling' && (step.phase === 1 || step.phase === 2)) ||
+                  (isPhase3Complete && !isPhase1Complete && (step.phase === 1 || step.phase === 2))
+
+                // 前のステップが完了しているか確認（順次活性化）
+                // スキップ対象のフェーズは無視する
+                const previousSteps = stepInfo.all_steps.slice(0, index).filter(s => {
+                  const isPrevSkipped = (plantingMethod === 'seedling' && (s.phase === 1 || s.phase === 2)) ||
+                    (isPhase3Complete && !isPhase1Complete && (s.phase === 1 || s.phase === 2))
+                  return !isPrevSkipped
+                })
+                const canComplete = !isSkippedPhase && (previousSteps.length === 0 || previousSteps.every(s => s.done))
+
+                return (
+                  <div key={step.id} className="relative flex items-start">
+                    {/* ステップマーカー */}
+                    <div
+                      className={`relative z-10 w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium ${
+                        isSkippedPhase
+                          ? 'bg-gray-400 text-gray-600'
+                          : step.is_completed
+                          ? 'bg-green-500 text-white'
+                          : step.is_current
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-300 text-gray-700'
+                      }`}
+                    >
+                      {isSkippedPhase ? '−' : step.is_completed ? '✓' : step.phase === 0 ? '準' : displayNumber}
+                    </div>
 
                   {/* ステップ内容 */}
                   <div className="ml-4 flex-1">
                     <div
                       className={`p-3 rounded border ${
-                        step.is_current
+                        isSkippedPhase
+                          ? 'bg-gray-100 border-gray-300 opacity-50'
+                          : step.is_current
                           ? 'bg-blue-50 border-blue-300'
                           : step.is_completed
                           ? 'bg-gray-50 border-gray-200'
@@ -289,42 +454,67 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <p className="text-sm font-medium text-gray-900">{step.title}</p>
-                            <p className="text-xs text-gray-500 mt-1">目安: {step.due_days}日後</p>
-                            {step.done && step.completed_at && (
-                              <p className="text-xs text-green-600 mt-1">完了日: {step.completed_at}</p>
+                            {isSkippedPhase ? (
+                              <p className="text-xs text-gray-500 mt-1">
+                                {plantingMethod === 'seedling'
+                                  ? '苗から栽培のためスキップ'
+                                  : '植え付けから開始したためスキップ'}
+                              </p>
+                            ) : (
+                              <>
+                                <p className="text-xs text-gray-500 mt-1">目安: {step.due_days}日後</p>
+                                {step.done && step.completed_at && (
+                                  <p className="text-xs text-green-600 mt-1">完了日: {step.completed_at}</p>
+                                )}
+                              </>
                             )}
                           </div>
                           {isOwner && onStepComplete && step.growth_record_step_id && (
                             <div className="ml-3">
-                              {!step.done ? (
-                                <button
-                                  onClick={() => {
-                                    setSelectedDate(new Date())
-                                    setShowDateInput(step.growth_record_step_id!)
-                                  }}
-                                  className="px-3 py-1 text-xs bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
-                                >
-                                  完了を記録
-                                </button>
+                              {step.phase === 0 ? (
+                                // Phase 0（準備）はチェック形式（育成中では常に完了済みのはず）
+                                step.done && (
+                                  <span className="text-xs text-green-600">✓ 完了</span>
+                                )
                               ) : (
-                                <button
-                                  onClick={() => {
-                                    if (step.completed_at) {
-                                      setSelectedDate(new Date(step.completed_at))
-                                      setShowDateInput(step.growth_record_step_id!)
-                                    }
-                                  }}
-                                  className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-                                >
-                                  日付を編集
-                                </button>
+                                // Phase 1以降は日付管理
+                                !step.done ? (
+                                  <button
+                                    onClick={() => {
+                                      if (canComplete) {
+                                        setSelectedDate(new Date())
+                                        setShowDateInput(step.growth_record_step_id!)
+                                      }
+                                    }}
+                                    disabled={!canComplete}
+                                    className={`px-3 py-1 text-xs rounded transition-colors ${
+                                      canComplete
+                                        ? 'bg-green-500 text-white hover:bg-green-600'
+                                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                    }`}
+                                  >
+                                    完了を記録
+                                  </button>
+                                ) : (
+                                  <button
+                                    onClick={() => {
+                                      if (step.completed_at) {
+                                        setSelectedDate(new Date(step.completed_at))
+                                        setShowDateInput(step.growth_record_step_id!)
+                                      }
+                                    }}
+                                    className="px-3 py-1 text-xs bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                                  >
+                                    日付を編集
+                                  </button>
+                                )
                               )}
                             </div>
                           )}
                         </div>
 
-                        {/* 日付入力UI */}
-                        {showDateInput === step.growth_record_step_id && onStepComplete && (
+                        {/* 日付入力UI（Phase 0以外） */}
+                        {showDateInput === step.growth_record_step_id && onStepComplete && step.phase !== 0 && (
                           <div className="mt-3 p-3 bg-white border border-gray-300 rounded">
                             <label className="block text-xs font-medium text-gray-700 mb-2">
                               完了日を入力してください
@@ -369,11 +559,65 @@ export default function GuideStepsDisplay({ stepInfo, isOwner = false, onStepCom
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                  </div>
+                )
+              })}
             </div>
           </div>
+
+          {/* 記録完了ボタン */}
+          {isOwner && onStatusUpdate && (
+            <div className="mt-6 border border-gray-300 rounded-lg bg-gray-50">
+              <button
+                onClick={() => setIsStatusSectionOpen(!isStatusSectionOpen)}
+                className="w-full p-4 flex items-center justify-between text-left hover:bg-gray-100 transition-colors rounded-lg"
+              >
+                <span className="font-bold text-sm text-gray-700">記録を完了する？</span>
+                <svg
+                  className={`w-5 h-5 text-gray-600 transition-transform ${isStatusSectionOpen ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {isStatusSectionOpen && (
+                <div className="px-4 pb-4">
+                  <div className="text-sm text-gray-700 mb-3">
+                    <p className="mt-1">これ以上収穫できず収穫済みとして記録を完了したい場合や、栽培に失敗し記録を止める場合はここから登録</p>
+                  </div>
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => handleStatusButtonClick('completed')}
+                      className="flex-1 px-4 py-2 text-sm bg-green-500 text-white rounded hover:bg-green-600 transition-colors"
+                    >
+                      収穫済み登録
+                    </button>
+                    <button
+                      onClick={() => handleStatusButtonClick('failed')}
+                      className="flex-1 px-4 py-2 text-sm bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                    >
+                      失敗登録
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
+
+        {/* ステータス更新確認ダイアログ */}
+        {pendingStatus && (
+          <StatusUpdateConfirmDialog
+            isOpen={statusDialogOpen}
+            onClose={handleStatusDialogClose}
+            onConfirm={handleStatusConfirm}
+            status={pendingStatus}
+            loading={statusUpdateLoading}
+          />
+        )}
       </div>
     )
   }

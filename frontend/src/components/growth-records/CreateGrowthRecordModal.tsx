@@ -49,6 +49,7 @@ interface EditData {
   plant_id: number
   record_name: string
   location: string | null
+  planting_method?: 'seed' | 'seedling' | null
   started_on: string | null
   ended_on?: string | null
   status: 'planning' | 'growing' | 'completed' | 'failed'
@@ -117,7 +118,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
           location: editData.location || '',
           started_on: editData.started_on || '',
           ended_on: editData.ended_on || '',
-          planting_method: 'seed',
+          planting_method: editData.planting_method || 'seed',
           status: editData.status || 'planning'
         })
 
@@ -205,6 +206,10 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
         }
         formDataToSend.append('growth_record[record_name]', formData.record_name)
         formDataToSend.append('growth_record[location]', formData.location)
+        // 計画中でない場合のみplanting_methodを送信
+        if (formData.status !== 'planning') {
+          formDataToSend.append('growth_record[planting_method]', formData.planting_method)
+        }
         formDataToSend.append('growth_record[started_on]', formData.started_on)
         if (formData.ended_on) {
           formDataToSend.append('growth_record[ended_on]', formData.ended_on)
@@ -315,9 +320,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
                   (!editData || editData.status === 'planning')
                     ? [
                         { value: 'planning', label: '計画中' },
-                        { value: 'growing', label: '育成中' },
-                        { value: 'completed', label: '収穫済み' },
-                        { value: 'failed', label: '失敗' }
+                        { value: 'growing', label: '育成中' }
                       ]
                     : editData.status === 'growing'
                     ? [
@@ -332,9 +335,14 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
                 required
                 disabled={editData && (editData.status === 'completed' || editData.status === 'failed')}
               />
-              {editData && editData.status === 'planning' && formData.status !== 'planning' && (
+              {editData && editData.status === 'planning' && formData.status === 'growing' && (
                 <p className="text-xs text-yellow-600 mt-1">
-                  ⚠️ 育成中・収穫済み・失敗に変更すると、計画中には戻せなくなります
+                  ⚠️ 育成中に変更すると、計画中には戻せなくなります
+                </p>
+              )}
+              {editData && editData.status === 'planning' && formData.status === 'planning' && (
+                <p className="text-xs text-gray-500 mt-1">
+                  収穫済み・失敗への変更は、栽培スケジュールの「記録を完了する」ボタンから行ってください
                 </p>
               )}
               {editData && editData.status === 'growing' && (
@@ -410,7 +418,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
               />
             </div>
 
-            {formData.status === 'growing' && (
+            {formData.status !== 'planning' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   栽培方法
@@ -423,9 +431,10 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
                       value="seed"
                       checked={formData.planting_method === 'seed'}
                       onChange={handleInputChange}
+                      disabled={editData && editData.status !== 'planning'}
                       className="mr-2"
                     />
-                    <span className="text-sm text-gray-700">種から</span>
+                    <span className={`text-sm ${editData && editData.status !== 'planning' ? 'text-gray-400' : 'text-gray-700'}`}>種から</span>
                   </label>
                   <label className="flex items-center">
                     <input
@@ -434,34 +443,45 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
                       value="seedling"
                       checked={formData.planting_method === 'seedling'}
                       onChange={handleInputChange}
+                      disabled={editData && editData.status !== 'planning'}
                       className="mr-2"
                     />
-                    <span className="text-sm text-gray-700">苗から</span>
+                    <span className={`text-sm ${editData && editData.status !== 'planning' ? 'text-gray-400' : 'text-gray-700'}`}>苗から</span>
                   </label>
                 </div>
+                {editData && editData.status === 'planning' && formData.status === 'growing' && (
+                  <p className="text-xs text-yellow-600 mt-1">
+                    ⚠️ 育成中に変更すると、栽培方法は変更できなくなります
+                  </p>
+                )}
+                {editData && editData.status !== 'planning' && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    育成中以降は栽培方法を変更できません
+                  </p>
+                )}
               </div>
             )}
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                {formData.status === 'growing'
-                  ? (formData.planting_method === 'seed' ? '種まき日' : '植え付け日')
-                  : '栽培開始日'}
-              </label>
-              <DatePicker
-                selected={formData.started_on ? new Date(formData.started_on) : null}
-                onChange={(date) => setFormData(prev => ({ ...prev, started_on: date ? date.toISOString().split('T')[0] : '' }))}
-                dateFormat="yyyy年MM月dd日"
-                locale="ja"
-                placeholderText="日付を選択してください"
-                customInput={<DateInputWithIcon />}
-                wrapperClassName="w-full"
-                calendarClassName="z-[10001]"
-                preventOpenOnFocus
-                shouldCloseOnSelect
-                required={formData.status !== 'planning'}
-              />
-            </div>
+            {formData.status !== 'planning' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {formData.planting_method === 'seed' ? '種まき日' : '植え付け日'}
+                </label>
+                <DatePicker
+                  selected={formData.started_on ? new Date(formData.started_on) : null}
+                  onChange={(date) => setFormData(prev => ({ ...prev, started_on: date ? date.toISOString().split('T')[0] : '' }))}
+                  dateFormat="yyyy年MM月dd日"
+                  locale="ja"
+                  placeholderText="日付を選択してください"
+                  customInput={<DateInputWithIcon />}
+                  wrapperClassName="w-full"
+                  calendarClassName="z-[10001]"
+                  preventOpenOnFocus
+                  shouldCloseOnSelect
+                  required
+                />
+              </div>
+            )}
 
             {(formData.status === 'completed' || formData.status === 'failed') && (
               <div>
