@@ -142,12 +142,10 @@ puts "Plants: #{Plant.count}, Categories: #{Category.count}"
 
 puts "Creating checker data..."
 
-# 既存データのクリーンアップ（開発環境のみ）
-if Rails.env.development?
-  ChoiceScore.destroy_all
-  Choice.destroy_all
-  Question.destroy_all
-end
+# 既存データのクリーンアップ（重複防止）
+if Question.exists?
+  puts "Checker questions already exist. Skipping creation."
+else
 
 # 質問データの作成
 questions_data = [
@@ -220,6 +218,7 @@ questions_data.each do |q_data|
 end
 
 puts "Checker data created: #{Question.count} questions, #{Choice.count} choices, #{ChoiceScore.count} scores"
+end
 
 # 育て方ガイドデータ
 load Rails.root.join('db', 'seeds', 'guides.rb')
