@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
               "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: https: http://localhost:3001",
+              "img-src 'self' data: https: http://localhost:3001 https://ouchi-no-hatake.onrender.com",
               "font-src 'self' data:",
               "connect-src 'self' http://localhost:3001 https://ouchi-no-hatake.onrender.com",
               "frame-ancestors 'none'",
