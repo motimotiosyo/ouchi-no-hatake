@@ -22,6 +22,7 @@ export default function GrowthRecordDetail({ id }: Props) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [toastMessage, setToastMessage] = useState<string | null>(null)
+  const [toastType, setToastType] = useState<'success' | 'error'>('error')
   const router = useRouter()
   const [growthRecord, setGrowthRecord] = useState<GrowthRecord | null>(null)
   const [posts, setPosts] = useState<Post[]>([])
@@ -32,8 +33,9 @@ export default function GrowthRecordDetail({ id }: Props) {
   const [isGuideExpanded, setIsGuideExpanded] = useState(false)
 
   // トーストメッセージを表示して3秒後に自動的に消す
-  const showToast = (message: string) => {
+  const showToast = (message: string, type: 'success' | 'error' = 'error') => {
     setToastMessage(message)
+    setToastType(type)
     setTimeout(() => setToastMessage(null), 3000)
   }
 
@@ -169,6 +171,42 @@ export default function GrowthRecordDetail({ id }: Props) {
     })
   }
 
+  const handleStatusUpdate = async (status: 'completed' | 'failed') => {
+    if (stepToggleLoading) return
+
+    await executeProtected(async () => {
+      setStepToggleLoading(true)
+      try {
+        const token = localStorage.getItem('auth_token')
+        if (!token) {
+          setError('認証トークンが見つかりません')
+          return
+        }
+
+        const result = await apiClient.patch(`/api/v1/growth_records/${id}`, {
+          status: status
+        }, token)
+
+        if (result.success) {
+          showToast(status === 'completed' ? 'ステータスを「収穫済み」に更新しました' : 'ステータスを「失敗」に更新しました', 'success')
+          await fetchGrowthRecord()
+        } else {
+          if (process.env.NODE_ENV === 'development') {
+            console.error('ステータス更新エラー:', result.error.message)
+          }
+          showToast(result.error.message || 'ステータスの更新に失敗しました')
+        }
+      } catch (err) {
+        if (process.env.NODE_ENV === 'development') {
+          console.error('ステータス更新でエラーが発生しました:', err)
+        }
+        showToast('ステータスの更新に失敗しました')
+      } finally {
+        setStepToggleLoading(false)
+      }
+    })
+  }
+
   if (loading) {
     return (
       <div className="flex justify-center items-center py-8">
@@ -205,7 +243,7 @@ export default function GrowthRecordDetail({ id }: Props) {
     <div className="space-y-6">
       {/* トーストメッセージ */}
       {toastMessage && (
-        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg">
+        <div className={`fixed top-4 left-1/2 transform -translate-x-1/2 z-50 text-white px-6 py-3 rounded-lg shadow-lg ${toastType === 'success' ? 'bg-blue-500' : 'bg-red-500'}`}>
           {toastMessage}
         </div>
       )}
@@ -379,6 +417,7 @@ export default function GrowthRecordDetail({ id }: Props) {
                   isOwner={user?.id === growthRecord.user?.id}
                   onStepComplete={handleStepComplete}
                   onStepUncomplete={handleStepUncomplete}
+                  onStatusUpdate={handleStatusUpdate}
                 />
               </div>
             )}
@@ -437,6 +476,7 @@ export default function GrowthRecordDetail({ id }: Props) {
           plant_id: growthRecord.plant.id,
           record_name: growthRecord.record_name,
           location: growthRecord.location,
+          planting_method: growthRecord.planting_method,
           started_on: growthRecord.started_on,
           ended_on: growthRecord.ended_on,
           status: growthRecord.status,

@@ -70,6 +70,8 @@ class GrowthRecordStepService < ApplicationService
       if growth_record.status == "planning" && (guide_step.phase == 1 || guide_step.phase == 3)
         growth_record.started_on = completed_at
         growth_record.status = "growing"
+        # 栽培方法を自動設定（Phase 1=種から、Phase 3=苗から）
+        growth_record.planting_method = guide_step.phase == 1 ? "seed" : "seedling"
         growth_record.save
       end
 
