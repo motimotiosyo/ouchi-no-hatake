@@ -130,7 +130,7 @@ class Api::V1::GrowthRecordsController < ApplicationController
   end
 
   def growth_record_params
-    params.require(:growth_record).permit(:plant_id, :guide_id, :record_name, :location, :planting_method, :started_on, :ended_on, :status, :thumbnail, :remove_thumbnail)
+    params.require(:growth_record).permit(:plant_id, :guide_id, :record_name, :location, :planting_method, :started_on, :ended_on, :status, :thumbnail, :remove_thumbnail, :custom_plant_name)
   end
 
   def set_optional_current_user

@@ -47,6 +47,7 @@ DateInputWithIcon.displayName = 'DateInputWithIcon'
 interface EditData {
   id: number
   plant_id: number
+  custom_plant_name?: string | null
   record_name: string
   location: string | null
   planting_method?: 'seed' | 'seedling' | null
@@ -77,6 +78,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
   // フォーム状態
   const [formData, setFormData] = useState({
     plant_id: '',
+    custom_plant_name: '',
     record_name: '',
     location: '',
     started_on: '',
@@ -84,6 +86,9 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
     planting_method: 'seed' as 'seed' | 'seedling',
     status: 'planning' as 'planning' | 'growing' | 'completed' | 'failed'
   })
+
+  // 品種入力方法の切り替え（'select' | 'custom'）
+  const [plantInputMode, setPlantInputMode] = useState<'select' | 'custom'>('select')
   
   // サムネイル画像選択状態
   const [selectedThumbnail, setSelectedThumbnail] = useState<File | null>(null)
@@ -114,6 +119,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
       if (editData) {
         setFormData({
           plant_id: editData.plant_id.toString(),
+          custom_plant_name: editData.custom_plant_name || '',
           record_name: editData.record_name || '',
           location: editData.location || '',
           started_on: editData.started_on || '',
@@ -121,6 +127,13 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
           planting_method: editData.planting_method || 'seed',
           status: editData.status || 'planning'
         })
+
+        // フリー入力かどうかを判定してモードを設定
+        if (editData.custom_plant_name) {
+          setPlantInputMode('custom')
+        } else {
+          setPlantInputMode('select')
+        }
 
         // 既存のサムネイル画像がある場合はプレビューを設定
         if (editData.thumbnail_url) {
@@ -200,9 +213,15 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
           : '/api/v1/growth_records'
 
         const formDataToSend = new FormData()
-        // 新規作成、または計画中の場合のみplant_idを送信（育成中以降は変更不可）
+        // plant_id: 新規作成、または計画中の場合のみ送信（育成中以降は変更不可）
         if (!isEditMode || formData.status === 'planning') {
-          formDataToSend.append('growth_record[plant_id]', formData.plant_id)
+          if (formData.plant_id) {
+            formDataToSend.append('growth_record[plant_id]', formData.plant_id)
+          }
+        }
+        // custom_plant_name: タイポ修正のため、常に送信可能
+        if (formData.custom_plant_name) {
+          formDataToSend.append('growth_record[custom_plant_name]', formData.custom_plant_name)
         }
         formDataToSend.append('growth_record[record_name]', formData.record_name)
         formDataToSend.append('growth_record[location]', formData.location)
@@ -256,6 +275,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
     setError(null)
     setFormData({
       plant_id: '',
+      custom_plant_name: '',
       record_name: '',
       location: '',
       started_on: '',
@@ -263,6 +283,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
       planting_method: 'seed',
       status: 'planning'
     })
+    setPlantInputMode('select')
     setSelectedThumbnail(null)
     setThumbnailPreview('')
     setImageError('')
@@ -357,25 +378,88 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
               )}
             </div>
             <div>
-              <label htmlFor="plant_id" className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
                 品種
               </label>
-              <CustomSelect
-                id="plant_id"
-                name="plant_id"
-                value={formData.plant_id}
-                onChange={(value) => setFormData(prev => ({ ...prev, plant_id: value }))}
-                options={[
-                  { value: '', label: '選択してください' },
-                  ...plants.map(plant => ({ value: plant.id.toString(), label: plant.name }))
-                ]}
-                required
-                disabled={editData && formData.status !== 'planning'}
-              />
-              {editData && formData.status !== 'planning' && (
-                <p className="text-xs text-gray-500 mt-1">
-                  育成中以降は品種を変更できません
-                </p>
+
+              {/* ラジオボタンで入力方法を切り替え */}
+              <div className="flex gap-6 mb-3">
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="plant_input_mode"
+                    value="select"
+                    checked={plantInputMode === 'select'}
+                    onChange={() => {
+                      setPlantInputMode('select')
+                      setFormData(prev => ({ ...prev, custom_plant_name: '' }))
+                    }}
+                    disabled={editData && formData.status !== 'planning'}
+                    className="mr-2"
+                  />
+                  <span className={`text-sm ${editData && formData.status !== 'planning' ? 'text-gray-400' : 'text-gray-700'}`}>品種を選択</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="plant_input_mode"
+                    value="custom"
+                    checked={plantInputMode === 'custom'}
+                    onChange={() => {
+                      setPlantInputMode('custom')
+                      setFormData(prev => ({ ...prev, plant_id: '' }))
+                    }}
+                    className="mr-2"
+                  />
+                  <span className="text-sm text-gray-700">フリー入力</span>
+                </label>
+              </div>
+
+              {/* 品種選択モード */}
+              {plantInputMode === 'select' && (
+                <>
+                  <CustomSelect
+                    id="plant_id"
+                    name="plant_id"
+                    value={formData.plant_id}
+                    onChange={(value) => {
+                      setFormData(prev => ({ ...prev, plant_id: value }))
+                    }}
+                    options={[
+                      { value: '', label: '選択してください' },
+                      ...plants.map(plant => ({ value: plant.id.toString(), label: plant.name }))
+                    ]}
+                    required={plantInputMode === 'select'}
+                    disabled={editData && formData.status !== 'planning'}
+                  />
+                  {editData && formData.status !== 'planning' && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      育成中以降は品種を変更できません
+                    </p>
+                  )}
+                </>
+              )}
+
+              {/* フリー入力モード */}
+              {plantInputMode === 'custom' && (
+                <>
+                  <input
+                    type="text"
+                    id="custom_plant_name"
+                    name="custom_plant_name"
+                    value={formData.custom_plant_name}
+                    onChange={(e) => {
+                      setFormData(prev => ({ ...prev, custom_plant_name: e.target.value }))
+                    }}
+                    placeholder="品種名を直接入力（最大50文字）"
+                    maxLength={50}
+                    required={plantInputMode === 'custom'}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    品種リストにない野菜を育てる場合はこちらに入力してください
+                  </p>
+                </>
               )}
             </div>
 

@@ -266,7 +266,7 @@ export default function GrowthRecordDetail({ id }: Props) {
             {growthRecord.thumbnail_url ? (
               <img
                 src={growthRecord.thumbnail_url}
-                alt={`${growthRecord.plant.name} - ${growthRecord.record_name}`}
+                alt={`${growthRecord.plant?.name || growthRecord.custom_plant_name || '成長記録'} - ${growthRecord.record_name}`}
                 className="w-full h-full min-h-[180px] object-cover rounded-lg"
               />
             ) : (
@@ -282,7 +282,7 @@ export default function GrowthRecordDetail({ id }: Props) {
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-2 flex-wrap">
                   <h1 className="text-2xl font-bold text-gray-900">
-                    {growthRecord.plant.name}
+                    {growthRecord.plant?.name || growthRecord.custom_plant_name}
                   </h1>
                   <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(growthRecord.status)}`}>
                     {getStatusText(growthRecord.status)}
@@ -473,7 +473,8 @@ export default function GrowthRecordDetail({ id }: Props) {
         onSuccess={handleEditSuccess}
         editData={growthRecord ? {
           id: growthRecord.id,
-          plant_id: growthRecord.plant.id,
+          plant_id: growthRecord.plant?.id || 0,
+          custom_plant_name: growthRecord.custom_plant_name,
           record_name: growthRecord.record_name,
           location: growthRecord.location,
           planting_method: growthRecord.planting_method,
@@ -492,7 +493,7 @@ export default function GrowthRecordDetail({ id }: Props) {
           onSuccess={handleDeleteSuccess}
           growthRecord={{
             id: growthRecord.id,
-            plant_name: growthRecord.plant.name,
+            plant_name: growthRecord.plant?.name || growthRecord.custom_plant_name || '不明な品種',
             record_name: growthRecord.record_name
           }}
         />
