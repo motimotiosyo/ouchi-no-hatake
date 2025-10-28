@@ -1,10 +1,11 @@
 class GrowthRecordSequence < ApplicationRecord
   belongs_to :user
-  belongs_to :plant
+  belongs_to :plant, optional: true
 
   validates :last_number, presence: true, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
 
   # 次の番号を取得してインクリメント（トランザクション内で排他ロック）
+  # plant が nil の場合、フリー入力として扱う
   def self.next_number(user, plant)
     sequence = find_or_create_by!(user: user, plant: plant) do |seq|
       seq.last_number = 0

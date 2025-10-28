@@ -1,6 +1,6 @@
 class GrowthRecord < ApplicationRecord
   belongs_to :user
-  belongs_to :plant
+  belongs_to :plant, optional: true
   belongs_to :guide, optional: true
   has_many :posts, dependent: :destroy
   has_many :favorite_growth_records, dependent: :destroy
@@ -11,9 +11,12 @@ class GrowthRecord < ApplicationRecord
 
   validates :record_number, presence: true
   validates :started_on, presence: true, unless: :planning?
+  validates :custom_plant_name, length: { maximum: 50 }, allow_blank: true
 
   # サムネイル画像のバリデーション
   validate :validate_thumbnail
+  # 品種またはフリー入力のいずれか必須
+  validate :either_plant_or_custom_name
 
   enum status: {
     planning: 0,
@@ -21,6 +24,16 @@ class GrowthRecord < ApplicationRecord
     completed: 2,
     failed: 3
   }
+
+  # 表示用の品種名（品種名 or フリー入力名）
+  def plant_display_name
+    plant&.name || custom_plant_name
+  end
+
+  # フリー入力の品種かどうか
+  def custom_plant?
+    plant_id.nil? && custom_plant_name.present?
+  end
 
   enum planting_method: {
     seed: 0,
@@ -74,6 +87,12 @@ class GrowthRecord < ApplicationRecord
     if (filename.end_with?(".jpg", ".jpeg") && content_type != "image/jpeg") ||
        (filename.end_with?(".png") && content_type != "image/png")
       errors.add(:thumbnail, "ファイル名とファイル形式が一致しません")
+    end
+  end
+
+  def either_plant_or_custom_name
+    if plant_id.blank? && custom_plant_name.blank?
+      errors.add(:base, "品種を選択するか、フリー入力してください")
     end
   end
 end

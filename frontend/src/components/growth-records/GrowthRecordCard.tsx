@@ -23,7 +23,8 @@ interface GrowthRecord {
     id: number
     name: string
     description: string
-  }
+  } | null
+  custom_plant_name?: string | null
   user?: {
     id: number
     name: string
@@ -46,23 +47,27 @@ export default function GrowthRecordCard({ record, onUpdate, showFavoriteButton 
   const [favoriteCount, setFavoriteCount] = useState(record.favorites_count ?? 0)
   const [isFavorited, setIsFavorited] = useState(record.favorited_by_current_user ?? false)
 
+  // 品種名（plant.name または custom_plant_name）
+  const plantDisplayName = record.plant?.name || record.custom_plant_name || '不明な品種'
+
   // editDataとgrowthRecordをメモ化して再レンダリングを防ぐ
   const editData = useMemo(() => ({
     id: record.id,
-    plant_id: record.plant.id,
+    plant_id: record.plant?.id || 0,
+    custom_plant_name: record.custom_plant_name,
     record_name: record.record_name,
     location: record.location,
     started_on: record.started_on,
     ended_on: record.ended_on,
     status: record.status,
     thumbnail_url: record.thumbnail_url
-  }), [record.id, record.plant.id, record.record_name, record.location, record.started_on, record.ended_on, record.status, record.thumbnail_url])
+  }), [record.id, record.plant?.id, record.custom_plant_name, record.record_name, record.location, record.started_on, record.ended_on, record.status, record.thumbnail_url])
 
   const growthRecordData = useMemo(() => ({
     id: record.id,
-    plant_name: record.plant.name,
+    plant_name: plantDisplayName,
     record_name: record.record_name
-  }), [record.id, record.plant.name, record.record_name])
+  }), [record.id, plantDisplayName, record.record_name])
 
   // モーダルの開閉コールバックをメモ化
   const handleEditModalClose = useCallback(() => {
@@ -151,7 +156,7 @@ return (
                 )}
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">{record.plant.name}</h3>
+                <h3 className="font-semibold text-gray-900">{plantDisplayName}</h3>
                 <p className="text-sm text-gray-600">{record.record_name}</p>
                 {record.user && (
                   <p className="text-xs text-gray-500">by {record.user.name}</p>
@@ -257,7 +262,7 @@ return (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="font-semibold text-gray-900 text-lg truncate">
-                    {record.plant.name}
+                    {plantDisplayName}
                     {record.record_name && ` - ${record.record_name}`}
                   </div>
                   <div className="flex items-center space-x-2 ml-4" style={{ position: 'relative', zIndex: 10 }}>

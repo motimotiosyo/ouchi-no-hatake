@@ -33,11 +33,12 @@ class GrowthRecordService < ApplicationService
       status: record.status,
       created_at: record.created_at,
       updated_at: record.updated_at,
-      plant: {
+      plant: record.plant ? {
         id: record.plant.id,
         name: record.plant.name,
         description: record.plant.description
-      },
+      } : nil,
+      custom_plant_name: record.custom_plant_name,
       thumbnail_url: build_thumbnail_url(record),
       favorites_count: record.favorites_count,
       favorited_by_current_user: current_user ? record.favorited_by?(current_user) : false,
@@ -98,9 +99,11 @@ class GrowthRecordService < ApplicationService
 
   # 成長記録作成
   def self.create_growth_record(user, params)
-    plant = Plant.find(params[:plant_id])
+    # plant_id がある場合のみ Plant を取得
+    plant = params[:plant_id].present? ? Plant.find(params[:plant_id]) : nil
 
     # シーケンステーブルから次の番号を取得（単調増加、再利用しない）
+    # フリー入力の場合は plant が nil
     next_record_number = GrowthRecordSequence.next_number(user, plant)
 
     # ガイドを自動紐付け（plant_idから取得）

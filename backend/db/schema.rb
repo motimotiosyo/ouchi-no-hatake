@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.2].define(version: 2025_10_24_045538) do
+ActiveRecord::Schema[7.2].define(version: 2025_10_28_071353) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -101,7 +101,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_24_045538) do
 
   create_table "growth_record_sequences", force: :cascade do |t|
     t.bigint "user_id", null: false
-    t.bigint "plant_id", null: false
+    t.bigint "plant_id"
     t.integer "last_number", default: 0, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
@@ -124,7 +124,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_24_045538) do
 
   create_table "growth_records", force: :cascade do |t|
     t.bigint "user_id", null: false
-    t.bigint "plant_id", null: false
+    t.bigint "plant_id"
     t.integer "record_number"
     t.string "record_name"
     t.string "location"
@@ -135,6 +135,7 @@ ActiveRecord::Schema[7.2].define(version: 2025_10_24_045538) do
     t.datetime "updated_at", null: false
     t.bigint "guide_id"
     t.integer "planting_method", default: 0
+    t.string "custom_plant_name", limit: 50
     t.index ["guide_id"], name: "index_growth_records_on_guide_id"
     t.index ["plant_id"], name: "index_growth_records_on_plant_id"
     t.index ["user_id"], name: "index_growth_records_on_user_id"

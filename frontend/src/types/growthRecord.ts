@@ -21,6 +21,11 @@ export interface Plant {
 }
 
 /**
+ * 植物情報（nullable対応）
+ */
+export type PlantOrNull = Plant | null
+
+/**
  * ガイドステップ
  */
 export interface GuideStep {
@@ -79,7 +84,8 @@ export interface GrowthRecord {
   status: GrowthRecordStatus
   created_at: DateTimeString
   updated_at: DateTimeString
-  plant: Plant
+  plant: PlantOrNull
+  custom_plant_name?: string | null
   guide: GrowthRecordGuide | null
   thumbnail_url: string | null
   favorites_count: number
