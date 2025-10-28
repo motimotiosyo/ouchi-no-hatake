@@ -82,7 +82,7 @@ export default function FavoriteButton({
           : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
       } ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
     >
-      <span className="text-lg">{favorited ? '📖' : '📕'}</span>
+      <span className="text-lg">{favorited ? '⭐' : '☆'}</span>
       {showCount && <span>{count}</span>}
     </button>
   )

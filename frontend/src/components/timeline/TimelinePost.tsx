@@ -221,16 +221,16 @@ export default function TimelinePost({ post }: TimelinePostProps) {
         {/* 2行目: 成長記録・カテゴリ（左寄せ） */}
         <div className="flex items-center space-x-2">
           {post.post_type === 'growth_record_post' && post.growth_record ? (
-            <Link 
+            <Link
               href={`/growth-records/${post.growth_record.id}`}
               className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 hover:bg-green-200 transition-colors cursor-pointer"
             >
-              🌱 成長記録
+              🌱 {post.growth_record.record_name}
             </Link>
           ) : (
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-              post.post_type === 'growth_record_post' 
-                ? 'bg-green-100 text-green-800' 
+              post.post_type === 'growth_record_post'
+                ? 'bg-green-100 text-green-800'
                 : 'bg-blue-100 text-blue-800'
             }`}>
               {post.post_type === 'growth_record_post' ? '🌱 成長記録' : '💬 雑談'}

@@ -4,11 +4,12 @@ import { useState, useEffect } from 'react'
 import { useAuthContext as useAuth } from '@/contexts/auth'
 import { useRouter } from 'next/navigation'
 import PostsTab from './PostsTab'
+import GrowthRecordsTab from './GrowthRecordsTab'
 import FollowButton from '../users/FollowButton'
 import type { UserProfile } from '@/types'
 import { apiClient } from '@/services/apiClient'
 
-type PostTypeFilter = 'all' | 'growth_record_post' | 'general_post'
+type TabFilter = 'all' | 'growth_record_post' | 'general_post' | 'growth_records'
 
 interface UserProfilePageProps {
   userId: number
@@ -20,7 +21,7 @@ export default function UserProfilePage({ userId }: UserProfilePageProps) {
   const [user, setUser] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState<PostTypeFilter>('all')
+  const [activeTab, setActiveTab] = useState<TabFilter>('all')
 
   const fetchUser = async () => {
     try {
@@ -166,12 +167,26 @@ export default function UserProfilePage({ userId }: UserProfilePageProps) {
           >
             雑談
           </button>
+          <button
+            onClick={() => setActiveTab('growth_records')}
+            className={`flex-1 py-2 rounded-md font-medium text-sm transition-all ${
+              activeTab === 'growth_records'
+                ? 'bg-white text-green-600 shadow'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            成長記録
+          </button>
         </div>
       </div>
 
-      {/* 投稿一覧 */}
+      {/* タブコンテンツ */}
       <div className="mb-6">
-        <PostsTab userId={userId} postType={activeTab} />
+        {activeTab === 'growth_records' ? (
+          <GrowthRecordsTab userId={userId} />
+        ) : (
+          <PostsTab userId={userId} postType={activeTab} />
+        )}
       </div>
     </div>
   )

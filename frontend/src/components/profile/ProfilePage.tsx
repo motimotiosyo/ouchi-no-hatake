@@ -4,10 +4,11 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuthContext as useAuth } from '@/contexts/auth'
 import PostsTab from './PostsTab'
+import GrowthRecordsTab from './GrowthRecordsTab'
 import FavoriteGrowthRecordsTab from './FavoriteGrowthRecordsTab'
 import EditProfileModal from './EditProfileModal'
 
-type TabType = 'posts_all' | 'posts_growth_record' | 'posts_general' | 'favorites'
+type TabType = 'posts_all' | 'posts_growth_record' | 'posts_general' | 'growth_records' | 'favorites'
 
 export default function ProfilePage() {
   const { user } = useAuth()
@@ -126,6 +127,16 @@ export default function ProfilePage() {
             雑談
           </button>
           <button
+            onClick={() => setActiveTab('growth_records')}
+            className={`flex-1 py-2 rounded-md font-medium text-sm transition-all ${
+              activeTab === 'growth_records'
+                ? 'bg-white text-green-600 shadow'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            成長記録
+          </button>
+          <button
             onClick={() => setActiveTab('favorites')}
             className={`flex-1 py-2 rounded-md font-medium text-sm transition-all ${
               activeTab === 'favorites'
@@ -142,6 +153,8 @@ export default function ProfilePage() {
       <div className="mb-6">
         {activeTab === 'favorites' ? (
           <FavoriteGrowthRecordsTab userId={user.id} />
+        ) : activeTab === 'growth_records' ? (
+          <GrowthRecordsTab />
         ) : (
           <PostsTab
             userId={user.id}
