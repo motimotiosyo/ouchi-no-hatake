@@ -390,7 +390,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
                     name="plant_input_mode"
                     value="select"
                     checked={plantInputMode === 'select'}
-                    onChange={(e) => {
+                    onChange={() => {
                       setPlantInputMode('select')
                       setFormData(prev => ({ ...prev, custom_plant_name: '' }))
                     }}
@@ -405,7 +405,7 @@ export default function CreateGrowthRecordModal({ isOpen, onClose, onSuccess, ed
                     name="plant_input_mode"
                     value="custom"
                     checked={plantInputMode === 'custom'}
-                    onChange={(e) => {
+                    onChange={() => {
                       setPlantInputMode('custom')
                       setFormData(prev => ({ ...prev, plant_id: '' }))
                     }}
