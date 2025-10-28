@@ -9,18 +9,30 @@ class Api::V1::GrowthRecordsController < ApplicationController
       per_page = params[:per_page]&.to_i || 10
       offset = (page - 1) * per_page
 
-      growth_records = current_user.growth_records
+      # user_idパラメータがあれば指定ユーザー、なければログインユーザーの成長記録を取得
+      target_user = if params[:user_id].present?
+        User.find(params[:user_id])
+      else
+        current_user
+      end
+
+      growth_records = target_user.growth_records
         .includes(:plant, guide: :plant)
         .order(created_at: :desc)
         .limit(per_page)
         .offset(offset)
 
-      total_count = current_user.growth_records.count
+      total_count = target_user.growth_records.count
       pagination_info = GrowthRecordService.build_pagination_info(page, per_page, total_count)
 
       response_data = GrowthRecordService.build_growth_records_list(growth_records, pagination_info, current_user)
       render json: ApplicationSerializer.success(data: response_data)
 
+    rescue ActiveRecord::RecordNotFound
+      render json: ApplicationSerializer.error(
+        message: "指定されたユーザーが見つかりません",
+        code: "USER_NOT_FOUND"
+      ), status: :not_found
     rescue => e
       Rails.logger.error "Error in GrowthRecordsController#index: #{e.message}"
       Rails.logger.error e.backtrace.join("\n")

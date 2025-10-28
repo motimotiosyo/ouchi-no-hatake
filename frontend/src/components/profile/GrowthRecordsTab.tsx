@@ -30,10 +30,11 @@ interface PaginationInfo {
 }
 
 interface GrowthRecordsTabProps {
+  userId?: number
   onCountChange?: (count: number) => void
 }
 
-export default function GrowthRecordsTab({ onCountChange }: GrowthRecordsTabProps) {
+export default function GrowthRecordsTab({ userId, onCountChange }: GrowthRecordsTabProps) {
   const [growthRecords, setGrowthRecords] = useState<GrowthRecord[]>([])
   const [loading, setLoading] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -51,8 +52,9 @@ export default function GrowthRecordsTab({ onCountChange }: GrowthRecordsTabProp
       setError(null)
 
       const token = localStorage.getItem('auth_token')
+      const userIdParam = userId ? `&user_id=${userId}` : ''
       const result = await apiClient.get<{ growth_records: GrowthRecord[], pagination: PaginationInfo }>(
-        `/api/v1/growth_records?page=${page}&per_page=10`,
+        `/api/v1/growth_records?page=${page}&per_page=10${userIdParam}`,
         token || undefined
       )
 
@@ -76,7 +78,7 @@ export default function GrowthRecordsTab({ onCountChange }: GrowthRecordsTabProp
       setLoading(false)
       setLoadingMore(false)
     }
-  }, [])
+  }, [userId, onCountChange])
 
   const lastGrowthRecordElementRef = useCallback((node: HTMLDivElement | null) => {
     if (loading || loadingMore) return
