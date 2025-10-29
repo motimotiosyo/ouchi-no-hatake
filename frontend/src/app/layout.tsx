@@ -6,6 +6,7 @@ import LayoutWrapper from '@/components/layout/LayoutWrapper'
 import FlashMessages from '@/components/ui/FlashMessages'
 import AutoLogoutModalContainer from '@/components/ui/AutoLogoutModalContainer'
 import RedirectMessageHandler from '@/components/ui/RedirectMessageHandler'
+import GoogleAnalytics from '@/components/analytics/GoogleAnalytics'
 
 import type { Metadata, Viewport } from 'next'
 
@@ -40,6 +41,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ja">
+      <head>
+        <GoogleAnalytics />
+      </head>
       <body className="min-h-screen flex flex-col" style={{ minWidth: '360px' }}>
         <FlashProvider>
           <AuthProvider>
