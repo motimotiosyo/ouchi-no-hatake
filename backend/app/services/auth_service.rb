@@ -26,12 +26,14 @@ class AuthService < ApplicationService
         )
       else
         # 未認証ユーザーの場合は、トークンを再生成してメールを送る
-        existing_user.generate_email_verification_token!
         begin
+          existing_user.generate_email_verification_token!
           send_verification_email(existing_user)
         rescue => e
-          Rails.logger.error "Failed to send verification email: #{e.message}"
-          # メール送信失敗してもユーザー登録は成功
+          Rails.logger.error "Failed to generate token or send verification email: #{e.message}"
+          Rails.logger.error e.backtrace.join("
+")
+          # トークン生成やメール送信失敗してもユーザー登録は成功
         end
         return ApplicationSerializer.success(
           data: build_registration_response(existing_user)
@@ -43,15 +45,15 @@ class AuthService < ApplicationService
     user = User.new(params)
 
     if user.save
-      # メール認証トークン生成
-      user.generate_email_verification_token!
-
-      # 認証メール送信（エラーが発生してもユーザー登録は成功させる）
+      # メール認証トークン生成と送信（エラーが発生してもユーザー登録は成功させる）
       begin
+        user.generate_email_verification_token!
         send_verification_email(user)
       rescue => e
-        Rails.logger.error "Failed to send verification email: #{e.message}"
-        # メール送信失敗してもユーザー登録は成功
+        Rails.logger.error "Failed to generate token or send verification email: #{e.message}"
+        Rails.logger.error e.backtrace.join("
+")
+        # トークン生成やメール送信失敗してもユーザー登録は成功
       end
 
       ApplicationSerializer.success(
@@ -146,12 +148,14 @@ class AuthService < ApplicationService
     end
 
     # 未認証ユーザーの場合のみ、新しいトークン生成とメール送信
-    user.generate_email_verification_token!
     begin
+      user.generate_email_verification_token!
       send_verification_email(user)
     rescue => e
-      Rails.logger.error "Failed to send verification email: #{e.message}"
-      # メール送信失敗してもユーザーには成功レスポンス
+      Rails.logger.error "Failed to generate token or send verification email: #{e.message}"
+      Rails.logger.error e.backtrace.join("
+")
+      # トークン生成やメール送信失敗してもユーザーには成功レスポンス
     end
 
     ApplicationSerializer.success(
@@ -174,13 +178,14 @@ class AuthService < ApplicationService
     end
 
     # 認証済みユーザーの場合のみ、実際にリセットメールを送信
-    reset_token = PasswordResetToken.generate_for_email(user.email)
-
     begin
+      reset_token = PasswordResetToken.generate_for_email(user.email)
       send_password_reset_email_with_token(user, reset_token.token)
     rescue => e
-      Rails.logger.error "Failed to send password reset email: #{e.message}"
-      # メール送信失敗してもユーザーには成功レスポンス
+      Rails.logger.error "Failed to generate token or send password reset email: #{e.message}"
+      Rails.logger.error e.backtrace.join("
+")
+      # トークン生成やメール送信失敗してもユーザーには成功レスポンス
     end
 
     ApplicationSerializer.success(
