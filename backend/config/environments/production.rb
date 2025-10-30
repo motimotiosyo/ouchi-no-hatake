@@ -77,7 +77,7 @@ Rails.application.configure do
   # caching is enabled.
   config.action_mailer.perform_caching = false
 
-  # SendGrid SMTP Configuration for Production
+  # Resend SMTP Configuration for Production
   config.action_mailer.delivery_method = :smtp
   config.action_mailer.raise_delivery_errors = true
   config.action_mailer.perform_deliveries = true
@@ -88,10 +88,10 @@ Rails.application.configure do
   }
 
   config.action_mailer.smtp_settings = {
-    user_name: "apikey",
-    password: ENV["SENDGRID_API_KEY"],
+    user_name: "resend",
+    password: ENV["RESEND_API_KEY"],
     domain: ENV.fetch("FRONTEND_URL", "your-domain.com"),
-    address: "smtp.sendgrid.net",
+    address: "smtp.resend.com",
     port: 587,
     authentication: :plain,
     enable_starttls_auto: true
@@ -115,4 +115,5 @@ Rails.application.configure do
   # Skip DNS rebinding protection for the default health check endpoint.
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
   config.hosts << ENV["FRONTEND_URL"] if ENV["FRONTEND_URL"].present?
+  config.hosts << "ouchi-no-hatake.onrender.com"
 end
