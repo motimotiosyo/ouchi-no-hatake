@@ -6,13 +6,11 @@ import { loginSchema, type LoginFormData } from '@/lib/validation'
 import { apiClient } from '@/services/apiClient'
 import { useAuthContext as useAuth } from '@/contexts/auth'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import ForgotPasswordModal from '@/components/auth/ForgotPasswordModal'
 import type { User } from '@/types/auth'
 
 export default function LoginPage() {
-  const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [apiError, setApiError] = useState<string | null>(null)
   const [isForgotPasswordModalOpen, setIsForgotPasswordModalOpen] = useState(false)

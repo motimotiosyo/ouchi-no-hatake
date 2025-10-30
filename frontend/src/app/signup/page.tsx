@@ -6,7 +6,6 @@ import { registerSchema, type RegisterFormData } from '@/lib/validation'
 import { apiClient } from '@/services/apiClient'
 import { useAuthContext as useAuth } from '@/contexts/auth'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { User } from '@/types/auth'
 import EmailVerificationModal from '@/components/auth/EmailVerificationModal'
@@ -16,7 +15,6 @@ export default function SignupPage() {
   const [apiError, setApiError] = useState<string | null>(null)
   const [isEmailVerificationModalOpen, setIsEmailVerificationModalOpen] = useState(false)
   const [registeredEmail, setRegisteredEmail] = useState('')
-  const router = useRouter()
 
   const { login } = useAuth()
 
