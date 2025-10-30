@@ -7,18 +7,6 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: [
           {
-            key: "Content-Security-Policy",
-            value: [
-              "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-              "style-src 'self' 'unsafe-inline'",
-              "img-src 'self' data: https: http://localhost:3001 https://ouchi-no-hatake.onrender.com",
-              "font-src 'self' data:",
-              "connect-src 'self' http://localhost:3001 https://ouchi-no-hatake.onrender.com",
-              "frame-ancestors 'none'",
-            ].join("; "),
-          },
-          {
             key: "X-Frame-Options",
             value: "DENY",
           },
