@@ -14,19 +14,51 @@ class AuthService < ApplicationService
 
   # ユーザー登録処理
   def self.register_user(params)
+    # セキュリティ上、メールアドレスの存在を漏らさないため、
+    # 既存ユーザーをチェックする
+    existing_user = User.find_by(email: params[:email]&.downcase)
+
+    if existing_user
+      # 既にメール認証済みの場合は、成功レスポンスを返すがメールは送らない
+      if existing_user.email_verified?
+        return ApplicationSerializer.success(
+          data: build_registration_response_without_email(existing_user)
+        )
+      else
+        # 未認証ユーザーの場合は、トークンを再生成してメールを送る
+        existing_user.generate_email_verification_token!
+        begin
+          send_verification_email(existing_user)
+        rescue => e
+          Rails.logger.error "Failed to send verification email: #{e.message}"
+          # メール送信失敗してもユーザー登録は成功
+        end
+        return ApplicationSerializer.success(
+          data: build_registration_response(existing_user)
+        )
+      end
+    end
+
+    # 新規ユーザーの場合
     user = User.new(params)
 
     if user.save
       # メール認証トークン生成
       user.generate_email_verification_token!
 
-      # 認証メール送信
-      send_verification_email(user)
+      # 認証メール送信（エラーが発生してもユーザー登録は成功させる）
+      begin
+        send_verification_email(user)
+      rescue => e
+        Rails.logger.error "Failed to send verification email: #{e.message}"
+        # メール送信失敗してもユーザー登録は成功
+      end
 
       ApplicationSerializer.success(
         data: build_registration_response(user)
       )
     else
+      # バリデーションエラー（メールアドレス以外）
       raise ValidationError.new(
         "登録できませんでした。入力内容をご確認ください",
         user.errors.full_messages
@@ -42,8 +74,9 @@ class AuthService < ApplicationService
       raise AuthenticationError.new("メールアドレスまたはパスワードが正しくありません")
     end
 
+    # セキュリティ上、メール未認証も同じエラーメッセージにする
     unless user.email_verified?
-      raise EmailNotVerifiedError.new("メールアドレスの認証が完了していません。認証メールをご確認ください")
+      raise AuthenticationError.new("メールアドレスまたはパスワードが正しくありません")
     end
 
     # JWT発行
@@ -103,17 +136,23 @@ class AuthService < ApplicationService
   # 認証メール再送
   def self.resend_verification(email)
     user = User.find_by(email: email&.downcase)
-    return ApplicationSerializer.error(message: "ユーザーが見つかりません", code: "USER_NOT_FOUND") unless user
 
-    if user.email_verified?
-      return ApplicationSerializer.error(message: "このメールアドレスは既に認証済みです", code: "ALREADY_VERIFIED")
+    # セキュリティ上、ユーザーの存在を漏らさないため、
+    # 存在しない場合や認証済みの場合も成功メッセージを返す
+    if user.nil? || user.email_verified?
+      return ApplicationSerializer.success(
+        data: { message: "認証メールを再送しました" }
+      )
     end
 
-    # 新しいトークン生成
+    # 未認証ユーザーの場合のみ、新しいトークン生成とメール送信
     user.generate_email_verification_token!
-
-    # メール送信
-    send_verification_email(user)
+    begin
+      send_verification_email(user)
+    rescue => e
+      Rails.logger.error "Failed to send verification email: #{e.message}"
+      # メール送信失敗してもユーザーには成功レスポンス
+    end
 
     ApplicationSerializer.success(
       data: { message: "認証メールを再送しました" }
@@ -126,23 +165,23 @@ class AuthService < ApplicationService
 
     user = User.find_by(email: email&.downcase)
 
-    if user.nil?
-      # セキュリティのため、ユーザーが存在しない場合も成功レスポンスを返す
+    # セキュリティのため、ユーザーの存在・認証状態を漏らさない
+    # ユーザーが存在しない、またはメール未認証の場合も成功レスポンスを返す
+    if user.nil? || !user.email_verified?
       return ApplicationSerializer.success(
         data: { message: "パスワードリセットメールを送信しました。メールをご確認ください" }
       )
     end
 
-    # メール未認証ユーザーの場合
-    unless user.email_verified?
-      return ApplicationSerializer.error(message: "メールアドレスの認証が完了していません", code: "EMAIL_NOT_VERIFIED")
-    end
-
-    # パスワードリセットトークンを生成（PasswordResetTokenモデル使用）
+    # 認証済みユーザーの場合のみ、実際にリセットメールを送信
     reset_token = PasswordResetToken.generate_for_email(user.email)
 
-    # リセットメール送信
-    send_password_reset_email_with_token(user, reset_token.token)
+    begin
+      send_password_reset_email_with_token(user, reset_token.token)
+    rescue => e
+      Rails.logger.error "Failed to send password reset email: #{e.message}"
+      # メール送信失敗してもユーザーには成功レスポンス
+    end
 
     ApplicationSerializer.success(
       data: { message: "パスワードリセットメールを送信しました。メールをご確認ください" }
@@ -206,6 +245,15 @@ class AuthService < ApplicationService
 
   # レスポンス構築メソッド群
   def self.build_registration_response(user)
+    {
+      message: "ユーザー登録が完了しました。認証メールをご確認ください",
+      requires_verification: true,
+      user: build_user_response(user)
+    }
+  end
+
+  # 既存ユーザー登録時のレスポンス（セキュリティ考慮、メール送信なし）
+  def self.build_registration_response_without_email(user)
     {
       message: "ユーザー登録が完了しました。認証メールをご確認ください",
       requires_verification: true,

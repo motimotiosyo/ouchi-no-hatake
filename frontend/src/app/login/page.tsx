@@ -15,8 +15,6 @@ export default function LoginPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [apiError, setApiError] = useState<string | null>(null)
-  const [requiresVerification, setRequiresVerification] = useState(false)
-  const [unverifiedEmail, setUnverifiedEmail] = useState<string>('')
   const [isForgotPasswordModalOpen, setIsForgotPasswordModalOpen] = useState(false)
 
   const { login } = useAuth()
@@ -32,15 +30,12 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true)
     setApiError(null)
-    setRequiresVerification(false)
-    setUnverifiedEmail('')
 
     try {
       const result = await apiClient.post<{
         message: string
         token: string
         user: User
-        requires_verification?: boolean
       }>(
         '/api/v1/auth/login',
         data
@@ -56,27 +51,12 @@ export default function LoginPage() {
         window.location.href = '/?flash_message=' + encodeURIComponent('ログインしました') + '&flash_type=success'
       } else {
         setApiError(result.error.message)
-
-        // メール認証が必要な場合の処理
-        if (result.error.code === 'EMAIL_NOT_VERIFIED') {
-          setRequiresVerification(true)
-          // エラー詳細からメールアドレスを抽出
-          const emailDetail = result.error.details?.find((detail: string) => detail.includes('email:'))
-          if (emailDetail) {
-            const email = emailDetail.split('email: ')[1]
-            setUnverifiedEmail(email)
-          }
-        }
       }
     } catch {
       setApiError('ネットワークエラーが発生しました')
     } finally {
       setIsLoading(false)
     }
-  }
-
-  const handleGoToResendPage = () => {
-    router.push(`/resend-verification?email=${encodeURIComponent(unverifiedEmail)}`)
   }
 
   return (
@@ -117,19 +97,15 @@ export default function LoginPage() {
           {/* APIエラー表示 */}
           {apiError && (
             <div className="auth-api-error">
-              {apiError}
-              {/* メール認証が必要な場合のリンク表示 */}
-              {requiresVerification && unverifiedEmail && (
-                <div className="mt-3 text-center">
-                  <button
-                    type="button"
-                    onClick={handleGoToResendPage}
-                    className="text-blue-600 hover:text-blue-800 underline text-sm"
-                  >
-                    認証メールを再送信する
-                  </button>
-                </div>
-              )}
+              <p>{apiError}</p>
+              <div className="mt-3 pt-3 border-t border-red-200 text-sm text-gray-700">
+                <p className="font-medium mb-2">ログインできない場合:</p>
+                <ul className="text-left space-y-1 text-xs">
+                  <li>• メールアドレス、パスワードをご確認ください</li>
+                  <li>• パスワードを忘れた方は下記のリンクからリセットできます</li>
+                  <li>• 初めての方は新規登録をお試しください</li>
+                </ul>
+              </div>
             </div>
           )}
 

@@ -9,10 +9,13 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { User } from '@/types/auth'
+import EmailVerificationModal from '@/components/auth/EmailVerificationModal'
 
 export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [apiError, setApiError] = useState<string | null>(null)
+  const [isEmailVerificationModalOpen, setIsEmailVerificationModalOpen] = useState(false)
+  const [registeredEmail, setRegisteredEmail] = useState('')
   const router = useRouter()
 
   const { login } = useAuth()
@@ -45,8 +48,9 @@ export default function SignupPage() {
 
         // バックエンドがrequires_verification: trueを返す場合
         if (result.data.requires_verification) {
-          // メール認証が必要な場合は案内画面へ遷移
-          router.push(`/signup-success?email=${encodeURIComponent(result.data.user.email)}`)
+          // メール認証が必要な場合はモーダルを表示
+          setRegisteredEmail(result.data.user.email)
+          setIsEmailVerificationModalOpen(true)
         } else {
           // 古いフロー（念のため残す）- 即座にログイン
           login(result.data.token, result.data.user)
@@ -140,6 +144,11 @@ export default function SignupPage() {
           </div>
         </form>
       </div>
+      <EmailVerificationModal
+        isOpen={isEmailVerificationModalOpen}
+        onClose={() => setIsEmailVerificationModalOpen(false)}
+        email={registeredEmail}
+      />
     </div>
   )
 }
