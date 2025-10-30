@@ -40,12 +40,6 @@ class Api::V1::AuthController < ApplicationController
       }
 
       render json: result, status: :ok
-    rescue AuthService::EmailNotVerifiedError => e
-      render json: ApplicationSerializer.error(
-        message: "メールアドレスの認証が完了していません。認証メールをご確認ください",
-        code: "EMAIL_NOT_VERIFIED",
-        details: [ "email: #{params[:email]}" ]
-      ), status: :forbidden
     rescue AuthService::AuthenticationError => e
       raise ExceptionHandler::AuthenticationError, e.message
     rescue => e
