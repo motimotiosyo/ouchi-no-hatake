@@ -9,6 +9,8 @@ Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
     origins "http://localhost:3000",
             "https://ouchi-no-hatake.vercel.app",
+            "https://ouchi-no-hatake.com",
+            "https://www.ouchi-no-hatake.com",
             /https:\/\/ouchi-no-hatake-.*\.vercel\.app/
     resource "*",
       headers: :any,
