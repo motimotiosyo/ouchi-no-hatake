@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuthContext as useAuth } from '@/contexts/auth'
 
@@ -11,26 +11,37 @@ export default function VerifyEmailPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { verifyEmail, resendVerification } = useAuth()
-  
+
   const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'expired'>('loading')
   const [errorMessage, setErrorMessage] = useState<string>('')
   const [email, setEmail] = useState<string>('')
   const [isResending, setIsResending] = useState(false)
 
+  // 重複リクエスト防止用のフラグ
+  const hasVerified = useRef(false)
+
   useEffect(() => {
     const token = searchParams.get('token')
-    
+
     if (!token) {
       setStatus('error')
       setErrorMessage('認証トークンが見つかりません')
       return
     }
 
+    // 既に認証リクエストを送信済みの場合はスキップ
+    if (hasVerified.current) {
+      return
+    }
+
     // メール認証を実行
     const performVerification = async () => {
+      // リクエスト送信前にフラグを立てる
+      hasVerified.current = true
+
       try {
         const result = await verifyEmail(token)
-        
+
         if (result.success) {
           setStatus('success')
           // 3秒後にタイムラインへリダイレクト
