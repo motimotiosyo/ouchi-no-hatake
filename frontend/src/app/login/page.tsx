@@ -8,6 +8,8 @@ import { useAuthContext as useAuth } from '@/contexts/auth'
 import { useState } from 'react'
 import Link from 'next/link'
 import ForgotPasswordModal from '@/components/auth/ForgotPasswordModal'
+import GoogleOAuthProvider from '@/components/auth/GoogleOAuthProvider'
+import GoogleLoginButton from '@/components/auth/GoogleLoginButton'
 import type { User } from '@/types/auth'
 
 export default function LoginPage() {
@@ -117,6 +119,21 @@ export default function LoginPage() {
               {isLoading ? 'ログイン中...' : 'ログイン'}
             </button>
           </div>
+
+          {/* 区切り線 */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">または</span>
+            </div>
+          </div>
+
+          {/* Googleログインボタン */}
+          <GoogleOAuthProvider>
+            <GoogleLoginButton onError={setApiError} />
+          </GoogleOAuthProvider>
 
           {/* パスワードリセットリンク */}
           <div className="text-center mt-4">

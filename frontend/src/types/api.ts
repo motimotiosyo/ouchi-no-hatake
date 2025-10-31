@@ -70,3 +70,24 @@ export interface ApiRequestConfig {
 export interface AuthenticatedApiRequestConfig extends ApiRequestConfig {
   requireAuth?: boolean
 }
+
+/**
+ * Google OAuth認証リクエスト
+ */
+export interface GoogleAuthRequest {
+  credential: string
+}
+
+/**
+ * OAuth認証レスポンス
+ */
+export interface OAuthAuthResponse {
+  user: {
+    id: number
+    name: string
+    email: string
+    email_verified: boolean
+    created_at: string
+  }
+  token: string
+}
