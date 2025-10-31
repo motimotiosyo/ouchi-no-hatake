@@ -6,7 +6,7 @@ class UserMailer < ApplicationMailer
     mail(
       to: @user.email,
       subject: "【おうちの畑】メールアドレス認証のお願い",
-      from: "ouchi.no.hatake@gmail.com"
+      from: "noreply@ouchi-no-hatake.com"
     )
   end
 
@@ -17,7 +17,7 @@ class UserMailer < ApplicationMailer
     mail(
       to: @user.email,
       subject: "【おうちの畑】パスワードリセットのご案内",
-      from: "ouchi.no.hatake@gmail.com"
+      from: "noreply@ouchi-no-hatake.com"
     )
   end
 end
