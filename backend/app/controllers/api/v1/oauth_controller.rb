@@ -1,7 +1,8 @@
 module Api
   module V1
     class OauthController < ApplicationController
-      skip_before_action :authenticate_user!, only: [ :google_callback ]
+      skip_before_action :authenticate_request, only: [ :google_callback ]
+      skip_before_action :check_email_verification, only: [ :google_callback ]
 
       # Google OAuth コールバック
       def google_callback
