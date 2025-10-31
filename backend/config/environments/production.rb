@@ -116,4 +116,5 @@ Rails.application.configure do
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
   config.hosts << ENV["FRONTEND_URL"] if ENV["FRONTEND_URL"].present?
   config.hosts << "ouchi-no-hatake.onrender.com"
+  config.hosts << "api.ouchi-no-hatake.com"
 end
