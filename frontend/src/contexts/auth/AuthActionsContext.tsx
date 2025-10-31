@@ -82,8 +82,10 @@ export function AuthActionsProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('auth_user', JSON.stringify({ ...result.data.user, email_verified: true }))
       setCookie('auth_token', result.data.token, 7)
 
-      // ページリロードして状態を更新
-      window.location.reload()
+      // トップページにリダイレクト（トークンパラメータを残さない）
+      // window.location.reload()の代わりにhrefで遷移することで、
+      // URLからトークンパラメータが削除され、重複リクエストを防止
+      window.location.href = '/'
 
       return { success: true, data: result.data }
     } else {
