@@ -33,6 +33,10 @@ gem "dotenv-rails", groups: [ :development, :test ]
 
 gem "jwt"
 
+# OAuth authentication
+gem "omniauth-google-oauth2"
+gem "omniauth-rails_csrf_protection"
+
 # Rate limiting for API security
 gem "rack-attack"
 

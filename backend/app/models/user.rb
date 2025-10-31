@@ -1,5 +1,5 @@
 class User < ApplicationRecord
-  has_secure_password
+  has_secure_password validations: false
   has_many :posts, dependent: :destroy
   has_many :growth_records, dependent: :destroy
   has_many :likes, dependent: :destroy
@@ -8,6 +8,9 @@ class User < ApplicationRecord
   has_many :favorite_growth_records, dependent: :destroy
   has_many :favorited_growth_records, through: :favorite_growth_records, source: :growth_record
   has_many :notifications, dependent: :destroy
+
+  # OAuth関連
+  has_many :user_providers, dependent: :destroy
 
   # フォロー関連
   has_many :active_follows, class_name: "Follow", foreign_key: "follower_id", dependent: :destroy
@@ -19,7 +22,7 @@ class User < ApplicationRecord
   has_one_attached :avatar
 
   validates :email, presence: true, uniqueness: true, format: { with: URI::MailTo::EMAIL_REGEXP }
-  validates :password, length: { minimum: 6 }, if: -> { new_record? || !password.nil? }
+  validates :password, length: { minimum: 6 }, if: -> { (new_record? || !password.nil?) && !oauth_user? }
   validates :name, presence: true
   validate :validate_avatar
 
@@ -83,6 +86,11 @@ class User < ApplicationRecord
     return false unless user
 
     followers.include?(user)
+  end
+
+  # OAuthユーザーかどうかを判定
+  def oauth_user?
+    user_providers.exists?
   end
 
   private

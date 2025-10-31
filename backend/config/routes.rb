@@ -12,6 +12,9 @@ Rails.application.routes.draw do
       put "auth/reset_password", to: "auth#reset_password"
       get "auth/me", to: "auth#me"
 
+      # OAuth関連API
+      post "auth/google/callback", to: "oauth#google_callback"
+
       # タイムライン関連API
       resources :posts, only: [ :index, :show, :create, :update, :destroy ] do
         resource :likes, only: [ :create, :destroy ]
