@@ -35,7 +35,7 @@ class PasswordResetToken < ApplicationRecord
   end
 
   # トークンが有効かどうかを確認
-  def valid?
+  def valid_token?
     !expired?
   end
 
