@@ -90,7 +90,7 @@ Rails.application.configure do
   config.action_mailer.smtp_settings = {
     user_name: "resend",
     password: ENV["RESEND_API_KEY"],
-    domain: ENV.fetch("FRONTEND_URL", "your-domain.com"),
+    domain: "ouchi-no-hatake.com",
     address: "smtp.resend.com",
     port: 587,
     authentication: :plain,
