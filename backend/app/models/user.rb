@@ -90,6 +90,10 @@ class User < ApplicationRecord
 
   # OAuthユーザーかどうかを判定
   def oauth_user?
+    # 新規レコードの場合は password_digest が nil かどうかで判定
+    return password_digest.nil? if new_record?
+
+    # 保存済みレコードの場合は user_providers の存在で判定
     user_providers.exists?
   end
 
