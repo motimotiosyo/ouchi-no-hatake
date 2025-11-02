@@ -70,6 +70,13 @@ class OauthService < ApplicationService
         uid: auth_info[:uid],
         email: auth_info[:email]
       )
+
+      # Googleがメールアドレスをすでに検証済みの場合、ユーザーのemail_verifiedをtrueに更新
+      if auth_info[:email_verified] && !user.email_verified?
+        user.update!(email_verified: true)
+        Rails.logger.info "Updated email_verified to true for user #{user.id} via OAuth"
+      end
+
       return user
     end
 
