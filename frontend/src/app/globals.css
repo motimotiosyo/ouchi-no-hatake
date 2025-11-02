@@ -61,7 +61,7 @@ select option {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding-top: 8rem;
+  padding-top: 1rem;
   /* 背景はbodyから継承 */
 }
 
