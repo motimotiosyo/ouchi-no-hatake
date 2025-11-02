@@ -8,12 +8,14 @@ module Api
       def google_callback
         result = OauthService.authenticate_google(params[:credential])
 
-        render json: ApplicationSerializer.success({
-          user: build_user_response(result[:user]),
-          token: result[:token]
-        }), status: :ok
+        render json: ApplicationSerializer.success(
+          data: {
+            user: build_user_response(result[:user]),
+            token: result[:token]
+          }
+        ), status: :ok
       rescue OauthService::AuthenticationError => e
-        render json: ApplicationSerializer.error(e.message), status: :unauthorized
+        render json: ApplicationSerializer.error(message: e.message), status: :unauthorized
       end
 
       private
