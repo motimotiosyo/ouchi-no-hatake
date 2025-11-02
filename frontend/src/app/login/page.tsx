@@ -103,6 +103,7 @@ export default function LoginPage() {
                 <ul className="text-left space-y-1 text-xs">
                   <li>• メールアドレス、パスワードをご確認ください</li>
                   <li>• パスワードを忘れた方は下記のリンクからリセットできます</li>
+                  <li>• 認証メールが届いていない方は <Link href="/resend-verification" className="text-green-600 hover:text-green-500 underline">こちら</Link></li>
                   <li>• 初めての方は新規登録をお試しください</li>
                 </ul>
               </div>

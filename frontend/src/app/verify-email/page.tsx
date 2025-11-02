@@ -91,15 +91,13 @@ export default function VerifyEmailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-          メールアドレス認証
-        </h2>
-      </div>
+    <div className="auth-container">
+      <div className="auth-form">
+        <div>
+          <h2>メールアドレス認証</h2>
+        </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        <div className="space-y-6">
           
           {status === 'loading' && (
             <div className="text-center">
@@ -122,7 +120,7 @@ export default function VerifyEmailPage() {
               </p>
               <button
                 onClick={() => router.push('/')}
-                className="mt-4 w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+                className="auth-button mt-4"
               >
                 今すぐタイムラインへ
               </button>
@@ -151,7 +149,7 @@ export default function VerifyEmailPage() {
                 <button
                   onClick={handleResendEmail}
                   disabled={isResending}
-                  className="mt-3 w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                  className="auth-button mt-3 disabled:opacity-50"
                 >
                   {isResending ? '送信中...' : '認証メール再送信'}
                 </button>
@@ -173,7 +171,7 @@ export default function VerifyEmailPage() {
               </p>
               <button
                 onClick={handleBackToSignup}
-                className="mt-4 w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-yellow-600 hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500"
+                className="auth-button mt-4"
               >
                 新規登録画面へ戻る
               </button>
