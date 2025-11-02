@@ -9,6 +9,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 import type { User } from '@/types/auth'
 import EmailVerificationModal from '@/components/auth/EmailVerificationModal'
+import GoogleOAuthProvider from '@/components/auth/GoogleOAuthProvider'
+import GoogleLoginButton from '@/components/auth/GoogleLoginButton'
 
 export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false)
@@ -130,10 +132,25 @@ export default function SignupPage() {
             </button>
           </div>
 
+          {/* 区切り線 */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">または</span>
+            </div>
+          </div>
+
+          {/* Googleログインボタン */}
+          <GoogleOAuthProvider>
+            <GoogleLoginButton onError={setApiError} />
+          </GoogleOAuthProvider>
+
           {/* ログインリンク */}
           <div className="text-center mt-4">
             <span className="text-gray-600 text-sm">すでにアカウントをお持ちの方は</span>
-            <Link 
+            <Link
               href="/login"
               className="text-green-600 hover:text-green-500 text-sm font-medium ml-1"
             >

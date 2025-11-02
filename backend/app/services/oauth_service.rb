@@ -9,8 +9,8 @@ class OauthService < ApplicationService
     # ユーザーを取得または作成
     user = find_or_create_user(auth_info)
 
-    # JWT発行
-    token = generate_jwt(user)
+    # JWT発行（通常ログインと同じ6ヶ月の有効期限）
+    token = JsonWebToken.encode(user_id: user.id)
 
     {
       user: user,
@@ -90,14 +90,5 @@ class OauthService < ApplicationService
 
       user
     end
-  end
-
-  def self.generate_jwt(user)
-    payload = {
-      user_id: user.id,
-      exp: 24.hours.from_now.to_i
-    }
-
-    JWT.encode(payload, Rails.application.credentials.secret_key_base)
   end
 end
