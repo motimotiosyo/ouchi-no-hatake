@@ -50,6 +50,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.rewrite(url);
   }
 
+  // チェッカーのカードを取りたいBotには public/checker-card.html を返す
+  if (pathname === '/checker' && BOT_UA.test(ua)) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/checker-card.html'; // ← public/ 配下の診断専用静的HTML
+    return NextResponse.rewrite(url);
+  }
+
   // /dashboard配下のみ認証必須
   if (!pathname.startsWith('/dashboard')) {
     return NextResponse.next();
@@ -66,5 +73,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/dashboard/:path*'],
+  matcher: ['/', '/checker', '/dashboard/:path*'],
 }
