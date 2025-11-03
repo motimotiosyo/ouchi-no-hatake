@@ -45,7 +45,7 @@ export function middleware(request: NextRequest) {
   // /checkerへのBotアクセスを静的OGPページにRewrite
   if (pathname === '/checker' && BOT_UA.test(ua)) {
     const url = request.nextUrl.clone();
-    url.pathname = '/(ogp)/checker-share';
+    url.pathname = '/checker-share';  // ルートグループ(ogp)はURLに含まれない
     return NextResponse.rewrite(url);
   }
 
