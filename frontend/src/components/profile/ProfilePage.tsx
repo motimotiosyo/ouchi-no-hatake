@@ -32,7 +32,74 @@ export default function ProfilePage() {
     <div className="max-w-2xl mx-auto">
       {/* ユーザー情報ヘッダー */}
       <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <div className="flex items-start gap-4">
+        {/* スマホレイアウト */}
+        <div className="md:hidden">
+          {/* アイコンと編集ボタン */}
+          <div className="flex items-start justify-between mb-3">
+            {/* アバター */}
+            <div className="flex-shrink-0">
+              {user.avatar_url ? (
+                <img
+                  src={user.avatar_url}
+                  alt={user.name}
+                  className="w-12 h-12 rounded-full object-cover"
+                />
+              ) : (
+                <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
+                  <span className="text-gray-500 text-lg font-semibold">
+                    {user.name.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
+            </div>
+            {/* 編集ボタン */}
+            <button
+              onClick={() => setIsEditModalOpen(true)}
+              className="px-4 py-2 text-sm text-orange-600 bg-orange-50 rounded hover:bg-orange-100 transition-colors"
+            >
+              編集
+            </button>
+          </div>
+
+          {/* ユーザー名 */}
+          <h1 className="text-lg font-bold text-gray-900 mb-2">{user.name}</h1>
+
+          {/* 自己紹介文 */}
+          {user.bio && (
+            <p className="text-gray-700 text-sm whitespace-pre-wrap mb-2">{user.bio}</p>
+          )}
+
+          {/* メールアドレス */}
+          <p className="text-gray-500 text-xs mb-2">{user.email}</p>
+
+          {/* 登録日 */}
+          {user.created_at && (
+            <p className="text-gray-500 text-xs mb-2">
+              登録日: {new Date(user.created_at).toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' })}
+            </p>
+          )}
+
+          {/* フォロー数・フォロワー数 */}
+          {(user.following_count !== undefined || user.followers_count !== undefined) && (
+            <div className="flex gap-4">
+              <button
+                onClick={() => router.push(`/users/${user.id}/following`)}
+                className="text-sm hover:underline"
+              >
+                <span className="font-semibold">{user.following_count || 0}</span> フォロー中
+              </button>
+              <button
+                onClick={() => router.push(`/users/${user.id}/followers`)}
+                className="text-sm hover:underline"
+              >
+                <span className="font-semibold">{user.followers_count || 0}</span> フォロワー
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* PCレイアウト */}
+        <div className="hidden md:flex items-start gap-4">
           {/* アバター */}
           <div className="flex-shrink-0">
             {user.avatar_url ? (

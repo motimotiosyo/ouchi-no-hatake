@@ -40,6 +40,7 @@ export default function GrowthRecordsTab({ userId, onCountChange }: GrowthRecord
   const [loadingMore, setLoadingMore] = useState(false)
   const [pagination, setPagination] = useState<PaginationInfo | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [hasFetched, setHasFetched] = useState(false)
   const observer = useRef<IntersectionObserver | null>(null)
 
   const fetchGrowthRecords = useCallback(async (page: number = 1, append: boolean = false) => {
@@ -59,6 +60,7 @@ export default function GrowthRecordsTab({ userId, onCountChange }: GrowthRecord
       )
 
       if (result.success) {
+        setHasFetched(true)
         if (append) {
           setGrowthRecords(prev => [...prev, ...result.data.growth_records])
         } else {
@@ -69,10 +71,12 @@ export default function GrowthRecordsTab({ userId, onCountChange }: GrowthRecord
           onCountChange(result.data.pagination.total_count)
         }
       } else {
+        setHasFetched(true)
         setError(result.error.message)
       }
     } catch (err) {
       console.error('成長記録の取得でエラーが発生しました:', err)
+      setHasFetched(true)
       setError(err instanceof Error ? err.message : 'エラーが発生しました')
     } finally {
       setLoading(false)
@@ -94,10 +98,10 @@ export default function GrowthRecordsTab({ userId, onCountChange }: GrowthRecord
   }, [loading, loadingMore, pagination, fetchGrowthRecords])
 
   useEffect(() => {
-    if (growthRecords.length === 0 && !loading) {
+    if (!hasFetched && !loading) {
       fetchGrowthRecords()
     }
-  }, [growthRecords.length, loading, fetchGrowthRecords])
+  }, [hasFetched, loading, fetchGrowthRecords])
 
   if (loading && growthRecords.length === 0) {
     return (
