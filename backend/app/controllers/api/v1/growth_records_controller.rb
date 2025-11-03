@@ -1,10 +1,13 @@
 class Api::V1::GrowthRecordsController < ApplicationController
-  skip_before_action :authenticate_request, only: [ :show ]
+  skip_before_action :authenticate_request, only: [ :show, :index ]
   before_action :set_growth_record, only: [ :update, :destroy ]
   before_action :set_growth_record_for_show, only: [ :show ]
 
   def index
     begin
+      # トークンがあれば認証を試みる（オプショナル認証）
+      set_optional_current_user
+
       page = params[:page]&.to_i || 1
       per_page = params[:per_page]&.to_i || 10
       offset = (page - 1) * per_page

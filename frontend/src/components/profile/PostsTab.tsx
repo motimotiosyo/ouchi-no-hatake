@@ -24,6 +24,8 @@ export default function PostsTab({ userId, postType = 'all', onCountChange }: Po
   const [loadingMore, setLoadingMore] = useState(false)
   const [pagination, setPagination] = useState<PaginationInfo | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [hasFetched, setHasFetched] = useState(false)
+  const [lastFetchKey, setLastFetchKey] = useState('')
   const observer = useRef<IntersectionObserver | null>(null)
 
   const fetchPosts = useCallback(async (page: number = 1, append: boolean = false) => {
@@ -42,6 +44,9 @@ export default function PostsTab({ userId, postType = 'all', onCountChange }: Po
       )
 
       if (result.success) {
+        const fetchKey = `${userId}-${postType}`
+        setLastFetchKey(fetchKey)
+        setHasFetched(true)
         if (append) {
           setPosts(prev => [...prev, ...result.data.posts])
         } else {
@@ -53,16 +58,18 @@ export default function PostsTab({ userId, postType = 'all', onCountChange }: Po
         }
         setError(null)
       } else {
+        setHasFetched(true)
         setError(result.error.message)
       }
     } catch (err) {
       console.error('投稿の取得でエラーが発生しました:', err)
+      setHasFetched(true)
       setError(err instanceof Error ? err.message : 'エラーが発生しました')
     } finally {
       setLoadingMore(false)
       setLoading(false)
     }
-  }, [userId, postType])
+  }, [userId, postType, onCountChange])
 
   const lastPostElementRef = useCallback((node: HTMLDivElement | null) => {
     if (loading || loadingMore) return
@@ -78,8 +85,13 @@ export default function PostsTab({ userId, postType = 'all', onCountChange }: Po
   }, [loading, loadingMore, pagination, fetchPosts])
 
   useEffect(() => {
-    fetchPosts()
-  }, [fetchPosts])
+    const currentFetchKey = `${userId}-${postType}`
+    if (!hasFetched || lastFetchKey !== currentFetchKey) {
+      setHasFetched(false)
+      setPosts([])
+      fetchPosts()
+    }
+  }, [userId, postType, hasFetched, lastFetchKey, fetchPosts])
 
   if (loading && posts.length === 0) {
     return (
