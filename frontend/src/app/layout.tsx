@@ -51,9 +51,6 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ja">
-      <head>
-        <GoogleAnalytics />
-      </head>
       <body className="min-h-screen flex flex-col" style={{ minWidth: '360px' }}>
         <FlashProvider>
           <AuthProvider>
@@ -65,6 +62,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <AutoLogoutModalContainer />
           </AuthProvider>
         </FlashProvider>
+        <GoogleAnalytics />
       </body>
     </html>
   )
