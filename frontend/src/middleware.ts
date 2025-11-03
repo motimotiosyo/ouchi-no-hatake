@@ -35,8 +35,19 @@ function verifyJWT(token: string): boolean {
   }
 }
 
+// SNSクローラーのUser-Agent検出
+const BOT_UA = /(Twitterbot|facebookexternalhit|Slackbot|Line|Discordbot|Pinterest|LinkedInBot|WhatsApp)/i;
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const ua = request.headers.get('user-agent') || '';
+
+  // /checkerへのBotアクセスを静的OGPページにRewrite
+  if (pathname === '/checker' && BOT_UA.test(ua)) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/(ogp)/checker-share';
+    return NextResponse.rewrite(url);
+  }
 
   // /dashboard配下のみ認証必須
   if (!pathname.startsWith('/dashboard')) {
@@ -54,5 +65,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*'],
+  matcher: ['/dashboard/:path*', '/checker'],
 }
