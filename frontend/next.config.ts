@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // クローラー向けにストリーミングメタデータを無効化し、ブロッキングで返す
+  // これによりOGPメタタグが確実にHTML <head>に直接出力される
+  htmlLimitedBots: /.*/,
+
   async headers() {
     return [
       {
