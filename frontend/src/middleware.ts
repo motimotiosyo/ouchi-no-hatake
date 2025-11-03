@@ -1,6 +1,10 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+// 主要SNSクローラーUA（必要に応じて追加）
+const BOT_UA =
+  /(Twitterbot|facebookexternalhit|Slackbot|Line|Discordbot|Pinterest|LinkedInBot|WhatsApp)/i;
+
 const getTokenFromCookie = (request: NextRequest) => {
   const tokenCookie = request.cookies.get('auth_token');
   return tokenCookie?.value;
@@ -36,7 +40,15 @@ function verifyJWT(token: string): boolean {
 }
 
 export function middleware(request: NextRequest) {
+  const ua = request.headers.get('user-agent') || '';
   const { pathname } = request.nextUrl;
+
+  // ルートのカードを取りたいBotには public/card.html を返す
+  if (pathname === '/' && BOT_UA.test(ua)) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/card.html'; // ← public/ 配下の静的HTML
+    return NextResponse.rewrite(url);
+  }
 
   // /dashboard配下のみ認証必須
   if (!pathname.startsWith('/dashboard')) {
@@ -54,5 +66,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*'],
+  matcher: ['/', '/dashboard/:path*'],
 }
