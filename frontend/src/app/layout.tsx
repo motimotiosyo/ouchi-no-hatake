@@ -18,6 +18,7 @@ export const viewport: Viewport = {
 }
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://ouchi-no-hatake.com'),
   title: {
     default: 'おうちの畑',
     template: '%s | おうちの畑',
@@ -26,15 +27,24 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'おうちの畑',
     description: '初心者が気軽に家庭菜園を始められる掲示板型サービス。野菜診断で育てやすい野菜を提案し、育て方指南で栽培をサポート。成長記録を共有して楽しく野菜を育てよう。',
-    url: 'https://ouchi-no-hatake.vercel.app',
+    url: 'https://ouchi-no-hatake.com',
     siteName: 'おうちの畑',
     locale: 'ja_JP',
     type: 'website',
+    images: [
+      {
+        url: '/ogp.png',
+        width: 1200,
+        height: 630,
+        alt: 'おうちの畑 - 家庭菜園を、もっと身近。',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'おうちの畑',
     description: '初心者が気軽に家庭菜園を始められる掲示板型サービス。野菜診断で育てやすい野菜を提案し、育て方指南で栽培をサポート。成長記録を共有して楽しく野菜を育てよう。',
+    images: ['/ogp.png'],
   },
 }
 

@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useState, useEffect, useRef } from 'react'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import HamburgerMenu from './HamburgerMenu'
@@ -61,10 +62,13 @@ export default function AuthenticatedHeader() {
   return (
     <header className="fixed top-0 left-0 right-0 shadow z-50">
       {/* ヘッダー本体 */}
-      <div className="bg-[#95FB99] py-2 px-4">
-        <div className="flex justify-center">
+      <div className="bg-[#95FB99] h-16">
+        <div className="flex justify-center h-full">
           <nav className="w-full max-w-2xl min-w-80 flex items-center justify-between px-4">
-            <Link href="/" className="text-xl font-black tracking-wide font-serif">🌱 おうちの畑</Link>
+            <Link href="/" className="flex items-end gap-2 h-full pb-2">
+              <Image src="/logo.png" alt="おうちの畑" width={120} height={80} priority className="h-[calc(100%-0.5rem)] w-auto" />
+              <span className="text-xl font-bold leading-none pb-1">おうちの畑</span>
+            </Link>
         
         <div className="flex items-center space-x-3">
           {/* 通知 */}
