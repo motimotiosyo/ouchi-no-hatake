@@ -1,0 +1,20 @@
+{
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        { "type": "host", "value": "ouchi-no-hatake.vercel.app" }
+      ],
+      "destination": "https://ouchi-no-hatake.com/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        { "type": "host", "value": "www.ouchi-no-hatake.com" }
+      ],
+      "destination": "https://ouchi-no-hatake.com/:path*",
+      "permanent": true
+    }
+  ]
+}
