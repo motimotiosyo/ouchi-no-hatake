@@ -45,14 +45,25 @@ class PostService < ApplicationService
 
     # 成長記録情報を追加
     if post.growth_record
-      post_data[:growth_record] = {
+      growth_record_data = {
         id: post.growth_record.id,
-        record_name: post.growth_record.record_name,
-        plant: {
+        record_name: post.growth_record.record_name
+      }
+
+      # plant または custom_plant_name のいずれかが設定されている
+      if post.growth_record.plant
+        growth_record_data[:plant] = {
           id: post.growth_record.plant.id,
           name: post.growth_record.plant.name
         }
-      }
+      elsif post.growth_record.custom_plant_name.present?
+        growth_record_data[:plant] = {
+          id: nil,
+          name: post.growth_record.custom_plant_name
+        }
+      end
+
+      post_data[:growth_record] = growth_record_data
     end
 
     # 画像URL生成

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAuthContext as useAuth } from '@/contexts/auth'
 import { apiClient } from '@/services/apiClient'
 import CustomSelect from '@/components/ui/CustomSelect'
+import { PostCategory } from '@/types'
 
 interface GrowthRecord {
   id: number
@@ -14,19 +15,6 @@ interface GrowthRecord {
   } | null
   custom_plant_name: string | null
 }
-
-// 固定カテゴリリスト
-const CATEGORIES = [
-  { id: 1, name: "栽培記録" },
-  { id: 2, name: "種まき" },
-  { id: 3, name: "水やり" },
-  { id: 4, name: "収穫" },
-  { id: 5, name: "雑談" },
-  { id: 6, name: "質問" },
-  { id: 7, name: "病気・害虫" },
-  { id: 8, name: "肥料" },
-  { id: 9, name: "その他" }
-]
 
 // 画像アップロード制限
 const IMAGE_UPLOAD_LIMITS = {
@@ -51,15 +39,16 @@ interface Props {
   preselectedGrowthRecordId?: number
 }
 
-export default function CreatePostModal({ 
-  isOpen, 
-  onClose, 
-  onSuccess, 
-  editData, 
-  preselectedGrowthRecordId 
+export default function CreatePostModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  editData,
+  preselectedGrowthRecordId
 }: Props) {
   const { executeProtectedAsync } = useAuth()
   const [growthRecords, setGrowthRecords] = useState<GrowthRecord[]>([])
+  const [categories, setCategories] = useState<PostCategory[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -84,7 +73,7 @@ export default function CreatePostModal({
         '/api/v1/growth_records?per_page=100',
         token || undefined
       )
-      
+
       if (result.success) {
         setGrowthRecords(result.data.growth_records || [])
       } else {
@@ -95,11 +84,26 @@ export default function CreatePostModal({
     }
   }, [])
 
+  const fetchCategories = useCallback(async () => {
+    try {
+      const result = await apiClient.getCategories()
+
+      if (result.success) {
+        setCategories(result.data.categories || [])
+      } else {
+        console.error('カテゴリの取得に失敗:', result.error.message)
+      }
+    } catch (err) {
+      console.error('カテゴリの取得でエラーが発生しました:', err)
+    }
+  }, [])
+
   // データ取得とフォーム初期化
   useEffect(() => {
     if (isOpen) {
       fetchGrowthRecords()
-      
+      fetchCategories()
+
       // 編集モードの場合、初期値を設定
       if (editData) {
         setFormData({
@@ -118,7 +122,7 @@ export default function CreatePostModal({
         }))
       }
     }
-  }, [isOpen, editData, preselectedGrowthRecordId, fetchGrowthRecords])
+  }, [isOpen, editData, preselectedGrowthRecordId, fetchGrowthRecords, fetchCategories])
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -392,7 +396,7 @@ export default function CreatePostModal({
                   onChange={(value) => setFormData(prev => ({ ...prev, category_id: value }))}
                   options={[
                     { value: '', label: 'カテゴリを選択してください' },
-                    ...CATEGORIES.filter(category => category.name !== '雑談' && category.id !== 5).map(category => ({
+                    ...categories.filter(category => category.name !== '雑談').map(category => ({
                       value: category.id.toString(),
                       label: category.name
                     }))
