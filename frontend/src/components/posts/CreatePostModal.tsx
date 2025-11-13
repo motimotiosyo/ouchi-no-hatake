@@ -11,7 +11,8 @@ interface GrowthRecord {
   plant: {
     id: number
     name: string
-  }
+  } | null
+  custom_plant_name: string | null
 }
 
 // 固定カテゴリリスト
@@ -288,8 +289,8 @@ export default function CreatePostModal({
   if (!isOpen) return null
 
   return (
-    <div 
-      className="fixed inset-0 flex items-center justify-center z-[10000] p-4"
+    <div
+      className="fixed inset-0 flex items-center justify-center z-10000 p-4"
       style={{
         backgroundColor: 'rgba(0, 0, 0, 0.3)',
         backdropFilter: 'brightness(0.7)'
@@ -369,7 +370,7 @@ export default function CreatePostModal({
                     { value: '', label: '成長記録を選択してください' },
                     ...growthRecords.map(record => ({
                       value: record.id.toString(),
-                      label: `${record.plant.name} - ${record.record_name}`
+                      label: `${record.plant?.name || record.custom_plant_name || '不明な植物'} - ${record.record_name}`
                     }))
                   ]}
                   required
