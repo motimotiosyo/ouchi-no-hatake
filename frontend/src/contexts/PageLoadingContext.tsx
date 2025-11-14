@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react'
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
 
 interface PageLoadingContextType {
@@ -13,24 +13,11 @@ const PageLoadingContext = createContext<PageLoadingContextType | undefined>(und
 export function PageLoadingProvider({ children }: { children: ReactNode }) {
   const [isPageLoading, setIsPageLoading] = useState(false)
   const pathname = usePathname()
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
-    // 既存のタイムアウトをクリア
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current)
-    }
-
-    // pathname変更後、一定時間待ってから自動的にローディング解除（フォールバック）
-    timeoutRef.current = setTimeout(() => {
-      setIsPageLoading(false)
-    }, 1500)
-
-    return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current)
-      }
-    }
+    // pathname変化 = ページ遷移完了
+    // useEffect発火時点でReactのレンダリングも完了しているため即座に終了
+    setIsPageLoading(false)
   }, [pathname])
 
   const setPageLoading = (loading: boolean) => {

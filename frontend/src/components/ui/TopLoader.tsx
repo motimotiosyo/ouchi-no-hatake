@@ -22,8 +22,22 @@ export default function TopLoader() {
       const anchor = target.closest('a')
 
       if (anchor && anchor.href && !anchor.href.startsWith('#') && anchor.href.startsWith(window.location.origin)) {
+        const clickedUrl = new URL(anchor.href)
+        const currentPathname = window.location.pathname
+
         nprogress.start()
         setPageLoading(true)
+
+        // 同一ページの場合は短いタイマーで終了
+        if (clickedUrl.pathname === currentPathname) {
+          if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current)
+          }
+          timeoutRef.current = setTimeout(() => {
+            setPageLoading(false)
+          }, 100)
+        }
+        // 異なるページの場合はPageLoadingContextのpathname変化を待つ
       }
     }
 
