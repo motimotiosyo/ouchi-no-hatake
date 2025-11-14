@@ -69,8 +69,8 @@ build-iPhoneSimulator/
 # Temporary reports and documentation
 tmp/
 
-# Internal development documentation (non-public)
-docs/internal/
+# Documentation (non-public)
+docs/
 
 # Frontend (Node.js / Next.js)
 frontend/node_modules/
