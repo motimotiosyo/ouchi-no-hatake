@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { useAuthContext as useAuth } from '@/contexts/auth'
 import { ImageModalProvider, useImageModal } from '@/contexts/ImageModalContext'
 import PublicHeader from './PublicHeader'
@@ -17,17 +18,12 @@ interface LayoutWrapperProps {
 function LayoutWrapperContent({ children }: LayoutWrapperProps) {
   const { user, isLoading } = useAuth()
   const { modalState, closeModal, navigateImage } = useImageModal()
+  const pathname = usePathname()
 
   Logger.debug('LayoutWrapper authentication state updated')
 
   // フォールバック: 3秒以上ローディングが続く場合は強制的に判定
   const [forceShowLayout, setForceShowLayout] = useState(false)
-  const [pathname, setPathname] = useState('/')
-
-  // 現在のパスを取得
-  useEffect(() => {
-    setPathname(window.location.pathname)
-  }, [])
 
   useEffect(() => {
     const timer = setTimeout(() => {
