@@ -1,7 +1,9 @@
 import './globals.css'
 
+import TopLoader from '@/components/ui/TopLoader'
 import { AuthProvider } from '@/contexts/auth'
 import { FlashProvider } from '@/contexts/FlashContext'
+import { PageLoadingProvider } from '@/contexts/PageLoadingContext'
 import LayoutWrapper from '@/components/layout/LayoutWrapper'
 import FlashMessages from '@/components/ui/FlashMessages'
 import AutoLogoutModalContainer from '@/components/ui/AutoLogoutModalContainer'
@@ -52,16 +54,19 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ja">
       <body className="min-h-screen flex flex-col" style={{ minWidth: '360px' }}>
-        <FlashProvider>
-          <AuthProvider>
-            <RedirectMessageHandler />
-            <LayoutWrapper>
-              {children}
-            </LayoutWrapper>
-            <FlashMessages />
-            <AutoLogoutModalContainer />
-          </AuthProvider>
-        </FlashProvider>
+        <PageLoadingProvider>
+          <TopLoader />
+          <FlashProvider>
+            <AuthProvider>
+              <RedirectMessageHandler />
+              <LayoutWrapper>
+                {children}
+              </LayoutWrapper>
+              <FlashMessages />
+              <AutoLogoutModalContainer />
+            </AuthProvider>
+          </FlashProvider>
+        </PageLoadingProvider>
         <GoogleAnalytics />
       </body>
     </html>
