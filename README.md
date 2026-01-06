@@ -18,13 +18,13 @@
 栽培場所や期間などの質問に答えるだけで、育てやすい野菜を診断できます。  
 全6問の質問は進捗バー付きで表示され、初心者でも迷わず回答できる設計です。
 
-![家庭菜園チェッカーの質問画面](.github/images/checker-question.png)
+<img src=".github/images/checker-question.png" alt="家庭菜園チェッカーの質問画面" width="420">
 
 **診断結果画面**
 回答内容をもとに野菜をスコアリングし、ランキング形式でおすすめを表示します。  
 診断結果から成長記録の作成やSNSシェア、再診断へとスムーズにつなげています。
 
-![家庭菜園チェッカーの診断結果画面](.github/images/checker-result.png)
+<img src=".github/images/checker-result.png" alt="家庭菜園チェッカーの診断結果画面" width="420">
 
 ---
 
@@ -40,7 +40,7 @@
 各記録はステータス（計画中 / 育成中 / 完了 / 失敗）ごとに管理され、  
 今どの野菜がどの段階にあるかを一目で把握できます。
 
-![成長記録一覧](.github/images/growth-record-list.png)
+<img src=".github/images/growth-record-list.png" alt="成長記録一覧" width="420">
 
 ---
 
@@ -58,7 +58,7 @@
 また、育て方ガイドが存在する品種を選択した場合は、  
 そのガイドに基づいた**栽培ステップ付きの成長記録**が自動生成されます。
 
-![成長記録作成](.github/images/growth-record-create.png)
+<img src=".github/images/growth-record-create.png" alt="成長記録作成" width="420">
 
 ---
 
@@ -74,7 +74,7 @@
 「次にやることが分からない」という初心者の不安を減らし、  
 迷わず栽培を進められることを意識しています。
 
-![成長記録詳細・栽培ガイド](.github/images/growth-record-detail.png)
+<img src=".github/images/growth-record-detail.png" alt="成長記録詳細・栽培ガイド" width="420">
 
 ---
 
@@ -90,7 +90,7 @@
 
 個人の記録としても、他ユーザーとの共有としても機能する設計です。
 
-![成長メモ](.github/images/growth-memo-create.png)
+<img src=".github/images/growth-memo-create.png" alt="成長メモ" width="420">
 
 
 ---
@@ -115,7 +115,7 @@
 といった切り替えが可能で、  
 目的に応じて情報を整理して閲覧できます。
 
-![タイムライン一覧](.github/images/timeline-list.png)
+<img src=".github/images/timeline-list.png" alt="タイムライン一覧" width="420">
 
 ---
 
@@ -129,7 +129,7 @@
 のいずれかを選択でき、  
 成長メモの場合は、どの成長記録に紐づけるかを指定して投稿します。
 
-![投稿作成](.github/images/timeline-create.png)
+<img src=".github/images/timeline-create.png" alt="投稿作成" width="420">
 
 ---
 
@@ -145,7 +145,7 @@
 **閲覧 → 興味を持った投稿のみ深掘り → コメントで交流**  
 という自然なユーザー導線を実現しています。
 
-![投稿詳細・コメント](.github/images/timeline-detail.png)
+<img src=".github/images/timeline-detail.png" alt="投稿詳細・コメント" width="420">
 
 ---
 
