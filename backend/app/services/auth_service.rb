@@ -282,7 +282,8 @@ class AuthService < ApplicationService
       if Rails.env.development?
         Rails.application.routes.url_helpers.rails_blob_url(user.avatar, host: "http://localhost:3001")
       else
-        Rails.application.routes.url_helpers.rails_blob_path(user.avatar, only_path: true)
+        # 本番環境ではS3の直接URLを返す
+        user.avatar.url
       end
     else
       nil

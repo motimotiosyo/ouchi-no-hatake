@@ -129,7 +129,14 @@ class PostService < ApplicationService
   # 画像URL生成（プライベートメソッド）
   def self.build_image_urls(post)
     if post.images.attached?
-      post.images.map { |image| Rails.application.routes.url_helpers.rails_blob_path(image, only_path: true) }
+      post.images.map do |image|
+        if Rails.env.development?
+          Rails.application.routes.url_helpers.rails_blob_url(image, host: "http://localhost:3001")
+        else
+          # 本番環境ではS3の直接URLを返す
+          image.url
+        end
+      end
     else
       []
     end

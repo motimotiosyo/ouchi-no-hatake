@@ -148,7 +148,9 @@ export default function PostDetailPage() {
   // 画像クリック処理
   const handleImageClick = (imageIndex: number) => {
     if (post?.images && post.images.length > 0) {
-      const fullImageUrls = post.images.map(imageUrl => `${API_BASE_URL}${imageUrl}`)
+      const fullImageUrls = post.images.map(imageUrl =>
+        imageUrl.startsWith('http') ? imageUrl : `${API_BASE_URL}${imageUrl}`
+      )
       openModal(fullImageUrls, imageIndex, post.title || `${post.user.name}の投稿`)
     }
   }
@@ -527,7 +529,7 @@ export default function PostDetailPage() {
               {post.images.map((imageUrl, index) => (
                 <div key={index} className="relative cursor-pointer">
                   <img
-                    src={`${API_BASE_URL}${imageUrl}`}
+                    src={imageUrl.startsWith('http') ? imageUrl : `${API_BASE_URL}${imageUrl}`}
                     alt={`投稿画像 ${index + 1}`}
                     className={`w-full rounded-md border border-gray-200 transition-opacity hover:opacity-90 ${
                       post.images?.length === 1

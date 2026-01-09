@@ -438,7 +438,8 @@ class GrowthRecordService < ApplicationService
       if Rails.env.development?
         Rails.application.routes.url_helpers.rails_blob_url(record.thumbnail, host: "http://localhost:3001")
       else
-        Rails.application.routes.url_helpers.rails_blob_path(record.thumbnail, only_path: true)
+        # 本番環境ではS3の直接URLを返す
+        record.thumbnail.url
       end
     else
       nil
